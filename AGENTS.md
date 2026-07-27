@@ -17,7 +17,6 @@
 - PRレビューレポート: `.agents/skills/pr-review-report/SKILL.md`
 - ブランチ戦略: `docs/branching.md`
 - エージェント活用開発フロー: `docs/agent-driven-development.md`
-- Flutterアップグレード手順: `docs/flutter-upgrade.md`
 
 ## 複数エージェントによる並列開発（git worktree runner）
 
