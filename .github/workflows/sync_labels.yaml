@@ -23,7 +23,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+        shell: bash
         run: |
+          set -euo pipefail
           ruby -ryaml -e 'YAML.load_file("labels.yaml").each { |label| puts [label.fetch("name"), label.fetch("color"), label.fetch("description", "")].join("\t") }' |
           while IFS=$'\t' read -r name color description; do
             gh label create "$name" --color "$color" --description "$description" --force
