@@ -2,6 +2,21 @@
 
 A new Flutter project.
 
+## 開発環境のセットアップ
+
+このリポジトリでは [mise](https://mise.jdx.dev/) でFlutterのバージョンを固定管理している。
+開発者間・CI間でのバージョン差異を防ぐため、`mise.toml` に記載されたバージョンを使用すること。
+
+```sh
+mise install
+```
+
+実行後、`flutter --version` で `mise.toml` の `flutter` に指定したバージョンが
+解決されていることを確認する。
+
+なお `pubspec.yaml` の `environment.sdk` はDart SDKのバージョン制約であり、
+Flutter本体のバージョン管理とは別軸のため、Flutter本体のバージョンは `mise.toml`側で管理する。
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
