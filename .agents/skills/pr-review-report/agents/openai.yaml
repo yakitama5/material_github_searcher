@@ -1,0 +1,4 @@
+interface:
+  display_name: "PRレビューレポート"
+  short_description: "PRの差分・AIレビュー結果をインタラクティブHTMLレポートにまとめる"
+  default_prompt: "$pr-review-report を使って、対象PRの差分・レビュー結果・変更の要約をインタラクティブHTMLレポートにまとめて公開してください。"

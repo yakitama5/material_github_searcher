@@ -1,0 +1,1092 @@
+<meta charset="utf-8">
+<title>PR #{{PR_NUMBER}} レビューレポート — {{PR_TITLE}}</title>
+<style>
+  /*
+    デフォルトは Material 3 Baseline（Google公式のデモ配色、seed #6750A4）。
+    対象リポジトリに既存のデザイントークン/テーマファイルがあれば、
+    このセクションの値を丸ごとそちらの値に差し替えること（詳細は SKILL.md）。
+  */
+  :root {
+    color-scheme: light;
+    --primary: #6750A4;
+    --on-primary: #FFFFFF;
+    --primary-container: #EADDFF;
+    --on-primary-container: #21005D;
+    --secondary: #625B71;
+    --on-secondary: #FFFFFF;
+    --secondary-container: #E8DEF8;
+    --on-secondary-container: #1D192B;
+    --tertiary: #7D5260;
+    --on-tertiary: #FFFFFF;
+    --tertiary-container: #FFD8E4;
+    --on-tertiary-container: #31111D;
+    --error: #B3261E;
+    --error-container: #F9DEDC;
+    --on-error-container: #410E0B;
+    --surface: #FFFBFE;
+    --on-surface: #1C1B1F;
+    --on-surface-variant: #49454F;
+    --outline: #79747E;
+    --outline-variant: #CAC4D0;
+    --surface-container-low: #F7F2FA;
+    --surface-container: #F3EDF7;
+    --surface-container-high: #ECE6F0;
+    --surface-container-highest: #E6E0E9;
+
+    /* diff の +/- はブランドの accent とは独立の意味色。むやみに変えない。 */
+    --diff-add-bg: rgba(27, 94, 32, 0.10);
+    --diff-add-fg: #1B5E20;
+    --diff-add-marker: #2E7D32;
+    --diff-del-bg: rgba(183, 28, 28, 0.08);
+    --diff-del-fg: #B71C1C;
+    --diff-del-marker: #C62828;
+    --diff-note-bg: rgba(125, 82, 96, 0.10);
+    --diff-note-fg: #7D5260;
+
+    /* CJK本文が乗る想定なのでカスタム@font-faceは埋め込まない。システムフォントで十分。 */
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Roboto, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --primary: #D0BCFF;
+      --on-primary: #381E72;
+      --primary-container: #4F378B;
+      --on-primary-container: #EADDFF;
+      --secondary: #CCC2DC;
+      --on-secondary: #332D41;
+      --secondary-container: #4A4458;
+      --on-secondary-container: #E8DEF8;
+      --tertiary: #EFB8C8;
+      --on-tertiary: #492532;
+      --tertiary-container: #633B48;
+      --on-tertiary-container: #FFD8E4;
+      --error: #F2B8B5;
+      --error-container: #8C1D18;
+      --on-error-container: #F9DEDC;
+      --surface: #1C1B1F;
+      --on-surface: #E6E1E5;
+      --on-surface-variant: #CAC4D0;
+      --outline: #938F99;
+      --outline-variant: #49454F;
+      --surface-container-low: #1D1B20;
+      --surface-container: #211F26;
+      --surface-container-high: #2B2930;
+      --surface-container-highest: #36343B;
+
+      --diff-add-bg: rgba(102, 187, 106, 0.14);
+      --diff-add-fg: #A5D6A7;
+      --diff-add-marker: #81C784;
+      --diff-del-bg: rgba(239, 83, 80, 0.14);
+      --diff-del-fg: #EF9A9A;
+      --diff-del-marker: #E57373;
+      --diff-note-bg: rgba(239, 184, 200, 0.14);
+      --diff-note-fg: #EFB8C8;
+    }
+  }
+
+  /* data-theme はビューア側のテーマ切替トグル用。必ずメディアクエリと両方向で勝つように定義する。 */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --primary: #D0BCFF; --on-primary: #381E72; --primary-container: #4F378B; --on-primary-container: #EADDFF;
+    --secondary: #CCC2DC; --on-secondary: #332D41; --secondary-container: #4A4458; --on-secondary-container: #E8DEF8;
+    --tertiary: #EFB8C8; --on-tertiary: #492532; --tertiary-container: #633B48; --on-tertiary-container: #FFD8E4;
+    --error: #F2B8B5; --error-container: #8C1D18; --on-error-container: #F9DEDC;
+    --surface: #1C1B1F; --on-surface: #E6E1E5; --on-surface-variant: #CAC4D0;
+    --outline: #938F99; --outline-variant: #49454F;
+    --surface-container-low: #1D1B20; --surface-container: #211F26; --surface-container-high: #2B2930; --surface-container-highest: #36343B;
+    --diff-add-bg: rgba(102, 187, 106, 0.14); --diff-add-fg: #A5D6A7; --diff-add-marker: #81C784;
+    --diff-del-bg: rgba(239, 83, 80, 0.14); --diff-del-fg: #EF9A9A; --diff-del-marker: #E57373;
+    --diff-note-bg: rgba(239, 184, 200, 0.14); --diff-note-fg: #EFB8C8;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --primary: #6750A4; --on-primary: #FFFFFF; --primary-container: #EADDFF; --on-primary-container: #21005D;
+    --secondary: #625B71; --on-secondary: #FFFFFF; --secondary-container: #E8DEF8; --on-secondary-container: #1D192B;
+    --tertiary: #7D5260; --on-tertiary: #FFFFFF; --tertiary-container: #FFD8E4; --on-tertiary-container: #31111D;
+    --error: #B3261E; --error-container: #F9DEDC; --on-error-container: #410E0B;
+    --surface: #FFFBFE; --on-surface: #1C1B1F; --on-surface-variant: #49454F;
+    --outline: #79747E; --outline-variant: #CAC4D0;
+    --surface-container-low: #F7F2FA; --surface-container: #F3EDF7; --surface-container-high: #ECE6F0; --surface-container-highest: #E6E0E9;
+    --diff-add-bg: rgba(27, 94, 32, 0.10); --diff-add-fg: #1B5E20; --diff-add-marker: #2E7D32;
+    --diff-del-bg: rgba(183, 28, 28, 0.08); --diff-del-fg: #B71C1C; --diff-del-marker: #C62828;
+    --diff-note-bg: rgba(125, 82, 96, 0.10); --diff-note-fg: #7D5260;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--surface);
+    color: var(--on-surface);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4 { text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  ::selection { background: var(--primary-container); color: var(--on-primary-container); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* ── App bar ─────────────────────────────────────────────────────── */
+  .appbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--outline-variant);
+  }
+  .appbar__inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 20px 28px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 28px;
+  }
+  .appbar__id {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    color: var(--on-surface-variant);
+    margin-bottom: 6px;
+  }
+  .appbar__id .sep { opacity: 0.5; }
+  .appbar__title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--on-surface);
+  }
+  .appbar__subtitle {
+    margin-top: 6px;
+    max-width: 62ch;
+    color: var(--on-surface-variant);
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+  .appbar__stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 7px 13px;
+    border-radius: 100px;
+    background: var(--surface-container);
+    border: 1px solid var(--outline-variant);
+    font-size: 12.5px;
+    color: var(--on-surface-variant);
+    white-space: nowrap;
+  }
+  .stat-chip b {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--on-surface);
+    font-size: 13.5px;
+  }
+  .stat-chip.plus b { color: var(--diff-add-fg); }
+  .stat-chip.minus b { color: var(--diff-del-fg); }
+  .stat-chip.ci {
+    background: var(--diff-add-bg);
+    border-color: transparent;
+    color: var(--diff-add-fg);
+    font-weight: 600;
+  }
+  .stat-chip.ci b { color: var(--diff-add-fg); }
+
+  /* ── Tabs ────────────────────────────────────────────────────────── */
+  .tabbar-wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+  .tabbar {
+    position: relative;
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--outline-variant);
+    /* モバイルでラベルが折り返れて崩れるのを防ぐ。タブは1行固定、溢れたら横スクロール。 */
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabbar::-webkit-scrollbar { display: none; }
+  .tab {
+    appearance: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font: inherit;
+    font-family: var(--font-ui);
+    color: var(--on-surface-variant);
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 14px 18px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 12px 12px 0 0;
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+  .tab:hover { background: color-mix(in srgb, var(--primary) 6%, transparent); color: var(--on-surface); }
+  .tab[aria-selected="true"] { color: var(--primary); }
+  .tab .count {
+    font-variant-numeric: tabular-nums;
+    background: var(--surface-container-high);
+    color: var(--on-surface-variant);
+    border-radius: 100px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .tab[aria-selected="true"] .count { background: var(--primary-container); color: var(--on-primary-container); }
+  .tab-indicator {
+    position: absolute;
+    bottom: -1px;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--primary);
+    transition: left 260ms cubic-bezier(.4,0,.2,1), width 260ms cubic-bezier(.4,0,.2,1);
+  }
+
+  main { max-width: 1120px; margin: 0 auto; padding: 28px; }
+  .panel { display: none; }
+  .panel.active { display: block; animation: panel-in 340ms cubic-bezier(.2,.7,.2,1); }
+  @keyframes panel-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .section-head h2 { font-size: 18px; font-weight: 700; }
+  .section-head .hint { font-size: 12.5px; color: var(--on-surface-variant); }
+
+  /* ── Cards / chips ───────────────────────────────────────────────── */
+  .card {
+    background: var(--surface-container-low);
+    border: 1px solid var(--outline-variant);
+    border-radius: 20px;
+    padding: 22px 24px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 11px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .chip.status-new { background: var(--tertiary-container); color: var(--on-tertiary-container); }
+  .chip.status-mod { background: var(--surface-container-high); color: var(--on-surface-variant); }
+  .chip.status-del { background: var(--error-container); color: var(--on-error-container); }
+  .chip.sev-p2 { background: var(--secondary-container); color: var(--on-secondary-container); }
+  .chip.fixed { background: var(--diff-add-bg); color: var(--diff-add-fg); }
+  .chip.deferred { background: var(--surface-container-high); color: var(--on-surface-variant); border: 1px solid var(--outline-variant); }
+  .chip.verified { background: var(--primary-container); color: var(--on-primary-container); }
+
+  /* ── Review-progress: check toggle + filter switch ───────────────── */
+  .tab-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .progress-note { font-size: 12px; color: var(--on-surface-variant); }
+  .progress-note b { font-variant-numeric: tabular-nums; color: var(--on-surface); font-weight: 700; }
+  .filter-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--on-surface-variant);
+    cursor: pointer;
+    user-select: none;
+  }
+  .filter-switch .track {
+    width: 34px;
+    height: 20px;
+    border-radius: 100px;
+    background: var(--surface-container-high);
+    border: 1px solid var(--outline);
+    position: relative;
+    flex-shrink: 0;
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+  .filter-switch .track::after {
+    content: "";
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--outline);
+    transition: transform 180ms cubic-bezier(.4,0,.2,1), background-color 160ms ease;
+  }
+  /* input自体は視覚的に隠す（クリック判定はlabel全体で受ける）。
+     Playwrightで自動テストする場合はこのinputではなくlabel/trackをクリックすること。 */
+  .filter-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .filter-switch input:checked ~ .track { background: var(--primary); border-color: var(--primary); }
+  .filter-switch input:checked ~ .track::after { transform: translateX(14px); background: var(--on-primary); }
+  .filter-switch input:focus-visible ~ .track { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+  .check-toggle {
+    appearance: none;
+    border: 1px solid var(--outline-variant);
+    background: var(--surface-container-low);
+    color: var(--on-surface-variant);
+    font: inherit;
+    font-family: var(--font-ui);
+    font-size: 11.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px 5px 8px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+    flex-shrink: 0;
+  }
+  .check-toggle .box {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    border: 1.5px solid var(--outline);
+    display: flex; align-items: center; justify-content: center;
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+  .check-toggle .box svg { opacity: 0; transform: scale(0.5); transition: opacity 120ms ease, transform 120ms ease; width: 10px; height: 10px; }
+  .check-toggle:hover { border-color: var(--primary); color: var(--on-surface); }
+  .check-toggle.checked { background: var(--diff-add-bg); border-color: transparent; color: var(--diff-add-fg); }
+  .check-toggle.checked .box { background: var(--diff-add-marker); border-color: var(--diff-add-marker); }
+  .check-toggle.checked .box svg { opacity: 1; transform: scale(1); }
+
+  /*
+    折りたたみは CSS Grid の 1fr → 0fr トリックを使う。
+    【重要な落とし穴】grid-template-rows: 0fr で 0 に潰す要素そのものに
+    padding/border を置いてはいけない。border-box でも padding は
+    物理的な最小サイズとして残ってしまい、0 まで潰れずに隙間が残る。
+    padding は「潰れる要素の中の、さらに1段ネストした子要素」に置くこと。
+    (.fb-inner = 潰れる要素・paddingなし / .fb-pad = 中の子要素・paddingあり)
+  */
+  .finding, .arc { transition: opacity 220ms ease; }
+  .finding__body {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 260ms cubic-bezier(.4,0,.2,1);
+  }
+  .finding__body > .fb-inner { overflow: hidden; min-height: 0; }
+  .fb-inner > .fb-pad { display: flex; flex-direction: column; gap: 14px; padding: 18px 0; }
+  .finding.is-checked .finding__body { grid-template-rows: 0fr; }
+  .finding.is-checked .finding__title { text-decoration: line-through; text-decoration-color: var(--outline); opacity: 0.7; }
+
+  .arc__collapsible {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 260ms cubic-bezier(.4,0,.2,1);
+  }
+  .arc__collapsible > div { overflow: hidden; min-height: 0; }
+  .arc.is-checked .arc__collapsible { grid-template-rows: 0fr; }
+  .arc.is-checked .arc__title { text-decoration: line-through; text-decoration-color: var(--outline); opacity: 0.7; }
+  .arc.is-checked .arc__node { background: var(--diff-add-marker); }
+
+  .hide-checked .finding.is-checked,
+  .hide-checked .arc.is-checked { display: none; }
+
+  /* ── Tab 1: overview + donut + file list ─────────────────────────── */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .donut-card { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+  .donut {
+    /* p1+p2+p3 は必ず 360deg になるように再計算する（下記 legend の3グループに対応）。 */
+    --p1: 120deg; --p2: 120deg; --p3: 120deg;
+    width: 168px; height: 168px;
+    border-radius: 50%;
+    background: conic-gradient(
+      var(--primary) 0deg var(--p1),
+      var(--secondary) var(--p1) calc(var(--p1) + var(--p2)),
+      var(--tertiary) calc(var(--p1) + var(--p2)) 360deg
+    );
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    opacity: 0; transform: scale(0.85) rotate(-8deg);
+    animation: donut-in 620ms 120ms cubic-bezier(.2,.8,.2,1) forwards;
+  }
+  @keyframes donut-in { to { opacity: 1; transform: scale(1) rotate(0deg); } }
+  .donut::before {
+    content: "";
+    position: absolute;
+    inset: 22px;
+    border-radius: 50%;
+    background: var(--surface-container-low);
+  }
+  .donut-center {
+    position: relative;
+    z-index: 1;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .donut-center .n { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .donut-center .l { font-size: 10.5px; color: var(--on-surface-variant); letter-spacing: 0.04em; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left; }
+  .donut-legend .row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .donut-legend .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .donut-legend .label { flex: 1; color: var(--on-surface); }
+  .donut-legend .pct { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--on-surface-variant); }
+
+  .filelist-card { padding-top: 18px; }
+  .filegroup + .filegroup { margin-top: 22px; }
+  .filegroup__head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; font-weight: 700; color: var(--on-surface-variant); letter-spacing: 0.02em; }
+  .filegroup__head .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .filerow {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) 60px minmax(90px, 1fr) 84px;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 4px;
+    border-radius: 10px;
+    transition: background-color 140ms ease;
+  }
+  .filerow:hover { background: color-mix(in srgb, var(--primary) 5%, transparent); }
+  /*
+    【重要な落とし穴】パスが長いと省略が必要になるが、省略すべきは
+    「ディレクトリ部分」で、ファイル名(.base)は絶対に省略してはいけない。
+    → .dir に flex-shrink:1 + min-width:0 + ellipsis、.base に flex-shrink:0。
+    これを逆にすると一番大事なファイル名が消える（実際にやった失敗）。
+  */
+  .filerow .path { font-family: var(--font-mono); font-size: 12.3px; display: flex; min-width: 0; white-space: nowrap; }
+  .filerow .path .dir { color: var(--on-surface-variant); flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .filerow .path .base { color: var(--on-surface); font-weight: 600; flex-shrink: 0; }
+  .filerow .bar {
+    position: relative;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--surface-container-high);
+    overflow: hidden;
+    display: flex;
+  }
+  .filerow .bar span { height: 100%; transform: scaleX(0); transform-origin: left; transition: transform 700ms cubic-bezier(.2,.7,.2,1); }
+  .filerow .bar .add { background: var(--diff-add-marker); }
+  .filerow .bar .del { background: var(--diff-del-marker); }
+  .filerow.revealed .bar span { transform: scaleX(1); }
+  .filerow .nums { font-family: var(--font-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .filerow .nums .a { color: var(--diff-add-fg); }
+  .filerow .nums .d { color: var(--diff-del-fg); margin-left: 6px; }
+  .filerow .badge-cell { text-align: left; }
+
+  /* ── Commit timeline axis (tab1 header strip) ────────────────────── */
+  .axis-card { margin-top: 20px; }
+  .axis-card .section-head { margin-bottom: 22px; }
+  .axis {
+    position: relative;
+    height: 54px;
+    margin: 0 6px;
+  }
+  .axis__line { position: absolute; left: 0; right: 0; top: 26px; height: 2px; background: var(--outline-variant); }
+  .axis__tick {
+    position: absolute;
+    top: 26px;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    border: 2px solid var(--surface-container-low);
+    cursor: default;
+    animation: tick-in 420ms cubic-bezier(.3,1.4,.4,1) forwards;
+  }
+  @keyframes tick-in { to { transform: translate(-50%, -50%) scale(1); } }
+  .axis__tick.feat { background: var(--primary); }
+  .axis__tick.fix { background: var(--tertiary); }
+  .axis__tick.chore { background: var(--outline); }
+  .axis__tick .tip {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: var(--on-surface);
+    color: var(--surface);
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 7px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease, transform 140ms ease;
+    font-family: var(--font-ui);
+    font-weight: 500;
+    z-index: 5;
+  }
+  .axis__tick:hover .tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .axis__tick:hover { z-index: 6; }
+  .axis__label { position: absolute; top: 0; font-size: 10.5px; color: var(--on-surface-variant); font-variant-numeric: tabular-nums; }
+  .axis__legend { display: flex; gap: 16px; margin-top: 10px; font-size: 11.5px; color: var(--on-surface-variant); }
+  .axis__legend .row { display: flex; align-items: center; gap: 6px; }
+  .axis__legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ── Tab 2: AI review ─────────────────────────────────────────────── */
+  .verify-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .verify-strip .v {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    background: var(--surface-container);
+    border: 1px solid var(--outline-variant);
+    color: var(--on-surface-variant);
+  }
+  .verify-strip .v .ok { color: var(--diff-add-fg); font-weight: 700; }
+
+  .status-bar-card { margin-bottom: 22px; }
+  .status-bar { display: flex; height: 22px; border-radius: 8px; overflow: hidden; background: var(--surface-container-high); margin: 14px 0 12px; }
+  .status-bar span { display: block; height: 100%; transform: scaleX(0); transform-origin: left; transition: transform 800ms cubic-bezier(.2,.7,.2,1); }
+  .status-bar .fixed { background: var(--diff-add-marker); }
+  .status-bar .deferred { background: var(--outline-variant); }
+  .status-bar.revealed span { transform: scaleX(1); }
+  .status-legend { display: flex; gap: 20px; font-size: 12px; color: var(--on-surface-variant); flex-wrap: wrap; }
+  .status-legend .row { display: flex; align-items: center; gap: 6px; }
+  .status-legend .dot { width: 9px; height: 9px; border-radius: 3px; }
+
+  .finding {
+    border: 1px solid var(--outline-variant);
+    border-radius: 20px;
+    background: var(--surface-container-low);
+    overflow: hidden;
+  }
+  .finding + .finding { margin-top: 18px; }
+  .finding__head { padding: 18px 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-bottom: 1px solid var(--outline-variant); }
+  .finding__head .path { font-family: var(--font-mono); font-size: 12px; color: var(--on-surface-variant); margin-left: auto; }
+  .finding__title { font-size: 15px; font-weight: 700; width: 100%; margin-top: 2px; }
+  .finding__body { padding: 0 22px; }
+  .finding__desc { font-size: 13.5px; color: var(--on-surface-variant); line-height: 1.75; }
+  .finding__desc b { color: var(--on-surface); font-weight: 600; }
+  .finding__verify { font-size: 12.5px; color: var(--on-surface-variant); background: var(--surface-container); border-radius: 10px; padding: 10px 14px; display: flex; gap: 8px; }
+  .finding__verify .lbl { font-weight: 700; color: var(--on-surface); flex-shrink: 0; }
+
+  /* ── Diff blocks ──────────────────────────────────────────────────── */
+  .diff-block {
+    font-family: var(--font-mono);
+    font-size: 12.3px;
+    line-height: 1.65;
+    border-radius: 12px;
+    border: 1px solid var(--outline-variant);
+    overflow-x: auto; /* 横スクロールはブロック内に閉じ込める。body自体は絶対にスクロールさせない */
+    background: var(--surface-container);
+  }
+  .diff-file {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--on-surface-variant);
+    border-bottom: 1px solid var(--outline-variant);
+    background: var(--surface-container-high);
+  }
+  .diff-line { display: flex; white-space: pre; }
+  .diff-line .marker { flex-shrink: 0; width: 22px; text-align: center; user-select: none; opacity: 0.85; }
+  .diff-line .code { flex: 1; padding-right: 14px; }
+  .diff-line.add { background: var(--diff-add-bg); color: var(--diff-add-fg); }
+  .diff-line.add .marker { color: var(--diff-add-marker); font-weight: 700; }
+  .diff-line.del { background: var(--diff-del-bg); color: var(--diff-del-fg); }
+  .diff-line.del .marker { color: var(--diff-del-marker); font-weight: 700; }
+  .diff-line.ctx { color: var(--on-surface-variant); }
+  .diff-line.ctx .marker { opacity: 0.3; }
+  /* note行 = 実際のdiffではない注記（例:「対応見送り」の該当箇所を指し示す）。斜体+別色で明確に区別する。 */
+  .diff-line.note { background: var(--diff-note-bg); color: var(--diff-note-fg); font-style: italic; }
+  .diff-line.note .marker { color: var(--diff-note-fg); }
+
+  /* ── Tab 3: timeline summary ──────────────────────────────────────── */
+  .arc {
+    position: relative;
+    padding-left: 34px;
+    padding-bottom: 36px;
+  }
+  .arc:last-child { padding-bottom: 4px; }
+  .arc::before {
+    content: "";
+    position: absolute;
+    left: 9px;
+    top: 30px;
+    bottom: 0;
+    width: 2px;
+    background: var(--outline-variant);
+  }
+  .arc:last-child::before { display: none; }
+  .arc__node {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--on-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 0 0 4px var(--surface);
+  }
+  .arc__meta { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .arc__time { font-family: var(--font-mono); font-size: 11.5px; color: var(--on-surface-variant); }
+  .arc__title { font-size: 16.5px; font-weight: 700; }
+  .arc__desc { font-size: 13.5px; color: var(--on-surface-variant); line-height: 1.75; margin: 8px 0 14px; max-width: 74ch; }
+  .arc__commits { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+  .arc__commit { display: flex; align-items: baseline; gap: 10px; font-size: 12px; color: var(--on-surface-variant); }
+  .arc__commit .sha { font-family: var(--font-mono); background: var(--surface-container-high); padding: 1px 7px; border-radius: 6px; color: var(--on-surface); font-size: 11px; }
+
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity 560ms ease, transform 560ms cubic-bezier(.2,.7,.2,1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  footer { max-width: 1120px; margin: 0 auto; padding: 8px 28px 48px; color: var(--on-surface-variant); font-size: 11.5px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  @media (max-width: 760px) {
+    .overview-grid { grid-template-columns: 1fr; }
+    .filerow { grid-template-columns: 1fr 74px; grid-template-areas: "path nums" "bar bar" "badge badge"; row-gap: 6px; }
+    .filerow .path { grid-area: path; }
+    .filerow .nums { grid-area: nums; }
+    .filerow .bar { grid-area: bar; }
+    .filerow .badge-cell { grid-area: badge; }
+    .appbar__inner { padding: 16px 18px 14px; }
+    main, .tabbar-wrap, footer { padding-left: 18px; padding-right: 18px; }
+  }
+</style>
+
+<header class="appbar">
+  <div class="appbar__inner">
+    <div>
+      <div class="appbar__id">
+        <span>{{ORG}} / {{REPO}}</span>
+        <span class="sep">·</span>
+        <span>PR #{{PR_NUMBER}}</span>
+        <span class="sep">·</span>
+        <span>{{HEAD_BRANCH}} → {{BASE_BRANCH}}</span>
+      </div>
+      <h1 class="appbar__title">{{PR_TITLE}}</h1>
+      <p class="appbar__subtitle">
+        {{PR_ONE_LINE_SUMMARY}}
+      </p>
+    </div>
+    <div class="appbar__stats">
+      <!-- CI未実行/未確認なら「✓ 全チェック成功」チップは出さない（嘘をつかない） -->
+      <span class="stat-chip ci">✓ 全チェック成功</span>
+      <span class="stat-chip">{{FILE_COUNT}} <b>files</b></span>
+      <span class="stat-chip">{{COMMIT_COUNT}} <b>commits</b></span>
+      <span class="stat-chip plus">+<b>{{INSERTIONS}}</b></span>
+      <span class="stat-chip minus">&minus;<b>{{DELETIONS}}</b></span>
+    </div>
+  </div>
+  <div class="tabbar-wrap">
+    <div class="tabbar" id="tabbar" role="tablist">
+      <button class="tab" role="tab" id="tab-files" aria-selected="true" data-panel="panel-files">
+        変更ファイル <span class="count">{{FILE_COUNT}}</span>
+      </button>
+      <!-- AIレビューを実施していないPRではこのタブごと削除してよい（SKILL.md参照） -->
+      <button class="tab" role="tab" id="tab-review" aria-selected="false" data-panel="panel-review">
+        AIレビュー <span class="count">{{FINDING_COUNT}}</span>
+      </button>
+      <button class="tab" role="tab" id="tab-summary" aria-selected="false" data-panel="panel-summary">
+        変更の要約 <span class="count">{{ARC_COUNT}}</span>
+      </button>
+      <span class="tab-indicator" id="tab-indicator"></span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══════════════════ TAB 1: 変更ファイル ══════════════════ -->
+  <section class="panel active" id="panel-files" role="tabpanel">
+
+    <div class="overview-grid">
+      <div class="card donut-card">
+        <div class="donut" id="donut">
+          <div class="donut-center">
+            <span class="n" id="donut-count">0</span>
+            <span class="l">行変更</span>
+          </div>
+        </div>
+        <!-- 3グループ以内に集約する（多すぎると意味を持たなくなる。近いカテゴリは1つにまとめる） -->
+        <div class="donut-legend">
+          <div class="row"><span class="dot" style="background:var(--primary)"></span><span class="label">{{GROUP_1_LABEL}}</span><span class="pct">{{GROUP_1_PCT}}%</span></div>
+          <div class="row"><span class="dot" style="background:var(--secondary)"></span><span class="label">{{GROUP_2_LABEL}}</span><span class="pct">{{GROUP_2_PCT}}%</span></div>
+          <div class="row"><span class="dot" style="background:var(--tertiary)"></span><span class="label">{{GROUP_3_LABEL}}</span><span class="pct">{{GROUP_3_PCT}}%</span></div>
+        </div>
+      </div>
+
+      <div class="card filelist-card">
+        <div class="section-head" style="margin-bottom:4px;">
+          <h2>ファイル別の変更量</h2>
+          <span class="hint">行数で降順ソート</span>
+        </div>
+
+        <!-- filegroup を GROUP_1/2/3 それぞれについて1つ、中に filerow を降順で並べる -->
+        <div class="filegroup">
+          <div class="filegroup__head"><span class="dot" style="background:var(--tertiary)"></span>{{GROUP_3_LABEL}}（{{GROUP_3_LINES}}行 / {{GROUP_3_FILE_COUNT}}ファイル）</div>
+
+          <!-- filerow 1件のテンプレート。data-max は使わず、width%はグループ内最大値に対する比率を事前計算して直接埋める -->
+          <div class="filerow">
+            <div class="path"><span class="dir">{{DIR_PATH}}</span><span class="base">{{FILE_NAME}}</span></div>
+            <div class="badge-cell"><span class="chip status-new">追加</span></div><!-- 新規は status-new、変更は status-mod、全行削除は status-del -->
+            <div class="bar"><span class="add" style="width:{{ADD_PCT}}%"></span><span class="del" style="width:{{DEL_PCT}}%"></span></div>
+            <div class="nums"><span class="a">+{{ADD_LINES}}</span><span class="d">&minus;{{DEL_LINES}}</span></div>
+          </div>
+          <!-- ↑ この filerow を、グループ内の各ファイルについて複製する -->
+        </div>
+        <!-- ↑ この filegroup を GROUP_1, GROUP_2 についても複製する（filegroup + filegroup { margin-top } で自動的に間隔が空く） -->
+      </div>
+    </div>
+
+    <div class="card axis-card">
+      <div class="section-head">
+        <h2>コミットの時系列（{{FIRST_COMMIT_TIME}} &rarr; {{LAST_COMMIT_TIME}}, {{DATE}}）</h2>
+        <span class="hint">ドットにカーソルを合わせると詳細</span>
+      </div>
+      <div class="axis" id="axis">
+        <div class="axis__line"></div>
+        <span class="axis__label" style="left:0%">{{FIRST_COMMIT_TIME}}</span>
+        <span class="axis__label" style="left:100%; transform: translateX(-100%);">{{LAST_COMMIT_TIME}}</span>
+
+        <!--
+          left% = (このコミットの時刻 - 最初のコミットの時刻) / (最後のコミットの時刻 - 最初のコミットの時刻) * 100
+          animation-delay は 50ms 刻みくらいで時系列順にずらすと発生順のアニメーションになる。
+          クラスは commit message の接頭辞（feat/fix/chore等）に対応させる。3種類以上あるなら
+          .axis__tick に新しい色クラスを増やすか、代表的な3種に丸める。
+        -->
+        <div class="axis__tick feat" style="left:0%; animation-delay:60ms">
+          <div class="tip">{{SHA}} ・ {{COMMIT_SUBJECT}}</div>
+        </div>
+        <!-- ↑ 各コミットについて複製 -->
+      </div>
+      <div class="axis__legend">
+        <span class="row"><span class="dot" style="background:var(--primary)"></span>feat</span>
+        <span class="row"><span class="dot" style="background:var(--tertiary)"></span>fix</span>
+        <span class="row"><span class="dot" style="background:var(--outline)"></span>chore</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ TAB 2: AIレビュー ══════════════════ -->
+  <!-- AIレビューを実施していない場合、このtab全体とtabbarのボタンを削除する -->
+  <section class="panel" id="panel-review" role="tabpanel">
+
+    <div class="verify-strip">
+      <!-- レビューに使った実際の手段・検証の事実だけを書く。誇張しない -->
+      <span class="v"><span class="ok">✓</span> {{REVIEW_TOOL_NAME}} — <code>{{REVIEW_COMMAND}}</code></span>
+      <span class="v"><span class="ok">✓</span> {{N}}件とも実コードを読んで独立検証済み</span>
+    </div>
+
+    <div class="card status-bar-card">
+      <div class="section-head" style="margin-bottom:0;">
+        <h2>検出{{FINDING_COUNT}}件の対応状況</h2>
+        <span class="hint">{{SEVERITY_NOTE}}</span>
+      </div>
+      <div class="status-bar" id="status-bar">
+        <span class="fixed" style="width:{{FIXED_PCT}}%"></span>
+        <span class="deferred" style="width:{{DEFERRED_PCT}}%"></span>
+      </div>
+      <div class="status-legend">
+        <span class="row"><span class="dot" style="background:var(--diff-add-marker)"></span>修正済み — {{FIXED_COUNT}}件</span>
+        <span class="row"><span class="dot" style="background:var(--outline-variant)"></span>対応見送り — {{DEFERRED_COUNT}}件</span>
+      </div>
+    </div>
+
+    <div class="tab-toolbar">
+      <label class="filter-switch">
+        <input type="checkbox" id="review-hide-checked">
+        <span class="track"></span>
+        確認済みを非表示
+      </label>
+      <span class="progress-note"><b id="review-progress">0</b> / {{FINDING_COUNT}} 件を確認済みにチェック</span>
+    </div>
+
+    <div id="review-list" style="display:flex; flex-direction:column; gap:18px;">
+
+      <!-- finding 1件のテンプレート。data-check-id は英数字+ハイフンのユニークなスラグにする -->
+      <div class="finding" data-check-id="{{FINDING_SLUG}}">
+        <div class="finding__head">
+          <span class="chip sev-p2">{{SEVERITY}}</span>
+          <span class="chip fixed">✓ 修正済み</span><!-- 見送りなら class="chip deferred">△ 対応見送り</span> -->
+          <span class="path">{{FILE_PATH}}</span>
+          <div class="finding__title">{{FINDING_TITLE}}</div>
+          <!-- このトグルは必ず finding__head 側（非折りたたみ領域）に置く。
+               finding__body の中に置くと、チェックして折りたたんだ瞬間に
+               このボタン自体も隠れてしまい、二度と開けなくなる（実際にやった失敗）。 -->
+          <div class="check-toggle" role="checkbox" aria-checked="false" tabindex="0" style="width:100%; margin-top:4px;">
+            <span class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 12L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="lbl">確認する</span>
+          </div>
+        </div>
+        <div class="finding__body"><div class="fb-inner"><div class="fb-pad">
+          <p class="finding__desc">
+            {{FINDING_DESCRIPTION}}
+          </p>
+          <!-- 差分で示せる指摘なら diff-block を、根拠コード引用だけなら省略可 -->
+          <div class="diff-block">
+            <div class="diff-file">{{FILE_PATH}}</div>
+            <div class="diff-line ctx"><span class="marker"> </span><span class="code">{{CONTEXT_LINE}}</span></div>
+            <div class="diff-line del"><span class="marker">-</span><span class="code">{{REMOVED_LINE}}</span></div>
+            <div class="diff-line add"><span class="marker">+</span><span class="code">{{ADDED_LINE}}</span></div>
+          </div>
+          <!-- 実際に手元で再現/検証した場合のみ書く。していないなら丸ごと削除する -->
+          <div class="finding__verify"><span class="lbl">検証</span>{{VERIFICATION_NOTE}}</div>
+        </div></div></div>
+      </div>
+      <!-- ↑ この finding を指摘の数だけ複製する -->
+
+    </div>
+  </section>
+
+  <!-- ══════════════════ TAB 3: 変更の要約 ══════════════════ -->
+  <section class="panel" id="panel-summary" role="tabpanel">
+
+    <div class="tab-toolbar">
+      <label class="filter-switch">
+        <input type="checkbox" id="summary-hide-checked">
+        <span class="track"></span>
+        確認済みを非表示
+      </label>
+      <span class="progress-note"><b id="summary-progress">0</b> / {{ARC_COUNT}} 件を確認済みにチェック</span>
+    </div>
+
+    <div id="summary-list">
+
+    <!-- arc 1件のテンプレート。テーマ・時期でコミットをまとめた「作業の弧」ごとに1つ -->
+    <div class="arc reveal" data-check-id="arc-1">
+      <div class="arc__node">1</div>
+      <div class="arc__meta">
+        <!-- チェックトグルは arc__meta 側（非折りたたみ領域）に置く。findingと同じ理由。 -->
+        <div class="check-toggle" role="checkbox" aria-checked="false" tabindex="0" style="order:99; margin-left:auto;">
+          <span class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 12L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="lbl">確認する</span>
+        </div>
+        <span class="arc__time">{{TIME_RANGE}}</span>
+        <span class="arc__title">{{ARC_TITLE}}</span>
+      </div>
+      <div class="arc__collapsible"><div>
+      <p class="arc__desc">
+        {{ARC_DESCRIPTION}}
+      </p>
+      <div class="arc__commits">
+        <div class="arc__commit"><span class="sha">{{SHA}}</span>{{COMMIT_SUBJECT}}</div>
+        <!-- ↑ このarcに含まれる各コミットについて複製 -->
+      </div>
+      <div class="diff-block">
+        <div class="diff-file">{{FILE_PATH}}（{{CONTEXT_NOTE}}）</div>
+        <div class="diff-line ctx"><span class="marker"> </span><span class="code">{{CONTEXT_LINE}}</span></div>
+        <div class="diff-line del"><span class="marker">-</span><span class="code">{{REMOVED_LINE}}</span></div>
+        <div class="diff-line add"><span class="marker">+</span><span class="code">{{ADDED_LINE}}</span></div>
+      </div>
+      </div></div>
+    </div>
+    <!-- ↑ この arc を各作業の弧について複製し、arc__node の番号を連番にする -->
+
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>{{ORG}}/{{REPO}} &middot; PR #{{PR_NUMBER}} レビューレポート</span>
+  <span>生成: {{GENERATOR_NOTE}}</span>
+</footer>
+
+<script>
+(function () {
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- Tabs ----
+  var tabbar = document.getElementById('tabbar');
+  var indicator = document.getElementById('tab-indicator');
+  var tabs = Array.prototype.slice.call(tabbar.querySelectorAll('.tab'));
+  var panels = {
+    'panel-files': document.getElementById('panel-files'),
+    'panel-review': document.getElementById('panel-review'), // AIレビュータブを削除した場合はここも消す
+    'panel-summary': document.getElementById('panel-summary')
+  };
+
+  function placeIndicator(tab) {
+    var barRect = tabbar.getBoundingClientRect();
+    var r = tab.getBoundingClientRect();
+    indicator.style.left = (r.left - barRect.left) + 'px';
+    indicator.style.width = r.width + 'px';
+  }
+
+  function selectTab(tab, animate) {
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t === tab ? 'true' : 'false'); });
+    Object.keys(panels).forEach(function (id) { panels[id].classList.remove('active'); });
+    panels[tab.dataset.panel].classList.add('active');
+    if (!animate) {
+      indicator.style.transition = 'none';
+      placeIndicator(tab);
+      requestAnimationFrame(function () { indicator.style.transition = ''; });
+    } else {
+      placeIndicator(tab);
+    }
+    revealTimeline();
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () { selectTab(tab, true); });
+  });
+  window.addEventListener('resize', function () {
+    var current = tabs.filter(function (t) { return t.getAttribute('aria-selected') === 'true'; })[0];
+    if (current) { indicator.style.transition = 'none'; placeIndicator(current); requestAnimationFrame(function(){ indicator.style.transition=''; }); }
+  });
+  selectTab(tabs[0], false);
+
+  // ---- Donut count-up ----
+  // {{TOTAL_LINES_CHANGED}} を実際の insertions+deletions 合計に置き換える
+  var TOTAL_LINES_CHANGED = 0;
+  var donutEl = document.getElementById('donut');
+  var countEl = document.getElementById('donut-count');
+  function animateCount(target, duration) {
+    if (reduced) { countEl.textContent = target; return; }
+    var start = null;
+    function step(ts) {
+      if (!start) start = ts;
+      var p = Math.min(1, (ts - start) / duration);
+      var eased = 1 - Math.pow(1 - p, 3);
+      countEl.textContent = Math.round(eased * target);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  var donutObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { animateCount(TOTAL_LINES_CHANGED, 900); donutObserver.disconnect(); }
+    });
+  }, { threshold: 0.4 });
+  donutObserver.observe(donutEl);
+
+  // ---- Bar reveal (file rows + status bar) ----
+  var barObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        barObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.filerow, #status-bar').forEach(function (el) {
+    if (reduced) { el.classList.add('revealed'); } else { barObserver.observe(el); }
+  });
+
+  // ---- Timeline arc reveal ----
+  function revealTimeline() {
+    document.querySelectorAll('.reveal').forEach(function (el, i) {
+      if (el.classList.contains('in')) return;
+      var rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.88) {
+        setTimeout(function () { el.classList.add('in'); }, reduced ? 0 : i * 90);
+      }
+    });
+  }
+  window.addEventListener('scroll', revealTimeline, { passive: true });
+  revealTimeline();
+  if (reduced) { document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); }); }
+
+  // ---- Review-progress checklist (persisted) ----
+  // 【重要】STORAGE_KEY はレポートごとに一意にすること。
+  // Artifactは同一オリジンでホストされるため、複数PRのレポートを同じ
+  // ブラウザで開くと、キーが同じだとチェック状態が別レポート間で
+  // 混線する。org/repo/PR番号を必ず含める。
+  var STORAGE_KEY = 'pr-review-report::{{ORG}}-{{REPO}}-{{PR_NUMBER}}';
+  var checkedIds = {};
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (saved && typeof saved === 'object') { checkedIds = saved; }
+  } catch (e) { /* localStorage unavailable / corrupt — start fresh */ }
+
+  function persist() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedIds)); } catch (e) { /* ignore quota/denied */ }
+  }
+
+  var reviewItems = Array.prototype.slice.call(document.querySelectorAll('#review-list .finding'));
+  var summaryItems = Array.prototype.slice.call(document.querySelectorAll('#summary-list .arc'));
+
+  function updateProgress(items, counterEl) {
+    var n = items.filter(function (el) { return el.classList.contains('is-checked'); }).length;
+    counterEl.textContent = n;
+  }
+
+  function applyCheckedState(el, checked) {
+    el.classList.toggle('is-checked', checked);
+    var toggle = el.querySelector('.check-toggle');
+    if (toggle) {
+      toggle.classList.toggle('checked', checked);
+      toggle.setAttribute('aria-checked', checked ? 'true' : 'false');
+      var lbl = toggle.querySelector('.lbl');
+      if (lbl) { lbl.textContent = checked ? '確認済み' : '確認する'; }
+    }
+  }
+
+  function wireChecklist(items, counterEl) {
+    items.forEach(function (el) {
+      var id = el.dataset.checkId;
+      var toggle = el.querySelector('.check-toggle');
+      if (!toggle || !id) return;
+      applyCheckedState(el, !!checkedIds[id]);
+      function flip() {
+        var next = !checkedIds[id];
+        checkedIds[id] = next;
+        applyCheckedState(el, next);
+        updateProgress(items, counterEl);
+        persist();
+      }
+      toggle.addEventListener('click', flip);
+      toggle.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); flip(); }
+      });
+    });
+    updateProgress(items, counterEl);
+  }
+
+  wireChecklist(reviewItems, document.getElementById('review-progress'));
+  wireChecklist(summaryItems, document.getElementById('summary-progress'));
+
+  function wireHideSwitch(inputId, listId) {
+    var input = document.getElementById(inputId);
+    var list = document.getElementById(listId);
+    input.addEventListener('change', function () {
+      list.classList.toggle('hide-checked', input.checked);
+    });
+  }
+  wireHideSwitch('review-hide-checked', 'review-list');
+  wireHideSwitch('summary-hide-checked', 'summary-list');
+})();
+</script>

@@ -14,3 +14,4 @@
 ## 定義
 
 - コミット: `.agents/skills/commit-changes/SKILL.md`
+- PRレビューレポート: `.agents/skills/pr-review-report/SKILL.md`
