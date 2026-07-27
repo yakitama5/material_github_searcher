@@ -1,0 +1,9 @@
+language: "ja-JP"
+reviews:
+  profile: "chill"
+  request_changes_workflow: true
+  auto_review:
+    drafts: true
+  pre_merge_checks:
+    issue_assessment:
+      mode: error
