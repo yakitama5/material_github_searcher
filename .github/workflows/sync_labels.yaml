@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - labels.yaml
+      - .github/labels.yaml
       - .github/workflows/sync_labels.yaml
   workflow_dispatch:
 
@@ -19,14 +19,14 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - name: Sync labels from labels.yaml
+      - name: Sync labels from .github/labels.yaml
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
-          ruby -ryaml -e 'YAML.load_file("labels.yaml").each { |label| puts [label.fetch("name"), label.fetch("color"), label.fetch("description", "")].join("\t") }' |
+          ruby -ryaml -e 'YAML.load_file(".github/labels.yaml").each { |label| puts [label.fetch("name"), label.fetch("color"), label.fetch("description", "")].join("\t") }' |
           while IFS=$'\t' read -r name color description; do
             gh label create "$name" --color "$color" --description "$description" --force
           done
