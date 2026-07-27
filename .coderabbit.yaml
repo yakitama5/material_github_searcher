@@ -1,3 +1,6 @@
-language: ja-JP
+language: "ja-JP"
 reviews:
-  profile: chill
+  profile: "chill"
+  request_changes_workflow: true
+  auto_review:
+    drafts: true
