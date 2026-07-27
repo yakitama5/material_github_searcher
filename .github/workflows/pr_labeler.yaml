@@ -21,4 +21,5 @@ jobs:
       - uses: actions/labeler@b8dd2d9be0f68b860e7dae5dae7d772984eacd6d # v6.2.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # 変更ファイルがglobに一致しなくなったラベルは、手動付与分も含めて自動的に外れる。
           sync-labels: true

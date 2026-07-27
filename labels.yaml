@@ -1,3 +1,4 @@
+# ラベル名を変更・追加・削除したら .github/labeler.yml も合わせて更新すること。
 - name: "documentation"
   color: "0075ca"
   description: "ドキュメントの変更"
