@@ -1,0 +1,4 @@
+interface:
+  display_name: "コミット"
+  short_description: "絵文字付き規約に沿って意図した変更を安全にコミットする"
+  default_prompt: "$commit-changes を使って、意図した変更を確認し、リポジトリの絵文字規約に沿ってコミットしてください。"
