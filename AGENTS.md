@@ -16,3 +16,4 @@
 - コミット: `.agents/skills/commit-changes/SKILL.md`
 - PRレビューレポート: `.agents/skills/pr-review-report/SKILL.md`
 - ブランチ戦略: `docs/branching.md`
+- エージェント活用開発フロー: `docs/agent-driven-development.md`
