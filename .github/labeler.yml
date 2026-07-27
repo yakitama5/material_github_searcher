@@ -1,0 +1,12 @@
+# ラベル名は .github/labels.yaml (色・説明の定義) のnameと一致させること。
+"documentation":
+  - changed-files:
+      - any-glob-to-any-file: "**/*.md"
+
+"github_actions":
+  - changed-files:
+      - any-glob-to-any-file: ".github/workflows/**"
+
+"dart":
+  - changed-files:
+      - any-glob-to-any-file: "**/*.dart"
