@@ -17,3 +17,17 @@
 - PRレビューレポート: `.agents/skills/pr-review-report/SKILL.md`
 - ブランチ戦略: `docs/branching.md`
 - エージェント活用開発フロー: `docs/agent-driven-development.md`
+
+## 複数エージェントによる並列開発（git worktree runner）
+
+複数のエージェントに並行して開発を行わせる際は `git gtr`（git worktree runner）を使い、
+作業ブランチを worktree で分離する。ローカル環境には `gtr` コマンドがインストール済み。
+
+- `git gtr new <branch>` : worktree を作成する。
+- `git gtr ai <branch>` : 作成した worktree でエージェントを起動する。
+- `git gtr rm <branch>` : worktree を削除する。
+
+推奨運用は 1 Issue = 1 worktree とし、Issue ごとにブランチと worktree を分けて並行作業する。
+
+worktree 作成時にコピーしたい未追跡ローカルファイル（`.env` 等）のパターンは、
+リポジトリ直下の `.gtrconfig` の `gtr.copy.include` に設定する。
