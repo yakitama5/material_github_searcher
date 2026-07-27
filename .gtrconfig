@@ -1,0 +1,15 @@
+# git worktree runner (gtr) のチームデフォルト設定。
+#
+# gtr.copy.include には、worktree 作成時にコピーしたい
+# 「Git管理下にない（untracked）ローカルファイル」のパターンを指定する。
+#
+# 注意: .gitignore 自体はGit管理下のトラッキングファイルであり、
+# 共有 .git を通じて全worktreeに既に存在するためコピー対象にする意味がない。
+# コピーが必要なのは .env 等、各ローカル環境にしか存在しないファイルである。
+#
+# 現状該当ファイルはないため、代表的なパターンをコメントアウトしたテンプレートとして
+# 用意しておく。必要になったらコメントを外して有効化すること。
+[gtr "copy"]
+	# include = .env
+	# include = .env*
+	# include = .env.local
