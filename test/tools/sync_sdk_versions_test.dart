@@ -116,6 +116,44 @@ void main() {
       );
     });
 
+    test('Flutterバージョン取得コマンドの失敗時は更新しない', () async {
+      await _expectActiveSdkFailureDoesNotWrite(
+        result: ProcessResult(1, 1, '', 'command failed'),
+        errorFragment: 'exited with 1',
+      );
+    });
+
+    test('Flutterバージョン取得結果が不正なJSONなら更新しない', () async {
+      await _expectActiveSdkFailureDoesNotWrite(
+        result: ProcessResult(1, 0, 'not-json', ''),
+        errorFragment: 'invalid JSON',
+      );
+    });
+
+    test('Flutterバージョン取得結果にFlutterバージョンがなければ更新しない', () async {
+      await _expectActiveSdkFailureDoesNotWrite(
+        result: ProcessResult(
+          1,
+          0,
+          jsonEncode({'dartSdkVersion': '3.12.2'}),
+          '',
+        ),
+        errorFragment: 'flutterVersion',
+      );
+    });
+
+    test('Flutterバージョン取得結果にDartバージョンがなければ更新しない', () async {
+      await _expectActiveSdkFailureDoesNotWrite(
+        result: ProcessResult(
+          1,
+          0,
+          jsonEncode({'flutterVersion': '3.44.8'}),
+          '',
+        ),
+        errorFragment: 'dartSdkVersion',
+      );
+    });
+
     test('ルート外へ解決されるWorkspaceメンバーを拒否する', () async {
       final outside = Directory.systemTemp.createTempSync('sdk_sync_outside_');
       final fixture = Directory.systemTemp.createTempSync('sdk_sync_fixture_');
@@ -460,6 +498,42 @@ ProcessResult _flutterResult({
   jsonEncode({'flutterVersion': flutter, 'dartSdkVersion': dart}),
   '',
 );
+
+Future<void> _expectActiveSdkFailureDoesNotWrite({
+  required ProcessResult result,
+  required String errorFragment,
+}) async {
+  final rootContent = _rootPubspec(
+    dartVersion: '3.11.0',
+    members: const ['packages/domain'],
+  );
+  final memberContent = _dartPubspec(dart: '3.11.0');
+  final fixture = _createFixture(
+    rootPubspec: rootContent,
+    members: {'packages/domain': memberContent},
+  );
+  addTearDown(() => fixture.deleteSync(recursive: true));
+  final synchronizer = SdkVersionSynchronizer(
+    rootDirectory: fixture,
+    processRunner: (_, _) async => result,
+  );
+
+  await expectLater(
+    synchronizer.synchronize(checkOnly: false),
+    throwsA(
+      isA<SdkVersionSyncException>().having(
+        (error) => error.message,
+        'message',
+        contains(errorFragment),
+      ),
+    ),
+  );
+  expect(File('${fixture.path}/pubspec.yaml').readAsStringSync(), rootContent);
+  expect(
+    File('${fixture.path}/packages/domain/pubspec.yaml').readAsStringSync(),
+    memberContent,
+  );
+}
 
 Directory _createFixture({
   required String rootPubspec,
