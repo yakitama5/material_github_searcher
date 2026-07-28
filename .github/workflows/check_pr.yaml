@@ -1,0 +1,198 @@
+name: Check PR
+
+# PRで必ず通過すべき高速かつ決定的な品質検査を1つに集約する。
+# Branch protectionのRequired Status Checkには本Workflowの status-check
+# ジョブのみを設定する。BuildとPatrolは実行時間・安定性の観点から対象外とする。
+#
+# 各チェックのジョブ定義を専用ファイルへ分割せずこのファイルへ集約している理由は
+# docs/ARCHITECTURE.md を参照。
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 変更パス判定はこのジョブでのみ実行し、後続の各チェックへ結果を渡す。
+  changes:
+    uses: ./.github/workflows/detect_ci_changes.yaml
+
+  format:
+    name: Format
+    needs: changes
+    if: needs.changes.outputs.format == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Format check
+        # build/ 等の生成物・依存物は対象外にする。
+        run: dart format --output=none --set-exit-if-changed apps packages test tools
+
+  analyze:
+    name: Analyze
+    needs: changes
+    if: needs.changes.outputs.analyze == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Check SDK constraints
+        run: dart tools/sync_sdk_versions.dart --check
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        # dart analyzeはデフォルトでinfoレベルの指摘ではexit codeが0のままになる。
+        # altive_lintsのルールはほぼ全てinfoレベルのため、--fatal-infosを付けないと
+        # このCIがlint違反を検知できないノーオペレーションになってしまう。
+        run: dart analyze --fatal-infos
+
+  test:
+    name: Test
+    needs: changes
+    if: needs.changes.outputs.test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Test SDK synchronization tool
+        run: dart test test/tools
+
+      - name: Test Flutter app
+        working-directory: apps/app
+        run: flutter test
+
+  check_package_dependencies:
+    name: Package Dependencies
+    needs: changes
+    if: needs.changes.outputs.package_dependencies == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Check SDK constraints
+        run: dart tools/sync_sdk_versions.dart --check
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Test package dependency checker
+        run: dart test test/tools
+
+      - name: Check package dependencies
+        run: dart run tools/check_package_dependencies.dart
+
+  cspell:
+    name: cspell
+    needs: changes
+    if: needs.changes.outputs.cspell == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Run cspell
+        # 対象ファイル・ドットファイルの扱いはcspell.jsoncの files/enableGlobDot に
+        # 一元化しているため、ここではグロブや --dot を指定しない。
+        # ただし --config を明示しないと、globを渡さない実行時にファイルが
+        # 一切拾われない(cspellの既定コマンドの挙動)ため明示的に指定する。
+        run: npx --yes cspell@10.0.1 --config cspell.jsonc --no-progress
+
+  markdown_lint:
+    name: Markdown Lint
+    needs: changes
+    if: needs.changes.outputs.markdown_lint == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # Markdownの静的解析を実行(設定は .markdownlint-cli2.jsonc を参照)
+      - name: Lint Markdown
+        run: npx --yes markdownlint-cli2@0.23.2
+
+  # 他のチェックジョブの結果を集約するジョブ。
+  # ブランチ保護ルールのRequired Status Checkはこのジョブのみを対象に設定する。
+  status-check:
+    name: Status Check
+    needs:
+      - changes
+      - format
+      - analyze
+      - test
+      - check_package_dependencies
+      - cspell
+      - markdown_lint
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check all required jobs succeeded
+        env:
+          NEEDS_JSON: ${{ toJson(needs) }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # 変更パス判定自体の失敗・キャンセルを、実処理ジョブの
+          # 「不要なのでskip」と誤認しないよう明示的に検査する。
+          changes_result="$(echo "$NEEDS_JSON" | jq -r '.changes.result')"
+          if [[ "$changes_result" != "success" ]]; then
+            echo "変更パス判定(changes job)が成功していません: $changes_result"
+            exit 1
+          fi
+
+          # 実処理ジョブはfailure/cancelledのみ失敗扱いにする。
+          # 変更対象外によるskippedは正常として許容する。
+          failed_jobs="$(echo "$NEEDS_JSON" |
+            jq -r 'to_entries[] | select(.key != "changes") |
+              select(.value.result == "failure" or .value.result == "cancelled") |
+              .key')"
+          if [[ -n "$failed_jobs" ]]; then
+            echo "以下のジョブが失敗またはキャンセルされました:"
+            echo "$failed_jobs"
+            exit 1
+          fi
+
+          echo "All required jobs succeeded or were legitimately skipped."

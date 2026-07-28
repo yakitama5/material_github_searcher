@@ -6,11 +6,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 readonly DETECTOR="$SCRIPT_DIR/detect_ci_changes.sh"
 
-readonly NONE=$'analyze=false\ntest=false\ncspell=false\nmarkdown_lint=false\npackage_dependencies=false'
-readonly DOCS=$'analyze=false\ntest=false\ncspell=true\nmarkdown_lint=true\npackage_dependencies=false'
-readonly DART=$'analyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false'
-readonly PUBSPEC=$'analyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true'
-readonly ALL=$'analyze=true\ntest=true\ncspell=true\nmarkdown_lint=true\npackage_dependencies=true'
+readonly NONE=$'format=false\nanalyze=false\ntest=false\ncspell=false\nmarkdown_lint=false\npackage_dependencies=false'
+readonly DOCS=$'format=false\nanalyze=false\ntest=false\ncspell=true\nmarkdown_lint=true\npackage_dependencies=false'
+readonly DART=$'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false'
+readonly PUBSPEC=$'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true'
+readonly ALL=$'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=true\npackage_dependencies=true'
 
 assert_paths() {
   local name="$1"
@@ -31,80 +31,60 @@ assert_paths "Dart source" "$DART" packages/domain/lib/domain.dart
 assert_paths "pubspec" "$PUBSPEC" packages/domain/pubspec.yaml
 assert_paths \
   "lockfile" \
-  $'analyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=true' \
+  $'format=true\nanalyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=true' \
   pubspec.lock
 
 assert_paths \
   "dart-define flavor file" \
-  $'analyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=false' \
+  $'format=false\nanalyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=false' \
   apps/app/flavor/development.json
 
 assert_paths \
   "analysis config" \
-  $'analyze=true\ntest=false\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false' \
+  $'format=false\nanalyze=true\ntest=false\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false' \
   analysis_options.yaml
 
 assert_paths \
   "package dependency implementation" \
-  $'analyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
+  $'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
   tools/src/package_dependency_checker.dart
 
 assert_paths \
   "nested package dependency helper" \
-  $'analyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
+  $'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
   tools/src/dependency_checker/yaml_reader.dart
 
 assert_paths \
   "nested SDK sync helper" \
-  $'analyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
+  $'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
   tools/src/sdk_sync/version_reader.dart
 
 assert_paths \
   "future tool test" \
-  $'analyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
+  $'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
   test/tools/new_validation_test.dart
 
 assert_paths \
-  "Analyze workflow itself" \
-  $'analyze=true\ntest=false\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false' \
-  .github/workflows/analyze.yaml
-
-assert_paths \
-  "Test workflow itself" \
-  $'analyze=false\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false' \
-  .github/workflows/test.yaml
-
-assert_paths \
-  "cspell workflow itself" \
-  $'analyze=false\ntest=false\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false' \
-  .github/workflows/cspell.yaml
-
-assert_paths \
-  "Markdown Lint workflow itself" \
-  $'analyze=false\ntest=false\ncspell=true\nmarkdown_lint=true\npackage_dependencies=false' \
-  .github/workflows/markdown_lint.yaml
-
-assert_paths \
-  "Package Dependencies workflow itself" \
-  $'analyze=false\ntest=false\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
-  .github/workflows/check_package_dependencies.yaml
-
-assert_paths \
   "Flutter setup" \
-  $'analyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
+  $'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=true' \
   .github/actions/setup-flutter/action.yaml
 
 assert_paths \
   "SDK setup" \
-  $'analyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=true' \
+  $'format=true\nanalyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=true' \
   mise.toml
 
 assert_paths \
   "generated Dart ignored only by cspell" \
-  $'analyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=false' \
+  $'format=true\nanalyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=false' \
   packages/domain/lib/model.g.dart
 
 assert_paths "shared detector" "$ALL" .github/scripts/detect_ci_changes.sh
+
+assert_paths \
+  "Check PR workflow itself (aggregates all checks, so a change to it is verified in full)" \
+  "$ALL" \
+  .github/workflows/check_pr.yaml
 
 actual_all="$(bash "$DETECTOR" --all)"
 if [[ "$actual_all" != "$ALL" ]]; then
