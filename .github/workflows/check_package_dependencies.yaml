@@ -14,7 +14,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    uses: ./.github/workflows/detect_ci_changes.yaml
+
   check_package_dependencies:
+    needs: changes
+    if: needs.changes.outputs.package_dependencies == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

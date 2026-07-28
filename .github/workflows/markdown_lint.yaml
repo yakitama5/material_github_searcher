@@ -3,14 +3,9 @@ name: Markdown Lint
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths: &markdown_lint_paths
-      - "**/*.md"
-      - ".markdownlint-cli2.jsonc"
-      - ".github/workflows/markdown_lint.yaml"
 
   push:
     branches: [main]
-    paths: *markdown_lint_paths
 
 permissions:
   contents: read
@@ -20,7 +15,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    uses: ./.github/workflows/detect_ci_changes.yaml
+
   markdown_lint:
+    needs: changes
+    if: needs.changes.outputs.markdown_lint == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
