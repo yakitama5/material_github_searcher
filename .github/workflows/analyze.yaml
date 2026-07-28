@@ -1,0 +1,33 @@
+name: Analyze
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        # dart analyzeはデフォルトでinfoレベルの指摘ではexit codeが0のままになる。
+        # altive_lintsのルールはほぼ全てinfoレベルのため、--fatal-infosを付けないと
+        # このCIがlint違反を検知できないノーオペレーションになってしまう。
+        run: dart analyze --fatal-infos

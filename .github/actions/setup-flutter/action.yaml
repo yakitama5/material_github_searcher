@@ -1,0 +1,23 @@
+# Flutter環境構築の共通コンポジットアクション。
+#
+# `mise.toml` に固定された Flutter/Dart SDK バージョンを mise 経由でセットアップし、
+# 呼び出し側のジョブで以降 `flutter` / `dart` コマンドをそのまま実行できるようにする。
+# `dart analyze` や `flutter test` など、Flutter環境が必要な複数のワークフローから
+# 再利用することを目的とする。
+#
+# 呼び出し側ワークフローの前提:
+#   - 本アクションを呼び出す前に `actions/checkout` を実行し、
+#     リポジトリ直下の `mise.toml` がワークスペースに存在している状態にすること。
+name: Setup Flutter
+description: mise.toml に記載されたバージョンのFlutter/Dartをセットアップする
+
+runs:
+  using: composite
+  steps:
+    # jdx/mise-action が mise 本体の導入と、mise.toml に記載されたツール
+    # (Flutter/Dart) のインストールを行う。
+    # `install`(既定 true) により `mise install` が実行され、
+    # `export_path`(既定 true) により導入したFlutter/DartのPATHが
+    # 後続のステップに自動的にエクスポートされる。
+    - name: Install mise and Flutter/Dart (mise.tomlのバージョンに従う)
+      uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
