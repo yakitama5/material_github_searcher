@@ -16,3 +16,4 @@ workspace:
 dev_dependencies:
   altive_lints: 4.0.0
   test: 1.31.0
+  yaml: 3.1.3
