@@ -3,6 +3,9 @@ name: Detect CI Changes
 on:
   workflow_call:
     outputs:
+      format:
+        description: Format の実行要否
+        value: ${{ jobs.detect.outputs.format }}
       analyze:
         description: Analyze の実行要否
         value: ${{ jobs.detect.outputs.analyze }}
@@ -27,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
+      format: ${{ steps.changes.outputs.format }}
       analyze: ${{ steps.changes.outputs.analyze }}
       test: ${{ steps.changes.outputs.test }}
       cspell: ${{ steps.changes.outputs.cspell }}
