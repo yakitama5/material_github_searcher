@@ -4,8 +4,10 @@ name: Check PR
 # Branch protectionのRequired Status Checkには本Workflowの status-check
 # ジョブのみを設定する。BuildとPatrolは実行時間・安定性の観点から対象外とする。
 #
-# 各チェックのジョブ定義を専用ファイルへ分割せずこのファイルへ集約している理由は
-# plans/51-check-pr.md を参照。
+# 各チェックのジョブ定義を専用ファイルへ分割せずこのファイルへ集約しているのは、
+# Required Status Checkとして1つのジョブへ結果を集約する必要があり、
+# skip/failの判定ロジック(status-check job参照)を複数ファイルに分散させるより
+# 1ファイルに閉じたほうが正しく書け、レビューもしやすいため。
 
 on:
   pull_request:
