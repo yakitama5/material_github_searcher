@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 /// Process invocation used by the SDK version synchronizer.
 typedef ProcessRunner =
@@ -456,7 +457,8 @@ String _decodeQuotedScalar(
 }
 
 void _replaceFiles(List<_PendingWrite> pendingWrites) {
-  final transactionId = '${pid}_${DateTime.now().microsecondsSinceEpoch}';
+  final nonce = Random.secure().nextInt(0x7FFFFFFF);
+  final transactionId = '${pid}_$nonce';
   final prepared = <_PreparedWrite>[];
   try {
     for (final pending in pendingWrites) {
