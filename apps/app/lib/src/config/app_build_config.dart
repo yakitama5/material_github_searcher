@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart' show appFlavor;
+
 /// アプリの実行環境。
 enum Flavor {
   /// 開発環境。
@@ -44,21 +46,31 @@ final class AppBuildConfig {
       appIdAndroid: const String.fromEnvironment('appIdAndroid'),
       appIdIos: const String.fromEnvironment('appIdIos'),
       appIdSuffix: const String.fromEnvironment('appIdSuffix'),
+      // analyze 実行時は --flavor 未指定のため null に定数畳み込みされ、
+      // デフォルト値と一致する誤検知が出る。実ビルドでは --flavor の値になる。
+      // ignore: avoid_redundant_argument_values
+      buildToolFlavor: appFlavor,
     );
   }
 
   /// 文字列の設定値を検証し、ビルド設定を生成する。
+  ///
+  /// [buildToolFlavor] は `--flavor` 指定時に Flutter が自動注入する
+  /// `package:flutter/services.dart` の `appFlavor`。`--flavor` を伴わない
+  /// プラットフォーム（Web 等）では `null` になるため、その場合は検証しない。
   factory AppBuildConfig.fromValues({
     required String flavor,
     required String appName,
     required String appIdAndroid,
     required String appIdIos,
     required String appIdSuffix,
+    String? buildToolFlavor,
   }) {
     final parsedFlavor = Flavor.parse(flavor);
     _requireValue('appName', appName);
     _requireValue('appIdAndroid', appIdAndroid);
     _requireValue('appIdIos', appIdIos);
+    _requireMatchingBuildToolFlavor(parsedFlavor, buildToolFlavor);
 
     return AppBuildConfig(
       flavor: parsedFlavor,
@@ -92,6 +104,23 @@ final class AppBuildConfig {
       throw StateError(
         'Required dart-define "$key" is not specified. '
         'Use --dart-define-from-file with a complete flavor configuration.',
+      );
+    }
+  }
+
+  /// Android/iOS の `--flavor` と `--dart-define-from-file` の取り違えを検出する。
+  static void _requireMatchingBuildToolFlavor(
+    Flavor flavor,
+    String? buildToolFlavor,
+  ) {
+    if (buildToolFlavor == null) {
+      return;
+    }
+    if (buildToolFlavor != flavor.name) {
+      throw StateError(
+        'Mismatched flavor: --flavor="$buildToolFlavor" but dart-define '
+        '"flavor"="${flavor.name}". Ensure --flavor and '
+        '--dart-define-from-file reference the same environment.',
       );
     }
   }

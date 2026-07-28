@@ -31,9 +31,9 @@ android {
     }
 
     defaultConfig {
-        // 全 flavor で appIdAndroid の値は共通のため、base の applicationId は
-        // prod.json を代表値として読み取る（flavor ごとの差分は appIdSuffix で表現する）。
-        applicationId = readFlavorConfig("prod").getValue("appIdAndroid")
+        // applicationId は productFlavors の各 create ブロックで flavor ごとに
+        // 上書きするため、ここでは namespace と同じ値を仮のデフォルトとして設定する。
+        applicationId = "com.example.material_github_searcher"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -48,6 +48,9 @@ android {
             create(flavorName) {
                 dimension = "environment"
                 val config = readFlavorConfig(flavorName)
+                // appIdSuffix だけでなく appIdAndroid 自体も flavor ごとに
+                // 独立して切り替えられるよう、flavor 自身の値をそのまま反映する。
+                applicationId = config.getValue("appIdAndroid")
                 config.getValue("appIdSuffix").takeIf { it.isNotEmpty() }?.let {
                     applicationIdSuffix = it
                 }
