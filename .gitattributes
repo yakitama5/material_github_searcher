@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.jar binary
+*.keystore binary
+*.ttf binary
+*.otf binary
+
+*.g.dart linguist-generated=true
+*.g.theme.dart linguist-generated=true
+*.freezed.dart linguist-generated=true
+*.gen.dart linguist-generated=true
+*.mocks.dart linguist-generated=true
