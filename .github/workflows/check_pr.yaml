@@ -38,6 +38,11 @@ jobs:
 
       - uses: ./.github/actions/setup-flutter
 
+      - name: Install dependencies
+        # analysis_options.yaml の altive_lints include (formatter設定を含む)を
+        # 解決するため、format前にpub getが必要。
+        run: flutter pub get
+
       - name: Format check
         # build/ 等の生成物・依存物は対象外にする。
         run: dart format --output=none --set-exit-if-changed apps packages test tools
