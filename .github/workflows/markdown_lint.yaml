@@ -1,0 +1,28 @@
+name: Markdown Lint
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markdown_lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # Markdownの静的解析を実行(設定は .markdownlint-cli2.jsonc を参照)
+      - name: Lint Markdown
+        run: npx --yes markdownlint-cli2@0.23.2

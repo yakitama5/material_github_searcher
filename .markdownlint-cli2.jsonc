@@ -1,0 +1,30 @@
+// https://github.com/DavidAnson/markdownlint-cli2?tab=readme-ov-file#markdownlint-cli2jsonc
+{
+  // https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+  "config": {
+    "default": true,
+    "MD013": false, // 日本語ドキュメントは1行が80文字を超えやすいため無効化
+    "MD033": false,
+    "MD036": false,
+    "MD041": false,
+    "MD045": false
+  },
+  "globs": [
+    "**/*.md"
+  ],
+  "ignores": [
+    ".idea/**/*.md",
+    "**/.dart_tool/**/*.md",
+    "**/build/**/*.md",
+    "**/node_modules/**/*.md",
+    "**/ios/Pods/**/*.md",
+    "**/ios/.symlinks/**/*.md",
+    // ios/Runner配下はFlutterが生成するボイラープレートのため対象外
+    "**/ios/Runner/**/*.md",
+    // .claude, .codex, CLAUDE.md は .agents/AGENTS.md へのシンボリックリンクのため
+    // 実体と二重に検査しないよう対象外にする
+    ".claude/**/*.md",
+    ".codex/**/*.md",
+    "CLAUDE.md"
+  ]
+}
