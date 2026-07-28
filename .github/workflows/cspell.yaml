@@ -24,4 +24,8 @@ jobs:
         with:
           node-version: "22"
       - name: Run cspell
-        run: npx --yes cspell@10.0.1 --no-progress --dot "**/*.{dart,md,yaml,yml}"
+        # 対象ファイル・ドットファイルの扱いはcspell.jsoncの files/enableGlobDot に
+        # 一元化しているため、ここではグロブや --dot を指定しない。
+        # ただし --config を明示しないと、globを渡さない実行時にファイルが
+        # 一切拾われない(cspellの既定コマンドの挙動)ため明示的に指定する。
+        run: npx --yes cspell@10.0.1 --config cspell.jsonc --no-progress
