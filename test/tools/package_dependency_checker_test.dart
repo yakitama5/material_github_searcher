@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-import '../../tool/src/package_dependency_checker.dart';
+import '../../tools/src/package_dependency_checker.dart';
 
 void main() {
   group('PackageDependencyChecker', () {

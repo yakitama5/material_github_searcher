@@ -31,7 +31,7 @@ jobs:
         run: dart pub get
 
       - name: Test package dependency checker
-        run: dart test test/tool
+        run: dart test test/tools
 
       - name: Check package dependencies
-        run: dart run tool/check_package_dependencies.dart
+        run: dart run tools/check_package_dependencies.dart
