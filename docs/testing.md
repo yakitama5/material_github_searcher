@@ -36,9 +36,17 @@
 | `apps/app` | Widget Test | 画面の表示、ユーザー操作（tap 等）、ルーティング |
 | 主要ユーザーフロー | E2E Test（Patrol） | 複数画面をまたぐ実利用シナリオ |
 
-`packages/application` は状態管理の実装方法を本ドキュメント執筆時点で未選定のため、
-「`domain` の抽象を Fake に差し替えて UseCase・Provider を検証する」という抽象度に
-留める。具体的な実装パターン（Provider の書き方など）は、状態管理ライブラリの選定後に
+`packages/application` は状態管理ライブラリとして Riverpod を想定している
+（本ドキュメント執筆時点では `pubspec.yaml` に未追加で、正式な採用は未確定）。想定する
+使い分けは次のとおり。
+
+- `application` 単体の Unit Test では、検証したい Provider だけを
+  `ProviderContainer`/`ProviderScope` の override 機能で Fake に差し替える。
+- アプリ全体を起動する E2E Test（Patrol）では、Provider 単位で個別に override せず、
+  `dependency_override` が公開する Mock 向け override 一式をそのまま適用し、
+  実装コードを変更せずに Fake へ切り替える。
+
+具体的な実装パターン（Provider の書き方など）は、Riverpod の採用が確定した後に
 本ドキュメントへ追記する。
 
 ## 配置と命名規約
