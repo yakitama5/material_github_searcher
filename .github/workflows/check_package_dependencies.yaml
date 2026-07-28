@@ -1,0 +1,39 @@
+name: Check Package Dependencies
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check_package_dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Check SDK constraints
+        run: dart tools/sync_sdk_versions.dart --check
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Test package dependency checker
+        run: dart test test/tools
+
+      - name: Check package dependencies
+        run: dart run tools/check_package_dependencies.dart

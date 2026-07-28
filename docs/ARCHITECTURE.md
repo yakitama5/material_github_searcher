@@ -39,6 +39,18 @@ Flutter に依存させず、複数レイヤーから利用できる純粋なユ
 参照する共通 UI に限定し、`domain`、`infrastructure`、`dependency_override`、`app` を
 直接参照させない。
 
+### 依存関係の機械的な保証
+
+`tools/check_package_dependencies.dart` が各 Workspace メンバーの `pubspec.yaml` にある
+ローカル `path` 依存を検査し、上記の依存関係図にない直接依存を検出する。
+
+```sh
+dart run tools/check_package_dependencies.dart
+```
+
+`.github/workflows/check_package_dependencies.yaml` でも同じ検査を実行し、Pull Request と
+`main` への push でアーキテクチャ違反を継続的に防止する。
+
 ## Pub Workspace を利用する方針
 
 本プロジェクトでは Melos を使わず、ルート `pubspec.yaml` の `workspace:` と、
