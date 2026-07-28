@@ -18,6 +18,7 @@
 - アーキテクチャ: `docs/ARCHITECTURE.md`
 - ブランチ戦略: `docs/branching.md`
 - エージェント活用開発フロー: `docs/agent-driven-development.md`
+- テスト戦略: `docs/testing.md`
 
 ## 複数エージェントによる並列開発（git worktree runner）
 
