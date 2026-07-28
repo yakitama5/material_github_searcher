@@ -10,3 +10,27 @@
 "dart":
   - changed-files:
       - any-glob-to-any-file: "**/*.dart"
+
+"layer: domain":
+  - changed-files:
+      - any-glob-to-any-file: "packages/domain/**"
+
+"layer: application":
+  - changed-files:
+      - any-glob-to-any-file: "packages/application/**"
+
+"layer: infrastructure":
+  - changed-files:
+      - any-glob-to-any-file: "packages/infrastructure/**"
+
+"layer: designsystem+app":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "packages/designsystem/**"
+          - "apps/app/**"
+          # Providerと実装を結線するComposition Rootの一部として扱う。
+          - "packages/dependency_override/**"
+
+"area: foundation":
+  - changed-files:
+      - any-glob-to-any-file: "packages/foundation/**"
