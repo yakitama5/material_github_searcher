@@ -20,6 +20,12 @@ const allowedPackageDependencies = <String, Set<String>>{
   'foundation': {},
 };
 
+const _dependencySections = [
+  'dependencies',
+  'dev_dependencies',
+  'dependency_overrides',
+];
+
 /// リポジトリのローカル `path` 依存が許可グラフに従っているか検証する。
 final class PackageDependencyChecker {
   PackageDependencyChecker({required this.rootDirectory});
@@ -81,68 +87,74 @@ final class PackageDependencyChecker {
 
     final violations = <PackageDependencyViolation>[];
     for (final member in members.values) {
-      final dependencies = member.yaml['dependencies'];
-      if (dependencies == null) {
-        continue;
-      }
-      if (dependencies is! YamlMap) {
-        throw PackageDependencyCheckException(
-          '`${member.pubspec.path}` must define `dependencies` as a map.',
-        );
-      }
-      for (final entry in dependencies.entries) {
-        final dependencyName = entry.key;
-        final specification = entry.value;
-        if (dependencyName is! String || specification is! YamlMap) {
+      for (final section in _dependencySections) {
+        final dependencies = member.yaml[section];
+        if (dependencies == null) {
           continue;
         }
-        final path = specification['path'];
-        if (path == null) {
-          continue;
-        }
-        if (path is! String || path.trim().isEmpty) {
+        if (dependencies is! YamlMap) {
           throw PackageDependencyCheckException(
-            '`${member.pubspec.path}` has an invalid path dependency '
-            'for `$dependencyName`.',
+            '`${member.pubspec.path}` must define `$section` as a map.',
           );
         }
+        for (final entry in dependencies.entries) {
+          final dependencyName = entry.key;
+          final specification = entry.value;
+          if (dependencyName is! String || specification is! YamlMap) {
+            continue;
+          }
+          final path = specification['path'];
+          if (path == null) {
+            continue;
+          }
+          if (path is! String || path.trim().isEmpty) {
+            throw PackageDependencyCheckException(
+              '`${member.pubspec.path}` has an invalid path dependency '
+              'for `$dependencyName` in `$section`.',
+            );
+          }
 
-        final targetDirectory = _resolveDependencyDirectory(
-          canonicalRoot: canonicalRoot,
-          source: member,
-          path: path,
-        );
-        final target = membersByPath[targetDirectory.path];
-        if (target == null) {
-          violations.add(
-            PackageDependencyViolation(
-              sourcePackage: member.name,
-              targetPackage: dependencyName,
-              reason: 'path `$path` does not point to a Pub Workspace member',
-            ),
+          final targetDirectory = _resolveDependencyDirectory(
+            canonicalRoot: canonicalRoot,
+            source: member,
+            path: path,
           );
-          continue;
-        }
-        if (dependencyName != target.name) {
-          violations.add(
-            PackageDependencyViolation(
-              sourcePackage: member.name,
-              targetPackage: target.name,
-              reason:
-                  'dependency key `$dependencyName` does not match the '
-                  'target package name `${target.name}`',
-            ),
-          );
-          continue;
-        }
-        if (!allowedPackageDependencies[member.name]!.contains(target.name)) {
-          violations.add(
-            PackageDependencyViolation(
-              sourcePackage: member.name,
-              targetPackage: target.name,
-              reason: 'dependency is not allowed by docs/ARCHITECTURE.md',
-            ),
-          );
+          final target = membersByPath[targetDirectory.path];
+          if (target == null) {
+            violations.add(
+              PackageDependencyViolation(
+                sourcePackage: member.name,
+                targetPackage: dependencyName,
+                reason:
+                    'path `$path` in `$section` does not point to a '
+                    'Pub Workspace member',
+              ),
+            );
+            continue;
+          }
+          if (dependencyName != target.name) {
+            violations.add(
+              PackageDependencyViolation(
+                sourcePackage: member.name,
+                targetPackage: target.name,
+                reason:
+                    'dependency key `$dependencyName` in `$section` does '
+                    'not match the target package name `${target.name}`',
+              ),
+            );
+            continue;
+          }
+          if (!allowedPackageDependencies[member.name]!.contains(target.name)) {
+            violations.add(
+              PackageDependencyViolation(
+                sourcePackage: member.name,
+                targetPackage: target.name,
+                reason:
+                    'dependency in `$section` is not allowed by '
+                    'docs/ARCHITECTURE.md',
+              ),
+            );
+          }
         }
       }
     }

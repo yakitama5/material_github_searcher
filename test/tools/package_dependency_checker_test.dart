@@ -37,6 +37,42 @@ void main() {
       expect(violations.single.reason, contains('not allowed'));
     });
 
+    test('dev_dependencies内の禁止依存を検出する', () {
+      final fixture = _createFixture(
+        devDependencies: {
+          'domain': {'application': '../application'},
+        },
+      );
+      addTearDown(() => fixture.deleteSync(recursive: true));
+
+      final violations = PackageDependencyChecker(
+        rootDirectory: fixture,
+      ).check();
+
+      expect(violations, hasLength(1));
+      expect(violations.single.sourcePackage, 'domain');
+      expect(violations.single.targetPackage, 'application');
+      expect(violations.single.reason, contains('dev_dependencies'));
+    });
+
+    test('dependency_overrides内の禁止依存を検出する', () {
+      final fixture = _createFixture(
+        dependencyOverrides: {
+          'domain': {'application': '../application'},
+        },
+      );
+      addTearDown(() => fixture.deleteSync(recursive: true));
+
+      final violations = PackageDependencyChecker(
+        rootDirectory: fixture,
+      ).check();
+
+      expect(violations, hasLength(1));
+      expect(violations.single.sourcePackage, 'domain');
+      expect(violations.single.targetPackage, 'application');
+      expect(violations.single.reason, contains('dependency_overrides'));
+    });
+
     test('Workspace外のローカルpath依存を検出する', () {
       final fixture = _createFixture(
         dependencies: {
@@ -88,6 +124,97 @@ void main() {
             (error) => error.message,
             'message',
             contains('Missing configuration: new_layer'),
+          ),
+        ),
+      );
+    });
+
+    test('pubspec.yamlのトップレベルがMapでなければ拒否する', () {
+      final fixture = _createFixture();
+      addTearDown(() => fixture.deleteSync(recursive: true));
+      File('${fixture.path}/packages/domain/pubspec.yaml').writeAsStringSync(
+        '- invalid\n',
+      );
+
+      expect(
+        () => PackageDependencyChecker(rootDirectory: fixture).check(),
+        throwsA(
+          isA<PackageDependencyCheckException>().having(
+            (error) => error.message,
+            'message',
+            contains('must contain a YAML map'),
+          ),
+        ),
+      );
+    });
+
+    test('WorkspaceがListでなければ拒否する', () {
+      final fixture = _createFixture();
+      addTearDown(() => fixture.deleteSync(recursive: true));
+      File('${fixture.path}/pubspec.yaml').writeAsStringSync(
+        'name: fixture\nworkspace: invalid\n',
+      );
+
+      expect(
+        () => PackageDependencyChecker(rootDirectory: fixture).check(),
+        throwsA(
+          isA<PackageDependencyCheckException>().having(
+            (error) => error.message,
+            'message',
+            contains('non-empty `workspace` list'),
+          ),
+        ),
+      );
+    });
+
+    test('リポジトリ外へ解決されるWorkspaceメンバーを拒否する', () {
+      final outside = Directory.systemTemp.createTempSync(
+        'dependency_check_outside_',
+      );
+      final outsideName = outside.path.split(Platform.pathSeparator).last;
+      final fixture = _createFixture(
+        workspacePaths: [..._workspacePaths, '../$outsideName'],
+      );
+      addTearDown(() {
+        fixture.deleteSync(recursive: true);
+        outside.deleteSync(recursive: true);
+      });
+
+      expect(
+        () => PackageDependencyChecker(rootDirectory: fixture).check(),
+        throwsA(
+          isA<PackageDependencyCheckException>().having(
+            (error) => error.message,
+            'message',
+            contains('resolves outside the repository root'),
+          ),
+        ),
+      );
+    });
+
+    test('リポジトリ外へ解決される依存pathを拒否する', () {
+      final outside = Directory.systemTemp.createTempSync(
+        'dependency_check_outside_',
+      );
+      final outsideName = outside.path.split(Platform.pathSeparator).last;
+      final fixture = _createFixture(
+        dependencies: {
+          ..._defaultDependencies,
+          'domain': {'outside': '../../../$outsideName'},
+        },
+      );
+      addTearDown(() {
+        fixture.deleteSync(recursive: true);
+        outside.deleteSync(recursive: true);
+      });
+
+      expect(
+        () => PackageDependencyChecker(rootDirectory: fixture).check(),
+        throwsA(
+          isA<PackageDependencyCheckException>().having(
+            (error) => error.message,
+            'message',
+            contains('resolves outside the repository root'),
           ),
         ),
       );
@@ -165,6 +292,8 @@ const _defaultDependencies = <String, Map<String, String>>{
 Directory _createFixture({
   List<String> workspacePaths = _workspacePaths,
   Map<String, Map<String, String>> dependencies = _defaultDependencies,
+  Map<String, Map<String, String>> devDependencies = const {},
+  Map<String, Map<String, String>> dependencyOverrides = const {},
   Map<String, String> extraPackages = const {},
 }) {
   final root = Directory.systemTemp.createTempSync('dependency_check_');
@@ -177,22 +306,46 @@ Directory _createFixture({
     );
   for (final entry in {..._packageNames, ...extraPackages}.entries) {
     final packageDependencies = dependencies[entry.value] ?? const {};
-    final dependencyEntries = packageDependencies.entries.map(
-      (dependency) =>
-          '  ${dependency.key}:\n'
-          '    path: ${dependency.value}\n',
+    final packageDevDependencies = devDependencies[entry.value] ?? const {};
+    final packageDependencyOverrides =
+        dependencyOverrides[entry.value] ?? const {};
+    final dependencyYaml = _dependencySectionYaml(
+      'dependencies',
+      packageDependencies,
     );
-    final dependencyYaml = packageDependencies.isEmpty
-        ? ''
-        : 'dependencies:\n${dependencyEntries.join()}';
+    final devDependencyYaml = _dependencySectionYaml(
+      'dev_dependencies',
+      packageDevDependencies,
+    );
+    final dependencyOverrideYaml = _dependencySectionYaml(
+      'dependency_overrides',
+      packageDependencyOverrides,
+    );
     File('${root.path}/${entry.key}/pubspec.yaml')
       ..createSync(recursive: true)
       ..writeAsStringSync(
         'name: ${entry.value}\n'
-        '$dependencyYaml',
+        '$dependencyYaml'
+        '$devDependencyYaml'
+        '$dependencyOverrideYaml',
       );
   }
   return root;
+}
+
+String _dependencySectionYaml(
+  String section,
+  Map<String, String> dependencies,
+) {
+  if (dependencies.isEmpty) {
+    return '';
+  }
+  final entries = dependencies.entries.map(
+    (dependency) =>
+        '  ${dependency.key}:\n'
+        '    path: ${dependency.value}\n',
+  );
+  return '$section:\n${entries.join()}';
 }
 
 final class _StringBufferConsumer implements StreamConsumer<List<int>> {
