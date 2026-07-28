@@ -1,0 +1,28 @@
+name: material_github_searcher
+description: A Material Design GitHub repository search application.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: 3.12.2
+  flutter: 3.44.8
+
+dependencies:
+  application:
+    path: ../../packages/application
+  cupertino_icons: 1.0.9
+  dependency_override:
+    path: ../../packages/dependency_override
+  designsystem:
+    path: ../../packages/designsystem
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+resolution: workspace

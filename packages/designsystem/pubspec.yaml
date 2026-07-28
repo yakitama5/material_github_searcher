@@ -1,0 +1,19 @@
+name: designsystem
+description: Shared themes and reusable presentation widgets.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: 3.12.2
+  flutter: 3.44.8
+
+dependencies:
+  application:
+    path: ../application
+  flutter:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+resolution: workspace

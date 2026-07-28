@@ -1,0 +1,13 @@
+name: domain
+description: Business entities, rules, value objects, and repository contracts.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: 3.12.2
+
+dependencies:
+  foundation:
+    path: ../foundation
+
+resolution: workspace
