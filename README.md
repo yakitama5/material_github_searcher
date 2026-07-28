@@ -22,13 +22,28 @@ mise exec -- flutter pub get
 ```
 
 Flutterアプリの実行、テスト、buildは `apps/app` で行う。
+実行時は Dev または Prod の Flavor 設定ファイルを必ず指定する。
 
 ```sh
 cd apps/app
-mise exec -- flutter run
+# Dev
+mise exec -- flutter run --dart-define-from-file=flavor/dev.json
+
+# Prod
+mise exec -- flutter run --dart-define-from-file=flavor/prod.json
+
 mise exec -- flutter test
-mise exec -- flutter build web
+
+# Dev の Web build
+mise exec -- flutter build web --dart-define-from-file=flavor/dev.json
+
+# Prod の Web build
+mise exec -- flutter build web --dart-define-from-file=flavor/prod.json
 ```
+
+VS Code では Run and Debug から `Dev` または `Prod` を選択する。
+IntelliJ IDEA / Android Studio では Run Configuration から `Dev` または `Prod` を
+選択する。いずれも対応する `apps/app/flavor/*.json` を読み込む。
 
 Flutterのバージョンをアップグレードする際の手順は
 [`docs/flutter-upgrade.md`](docs/flutter-upgrade.md) を参照。
