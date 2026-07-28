@@ -9,11 +9,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:material_github_searcher/main.dart';
+import 'package:material_github_searcher/src/config/app_build_config.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(
+      const MyApp(
+        config: AppBuildConfig(
+          flavor: Flavor.dev,
+          appName: 'Dev - Material GitHub Searcher',
+          appIdAndroid: 'com.example.material_github_searcher',
+          appIdIos: 'com.example.materialGithubSearcher',
+          appIdSuffix: '.dev',
+        ),
+      ),
+    );
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 
+import 'src/config/app_build_config.dart';
+
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp(config: AppBuildConfig.current));
 }
 
 /// アプリケーションのルートとなるウィジェット。
 class MyApp extends StatelessWidget {
   /// ルートウィジェット [MyApp] を生成する。
-  const MyApp({super.key});
+  const MyApp({required this.config, super.key});
+
+  /// 現在のビルド設定。
+  final AppBuildConfig config;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: config.appName,
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -31,7 +36,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: config.appName),
     );
   }
 }

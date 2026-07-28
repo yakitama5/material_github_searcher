@@ -1,0 +1,7 @@
+{
+  "flavor": "dev",
+  "appName": "Dev - Material GitHub Searcher",
+  "appIdAndroid": "com.example.material_github_searcher",
+  "appIdIos": "com.example.materialGithubSearcher",
+  "appIdSuffix": ".dev"
+}
