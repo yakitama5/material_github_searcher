@@ -14,8 +14,8 @@ mise install
 実行後、`flutter --version` で `mise.toml` の `flutter` に指定したバージョンが
 解決されていることを確認する。
 
-なお `pubspec.yaml` の `environment.sdk` はDart SDKのバージョン制約であり、
-Flutter本体のバージョン管理とは別軸のため、Flutter本体のバージョンは `mise.toml`側で管理する。
+Flutterのバージョンをアップグレードする際の手順は
+[`docs/flutter-upgrade.md`](docs/flutter-upgrade.md) を参照。
 
 ## Getting Started
 
