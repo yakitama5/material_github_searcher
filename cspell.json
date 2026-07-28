@@ -1,0 +1,40 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "dictionaries": ["dart", "flutter"],
+  "ignorePaths": [
+    "**/*.freezed.dart",
+    "**/*.g.dart",
+    "build/**",
+    ".dart_tool/**",
+    "pubspec.lock"
+  ],
+  "ignoreRegExpList": [
+    "/[\\u3000-\\u303F\\u3040-\\u309F\\u30A0-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uF900-\\uFAFF\\uFF00-\\uFFEF]+/gu"
+  ],
+  "words": [
+    "Flutter",
+    "flutter",
+    "Dart",
+    "dart",
+    "GitHub",
+    "github",
+    "searcher",
+    "altive",
+    "markdownlint",
+    "cspell",
+    "jsonc",
+    "mise",
+    "gtr",
+    "gtrconfig",
+    "worktree",
+    "worktrees",
+    "appbar",
+    "depre",
+    "numstat",
+    "pipefail",
+    "ryaml",
+    "xcworkspace",
+    "xcassets"
+  ]
+}
