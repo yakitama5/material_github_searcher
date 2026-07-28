@@ -14,22 +14,32 @@ mise install
 実行後、`flutter --version` で `mise.toml` の `flutter` に指定したバージョンが
 解決されていることを確認する。
 
+依存関係はリポジトリルートで一括解決する。
+
+```sh
+mise exec -- dart tools/sync_sdk_versions.dart --check
+mise exec -- flutter pub get
+```
+
+Flutterアプリの実行、テスト、buildは `apps/app` で行う。
+
+```sh
+cd apps/app
+mise exec -- flutter run
+mise exec -- flutter test
+mise exec -- flutter build web
+```
+
 Flutterのバージョンをアップグレードする際の手順は
 [`docs/flutter-upgrade.md`](docs/flutter-upgrade.md) を参照。
 
-## Getting Started
+## Workspace構成
 
-This project is a starting point for a Flutter application.
+- `apps/app`: Flutterアプリ
+- `packages/`: アーキテクチャレイヤーごとのパッケージ
+- `tools/sync_sdk_versions.dart`: `mise.toml` から全パッケージへSDK制約を同期するツール
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+パッケージの責務と依存方向は [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) を参照。
 
 ## License
 
