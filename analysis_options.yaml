@@ -9,6 +9,18 @@
 # apps, packages, and plugins. See https://pub.dev/packages/altive_lints
 include: package:altive_lints/altive_lints.yaml
 
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.g.theme.dart"
+    - "**/*.freezed.dart"
+    - "**/*.gen.dart"
+    - "**/*.mocks.dart"
+    - "**/build/**"
+    - "**/.dart_tool/**"
+  errors:
+    todo: warning
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:altive_lints/altive_lints.yaml`
