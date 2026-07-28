@@ -67,13 +67,6 @@ Pub Workspace のみで運用する。
 
 - CI ワークフローでは `melos run` を使わず、`dart analyze`、`flutter test`、
   `npx` などのコマンドを直接実行する。
-- CI ワークフローはチェック内容ごとに専用ファイルへ分ける。並列開発時のファイル
-  競合を避けるため、複数のチェックを単一ファイルへ集約しない。ただし、Branch
-  protectionのRequired Status Checkとして1つのジョブへ結果を集約する必要がある
-  `.github/workflows/check_pr.yaml` は例外とする。判定ロジック（skipと失敗の
-  区別など）を複数ファイルに分散させるより1ファイルに閉じたほうが正しく書け、
-  レビューもしやすいためである。`check_pr.yaml` の変更頻度は低く、並列開発での
-  コンフリクトは稀かつ解消が容易なため許容する（Issue #51）。
 - 依存バージョンは Melos の bootstrap では統一しない。各パッケージの
   `pubspec.yaml` に、利用するバージョンを `any` やキャレット付きの範囲ではなく
   個別の固定バージョンで明記する。SDK 制約は Pub の仕様に従いつつ、実際に使う
