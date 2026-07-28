@@ -5,7 +5,7 @@ name: Check PR
 # ジョブのみを設定する。BuildとPatrolは実行時間・安定性の観点から対象外とする。
 #
 # 各チェックのジョブ定義を専用ファイルへ分割せずこのファイルへ集約している理由は
-# docs/ARCHITECTURE.md を参照。
+# plans/51-check-pr.md を参照。
 
 on:
   pull_request:
