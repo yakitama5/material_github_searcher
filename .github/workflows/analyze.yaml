@@ -2,7 +2,7 @@ name: Analyze
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
 
@@ -27,4 +27,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: dart analyze
+        # dart analyzeはデフォルトでinfoレベルの指摘ではexit codeが0のままになる。
+        # altive_lintsのルールはほぼ全てinfoレベルのため、--fatal-infosを付けないと
+        # このCIがlint違反を検知できないノーオペレーションになってしまう。
+        run: dart analyze --fatal-infos
