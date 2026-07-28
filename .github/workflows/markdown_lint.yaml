@@ -3,9 +3,14 @@ name: Markdown Lint
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths: &markdown_lint_paths
+      - "**/*.md"
+      - ".markdownlint-cli2.jsonc"
+      - ".github/workflows/markdown_lint.yaml"
 
   push:
     branches: [main]
+    paths: *markdown_lint_paths
 
 permissions:
   contents: read
