@@ -1,0 +1,44 @@
+// https://cspell.org/configuration/
+{
+  "version": "0.2",
+  // 英語（コード識別子・技術用語）のスペルチェック用。日本語の文章はそもそも
+  // 「辞書に載っている単語かどうか」で判定する方式が馴染まず、cspellも
+  // 日本語向けの辞書は提供していない。日本語部分は language 指定ではなく
+  // 下記 ignoreRegExpList でCJK文字を丸ごとチェック対象外にすることで対応する。
+  "language": "en",
+  // ドットファイル（.github/ 配下等）もチェック対象に含める
+  "enableGlobDot": true,
+  "dictionaries": ["dart", "flutter", "project-term", "github-action-term", "ios-term"],
+  "dictionaryDefinitions": [
+    {
+      "name": "project-term",
+      "description": "プロジェクト固有の用語",
+      "path": "./.cspell/project-term.txt",
+      "addWords": true
+    },
+    {
+      "name": "github-action-term",
+      "description": "GitHub Actions/シェルスクリプト関連の用語",
+      "path": "./.cspell/github-action-term.txt",
+      "addWords": true
+    },
+    {
+      "name": "ios-term",
+      "description": "iOS/Xcode関連の用語",
+      "path": "./.cspell/ios-term.txt",
+      "addWords": true
+    }
+  ],
+  "files": ["**/*.{md,yaml,yml,dart}"],
+  "ignorePaths": [
+    // 自動生成ファイル(*.g.dart, *.freezed.dart 等)
+    "*.*.dart",
+    // 隠しyaml/ymlファイル
+    ".*.{yaml,yml}",
+    "build/**",
+    ".dart_tool/**"
+  ],
+  "ignoreRegExpList": [
+    "/[\\u3000-\\u303F\\u3040-\\u309F\\u30A0-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uF900-\\uFAFF\\uFF00-\\uFFEF]+/gu"
+  ]
+}

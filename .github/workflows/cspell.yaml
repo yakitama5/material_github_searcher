@@ -1,0 +1,31 @@
+name: cspell
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cspell:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Run cspell
+        # 対象ファイル・ドットファイルの扱いはcspell.jsoncの files/enableGlobDot に
+        # 一元化しているため、ここではグロブや --dot を指定しない。
+        # ただし --config を明示しないと、globを渡さない実行時にファイルが
+        # 一切拾われない(cspellの既定コマンドの挙動)ため明示的に指定する。
+        run: npx --yes cspell@10.0.1 --config cspell.jsonc --no-progress
