@@ -1,6 +1,6 @@
 # テスト戦略
 
-<!-- cspell:words designsystem alchemist goldens -->
+<!-- cspell:words designsystem -->
 
 本ドキュメントは、本プロジェクトにおけるテストの役割・配置・実装方針・実行方法を
 定義する。機能実装の前に読み、追加するテストの種類と置き場所を判断する材料とする。
@@ -31,6 +31,8 @@
 | `packages/application` | Unit Test | UseCase・Provider の振る舞い。`domain` の抽象を Fake に差し替えて検証する |
 | `packages/infrastructure/*` | Unit Test | リポジトリ実装の入出力変換。実サービスへは接続しない |
 | `packages/designsystem` | Widget Test / Golden Test | 共通 Widget の表示・操作。見た目の回帰は Golden Test で検証する |
+| `packages/dependency_override` | － | 実装の結線のみを担うため個別のテストは設けず、`apps/app` の Widget Test・E2E Test で間接的に検証する |
+| `packages/foundation` | Unit Test | ロジックを持つユーティリティを追加した場合のみ、対象箇所に Unit Test を追加する |
 | `apps/app` | Widget Test | 画面の表示、ユーザー操作（tap 等）、ルーティング |
 | 主要ユーザーフロー | E2E Test（Patrol） | 複数画面をまたぐ実利用シナリオ |
 
@@ -79,7 +81,7 @@ mise exec -- flutter test
 CI（`.github/workflows/check_pr.yaml`）は、実行時間・安定性の観点から Unit Test・
 Widget Test・Golden Test など高速かつ決定的なテストのみを対象にする。Patrol による
 E2E Test は Required Status Check に含めず、ローカルで実行する。この境界は
-`check_pr.yaml` 冒頭のコメント（「Build と Patrol は実行時間・安定性の観点から対象外」）
+`check_pr.yaml` 冒頭のコメント（`BuildとPatrolは実行時間・安定性の観点から対象外とする。`）
 で既に運用上の決定として明文化されており、本ドキュメントはこれを踏襲する。
 
 現状の `test` ジョブは `test/tools` と `apps/app` の `flutter test` のみを実行して
@@ -91,9 +93,9 @@ E2E Test は Required Status Check に含めず、ローカルで実行する。
 
 ## Golden Test と Patrol の位置付け
 
-- **Golden Test**: `packages/designsystem` の共通 Widget や、`apps/app` の
-  主要画面の見た目の回帰を検出する。ロジックではなく描画結果の変化を検知する
-  目的に限定し、頻繁に変化するレイアウトには適用しない。
+- **Golden Test**: `packages/designsystem` の共通 Widget の見た目の回帰を検出する。
+  ロジックではなく描画結果の変化を検知する目的に限定し、頻繁に変化するレイアウトや
+  `apps/app` の画面全体には適用しない。
 - **Patrol**: 実機・エミュレータ上で複数画面をまたぐ主要ユーザーフロー
   （例: 検索してリポジトリ詳細を開く）を検証する E2E Test。外部サービスへの
   依存は `dependency_override` で決定的な Fake に差し替えたうえで実行する想定とする。
