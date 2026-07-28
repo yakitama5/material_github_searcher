@@ -1,0 +1,15 @@
+name: dependency_override
+description: Composition bindings between application contracts and adapters.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: 3.12.2
+
+dependencies:
+  application:
+    path: ../application
+  infrastructure_mock:
+    path: ../infrastructure/mock
+
+resolution: workspace

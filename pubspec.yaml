@@ -1,24 +1,18 @@
-name: material_github_searcher
-description: "A new Flutter project."
-publish_to: 'none'
-
-version: 1.0.0+1
+name: material_github_searcher_workspace
+publish_to: none
 
 environment:
   sdk: 3.12.2
-  flutter: 3.44.8
 
-dependencies:
-  cupertino_icons: ^1.0.8
-
-  flutter:
-    sdk: flutter
+workspace:
+  - apps/app
+  - packages/application
+  - packages/dependency_override
+  - packages/designsystem
+  - packages/domain
+  - packages/foundation
+  - packages/infrastructure/mock
 
 dev_dependencies:
-  altive_lints: ^4.0.0
-
-  flutter_test:
-    sdk: flutter
-
-flutter:
-  uses-material-design: true
+  altive_lints: 4.0.0
+  test: 1.31.0

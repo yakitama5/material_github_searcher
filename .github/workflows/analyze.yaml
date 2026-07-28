@@ -23,6 +23,9 @@ jobs:
 
       - uses: ./.github/actions/setup-flutter
 
+      - name: Check SDK constraints
+        run: dart tools/sync_sdk_versions.dart --check
+
       - name: Install dependencies
         run: flutter pub get
 

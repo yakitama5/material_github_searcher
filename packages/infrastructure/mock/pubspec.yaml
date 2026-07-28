@@ -1,0 +1,13 @@
+name: infrastructure_mock
+description: Test and development repository implementations.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: 3.12.2
+
+dependencies:
+  domain:
+    path: ../../domain
+
+resolution: workspace

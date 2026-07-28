@@ -62,6 +62,19 @@ Pub Workspace のみで運用する。
   個別の固定バージョンで明記する。SDK 制約は Pub の仕様に従いつつ、実際に使う
   Flutter と Dart のバージョンを `mise.toml` で固定する。
 
+### SDK制約の同期
+
+`mise.toml` をFlutter/Dart SDKバージョンの唯一の正とする。ルートと全Workspace
+メンバーの `environment.sdk`、およびFlutter SDK依存を持つメンバーの
+`environment.flutter` は、次のツールで演算子なしの完全一致へ同期する。
+
+```sh
+mise exec -- dart tools/sync_sdk_versions.dart
+```
+
+手作業で各 `pubspec.yaml` を更新しない。CIでは依存解決より先に `--check` を実行し、
+`mise.toml` との不一致やFlutter利用パッケージの指定漏れを検出する。
+
 ## パッケージ命名規則
 
 パッケージ名に `packages_` 接頭辞は付けず、責務を表す snake_case の名前に統一する。
