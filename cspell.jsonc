@@ -8,7 +8,7 @@
   "language": "en",
   // ドットファイル（.github/ 配下等）もチェック対象に含める
   "enableGlobDot": true,
-  "dictionaries": ["dart", "flutter", "project-term", "github-action-term"],
+  "dictionaries": ["dart", "flutter", "project-term", "github-action-term", "ios-term"],
   "dictionaryDefinitions": [
     {
       "name": "project-term",
@@ -20,6 +20,12 @@
       "name": "github-action-term",
       "description": "GitHub Actions/シェルスクリプト関連の用語",
       "path": "./.cspell/github-action-term.txt",
+      "addWords": true
+    },
+    {
+      "name": "ios-term",
+      "description": "iOS/Xcode関連の用語",
+      "path": "./.cspell/ios-term.txt",
       "addWords": true
     }
   ],

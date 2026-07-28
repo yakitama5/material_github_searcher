@@ -1,3 +1,9 @@
 altive
 Altive
 appbar
+depre
+gtr
+gtrconfig
+numstat
+worktree
+worktrees
