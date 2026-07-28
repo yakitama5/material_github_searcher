@@ -1,0 +1,62 @@
+name: Detect CI Changes
+
+on:
+  workflow_call:
+    outputs:
+      analyze:
+        description: Analyze の実行要否
+        value: ${{ jobs.detect.outputs.analyze }}
+      test:
+        description: Test の実行要否
+        value: ${{ jobs.detect.outputs.test }}
+      cspell:
+        description: cspell の実行要否
+        value: ${{ jobs.detect.outputs.cspell }}
+      markdown_lint:
+        description: Markdown Lint の実行要否
+        value: ${{ jobs.detect.outputs.markdown_lint }}
+      package_dependencies:
+        description: Package Dependencies の実行要否
+        value: ${{ jobs.detect.outputs.package_dependencies }}
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      analyze: ${{ steps.changes.outputs.analyze }}
+      test: ${{ steps.changes.outputs.test }}
+      cspell: ${{ steps.changes.outputs.cspell }}
+      markdown_lint: ${{ steps.changes.outputs.markdown_lint }}
+      package_dependencies: ${{ steps.changes.outputs.package_dependencies }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # Pull Request の merge-base と head の差分を確実に取得する。
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test CI change detection scenarios
+        shell: bash
+        run: bash .github/scripts/test_detect_ci_changes.sh
+
+      - name: Detect affected CI jobs
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # main push は従来の安全網を維持し、変更パスにかかわらず全 CI を実行する。
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            bash .github/scripts/detect_ci_changes.sh --all >> "$GITHUB_OUTPUT"
+          else
+            git diff --name-only -z "$BASE_SHA...$HEAD_SHA" |
+              bash .github/scripts/detect_ci_changes.sh >> "$GITHUB_OUTPUT"
+          fi
