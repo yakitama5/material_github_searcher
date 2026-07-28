@@ -815,8 +815,15 @@ final class _PubspecDocument {
             '`${file.path}`.',
           );
         }
-        if (propertyName == 'sdk' && property.group(2) == 'flutter') {
-          usesFlutter = true;
+        if (propertyName == 'sdk') {
+          final sdk = _decodeQuotedScalar(
+            property.group(2)!,
+            description: '$currentDependency.sdk in $sectionName',
+            file: file,
+          );
+          if (sdk == 'flutter') {
+            usesFlutter = true;
+          }
         }
       }
     }

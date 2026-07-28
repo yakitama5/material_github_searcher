@@ -313,6 +313,41 @@ void main() {
         contains('  flutter: 3.44.8'),
       );
     });
+
+    test('引用符付きFlutter SDK依存もFlutterパッケージとして扱う', () async {
+      final fixture = _createFixture(
+        rootPubspec: _rootPubspec(
+          dartVersion: '3.12.2',
+          members: const ['apps/double_quote', 'apps/single_quote'],
+        ),
+        members: {
+          'apps/double_quote':
+              'name: double_quote\n'
+              'environment:\n'
+              '  sdk: 3.12.2\n'
+              'dependencies:\n'
+              '  flutter:\n'
+              '    sdk: "flutter"\n',
+          'apps/single_quote':
+              'name: single_quote\n'
+              'environment:\n'
+              '  sdk: 3.12.2\n'
+              'dev_dependencies:\n'
+              '  flutter_test:\n'
+              "    sdk: 'flutter'\n",
+        },
+      );
+      addTearDown(() => fixture.deleteSync(recursive: true));
+
+      await _synchronizer(fixture).synchronize(checkOnly: false);
+
+      for (final member in const ['double_quote', 'single_quote']) {
+        expect(
+          File('${fixture.path}/apps/$member/pubspec.yaml').readAsStringSync(),
+          contains('  flutter: 3.44.8'),
+        );
+      }
+    });
   });
 
   group('runSdkVersionSync', () {
