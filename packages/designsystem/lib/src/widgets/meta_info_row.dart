@@ -46,14 +46,17 @@ class MetaInfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
+            maxLines: 1,
             style: textTheme.bodyMedium,
             overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: 8),
-        Flexible(
+        Expanded(
           child: Text(
             value,
+            maxLines: 1,
+            textAlign: TextAlign.end,
             style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
             overflow: TextOverflow.ellipsis,
           ),

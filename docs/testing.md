@@ -110,8 +110,10 @@ mise exec -- flutter test
 ```
 
 CI（`.github/workflows/check_pr.yaml`）は、実行時間・安定性の観点から Unit Test・
-Widget Test・Golden Test など高速かつ決定的なテストのみを対象にする。Patrol による
-E2E Test は Required Status Check に含めず、ローカルで実行する。この境界は
+Widget Test など高速かつ決定的なテストのみを対象にする。Golden Test は
+OS 間の描画差により決定的に比較できないため CI 対象外とし、ローカルでの
+実行のみに限定する（詳細は後述の「Golden Test 基盤」を参照）。Patrol による
+E2E Test も Required Status Check に含めず、ローカルで実行する。この境界は
 `check_pr.yaml` 冒頭のコメント（`BuildとPatrolは実行時間・安定性の観点から対象外とする。`）
 で既に運用上の決定として明文化されており、本ドキュメントはこれを踏襲する。
 
