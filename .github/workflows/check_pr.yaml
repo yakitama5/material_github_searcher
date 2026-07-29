@@ -93,6 +93,10 @@ jobs:
       - name: Test SDK synchronization tool
         run: dart test test/tools
 
+      - name: Test domain package
+        working-directory: packages/domain
+        run: dart test
+
       - name: Test application package
         working-directory: packages/application
         run: dart test

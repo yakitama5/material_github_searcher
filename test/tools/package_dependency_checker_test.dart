@@ -284,7 +284,10 @@ const _defaultDependencies = <String, Map<String, String>>{
     'application': '../application',
     'infrastructure_mock': '../infrastructure/mock',
   },
-  'designsystem': {'application': '../application'},
+  'designsystem': {
+    'application': '../application',
+    'domain': '../domain',
+  },
   'domain': {'foundation': '../foundation'},
   'infrastructure_mock': {'domain': '../../domain'},
 };

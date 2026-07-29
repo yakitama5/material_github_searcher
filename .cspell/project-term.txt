@@ -13,3 +13,5 @@ worktrees
 yakitama
 Codemagic
 nanto
+usecase
+SSOT
