@@ -131,9 +131,33 @@ E2E Test も Required Status Check に含めず、ローカルで実行する。
   `apps/app` の画面全体には適用しない。
 - **Patrol**: 実機・エミュレータ上で複数画面をまたぐ主要ユーザーフロー
   （例: 検索してリポジトリ詳細を開く）を検証する E2E Test。外部サービスへの
-  依存は `dependency_override` で決定的な Fake に差し替えたうえで実行する想定とする。
-- Patrol は本ドキュメント執筆時点では基盤（セットアップ）を導入していない。
-  基盤導入は別 Issue で行い、導入後に実行コマンドを本ドキュメントへ追記する。
+  依存は `dependency_override` で決定的な Fake に差し替えたうえで実行する。
+
+### Patrol E2E Test 基盤（`apps/app`）
+
+Patrol Testは`apps/app/patrol_test/`へ配置し、ローカルのAndroid実機で実行する。
+環境構築と実機接続の詳細は`docs/development.md`を参照する。
+
+```sh
+# リポジトリルートで実行する
+mise run test:e2e <Android device ID>
+```
+
+共通タスクはDev Flavorと`apps/app/flavor/dev.json`を必ず使用する。端末localeによる
+結果差を防ぐため、`patrol_test/support/pump_test_app.dart`で`AppLocale.ja`へ固定して
+から、本番と共通の`createApp`をpumpする。テスト側から`main()`、`runApp()`、
+`WidgetsFlutterBinding.ensureInitialized()`は呼ばない。
+
+現時点では外部サービスやRepositoryが未実装のため、起動Smoke Testは外部通信を
+行わない。外部サービスを利用する機能を追加する際は、
+`patrol_test/support/pump_test_app.dart`へ`dependency_override`が公開するMock向け
+override一式を必須引数として追加し、`infrastructure_mock`の決定的なFakeへ
+差し替える。Dev向けの実サービス結線を暗黙に利用してはならない。
+
+検索機能とリポジトリ詳細画面が完成した時点で、現在の起動Smoke Testを
+「検索して結果を選択し、リポジトリ詳細を開く」主要検索フローへ置き換える。
+画面やユーザーフローを追加した後も、起動確認だけのテストを重複して増やさず、
+利用者の操作と結果を検証するシナリオを優先する。
 
 ### Golden Test 基盤（`packages/designsystem`）
 
@@ -209,7 +233,7 @@ Golden Test を持つ Widget を変更した場合は、コミット前に必ず
   `LocaleSettings.setLocale` でロケールを明示的に指定し、端末ロケールに依存せず
   決定的に検証する。
 - 主要ユーザーフローに影響する変更を行った場合: Patrol シナリオの追加・更新を
-  検討する（基盤導入後）。
+  検討する。外部サービスを利用する場合は、必ずFakeへ差し替える。
 - 不具合を修正した場合: その不具合を再現するテストを追加する。
 - どのレイヤーにも当てはまらない変更（設定ファイルのみの変更など）は、
   無理にテストを追加せず、レビューで代替の確認方法を示す。

@@ -35,8 +35,9 @@
     "*.*.dart",
     // 隠しyaml/ymlファイル
     ".*.{yaml,yml}",
-    "build/**",
-    ".dart_tool/**"
+    "**/build/**",
+    "**/.dart_tool/**",
+    "**/test_bundle.dart"
   ],
   "ignoreRegExpList": [
     "/[\\u3000-\\u303F\\u3040-\\u309F\\u30A0-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uF900-\\uFAFF\\uFF00-\\uFFEF]+/gu"
