@@ -39,5 +39,7 @@ patrol:
   flavor: dev
   android:
     package_name: com.example.material_github_searcher.dev
+  ios:
+    bundle_id: com.example.materialGithubSearcher.dev
 
 resolution: workspace
