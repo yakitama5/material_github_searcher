@@ -44,22 +44,17 @@ expandedクラスでは`Breakpoints.maxContentWidth`（840dp）を上限に`Cons
 
 Widget Testで画面幅を検証する場合の代表幅・手順は`docs/testing.md`を参照。
 
-### 画面回転はPortraitに固定
+### 画面回転を抑制しない
 
-Landscapeはサポートせず、iOS（`Info.plist`）・Android（`AndroidManifest.xml`）双方で
-Portraitに固定している。iPadは`UIRequiresFullScreen`も必要（無いとSlide Over/
-Split View等のマルチタスキング時に固定が効かない。引き換えにiPadでの
-マルチタスキング表示はできなくなる）。
+画面回転（Portrait/Landscape）を抑制する設定は追加しない。Android 16
+（`targetSdkVersion` 36以降）では大画面端末（smallestWidth 600dp以上）で
+`android:screenOrientation`がシステムに無視されるようになっており、Google自身が
+大画面での回転・リサイズ制限を撤廃する方向へ進んでいる。この流れに逆行して
+アプリ側で固定し続けるのではなく、回転にも幅ベースの判断（前述の
+`MediaQuery.sizeOf`/`WindowSizeClass`）で追従する方針とする。
 
-Androidは`targetSdkVersion`36（Android 16）以降、smallestWidthが600dp以上の
-大画面端末（タブレット・展開時のフォルダブル等）では`android:screenOrientation`が
-システムに無視されるため、`android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY`
-プロパティで一時的に固定を維持している。この互換プロパティは
-[`targetSdkVersion` 37で廃止されることがAndroid公式ドキュメントで明言されており](https://developer.android.com/about/versions/16/behavior-changes-16)、
-その時点では大画面Android端末でPortrait固定を維持する手段が無くなる（＝
-アプリ側の設定によらずシステムが回転・リサイズを許可する）。`docs/flutter-upgrade.md`
-に沿ってFlutterをアップグレードし`targetSdkVersion`が37以上になる際は、この方針
-（Portrait固定の前提）自体を再評価する。
+個々の画面が回転時にどうレイアウトを切り替えるかの具体的な設計は、各画面の
+デザイン時に決定する（本ドキュメントの対象外）。
 
 ### responsive_frameworkは不採用
 
@@ -69,7 +64,7 @@ Material 3の標準ブレークポイントでは表現しきれない連続的�
 
 ## 対象外
 
-- 検索画面・詳細画面の具体的なレスポンシブ実装
+- 検索画面・詳細画面の具体的なレスポンシブ実装（画面回転時のレイアウトを含む）
 - `responsive_framework`の導入（理由は前述）
 - デスクトップ・外部ディスプレイ向けの`large`/`extraLarge`クラス
 - macOS/Web/Windows/Linux向けの画面回転・レスポンシブ対応（iOS/Androidのみ対象）

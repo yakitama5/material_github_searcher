@@ -255,3 +255,25 @@ smallestWidthが600dp以上の大画面端末（タブレット・展開時の�
   大画面Android端末でのPortrait固定は（アプリ側の設定によらず）保証できなくなる。
   その時点で「画面回転をPortraitに固定する」という本Issueの前提自体を再評価する
   必要がある。`docs/design.md`にも同様の注記を追加した。
+
+## 追記: 画面回転固定方針の撤回
+
+上記のAndroid 16の挙動変更は、単なる技術的な回避策が必要という話にとどまらず、
+「Googleが大画面端末での回転・リサイズ制限を意図的に撤廃する方向へ進んでいる」
+という設計方針の裏付けだった。この方針とアプリ側で回転を固定し続けることは
+反する（`targetSdkVersion` 37到達後は固定を維持する手段がそもそも無くなる）ため、
+Portrait固定という方針自体を撤回し、Issue起票時の前提（画面回転を抑制しない）へ
+戻すことにした。
+
+- iOS（`Info.plist`）・Android（`AndroidManifest.xml`）の変更を全て元に戻した
+  （`UIRequiresFullScreen`・`UISupportedInterfaceOrientations`の制限・
+  `android:screenOrientation`・`PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY`の
+  いずれも削除。`git diff main`で差分が無いことを確認済み）。
+- `docs/design.md`の「画面回転はPortraitに固定」節を「画面回転を抑制しない」節へ
+  書き換えた。個々の画面が回転時にどうレイアウトを切り替えるかは、各画面の
+  デザイン時に決定する対象外事項とした。
+- 本Issue自体は当初から「画面回転を抑制しない」前提だったため、GitHub Issue #46の
+  本文もこの前提に戻した（詳細な経緯はIssue本文の追記コメントを参照）。
+- `packages/designsystem`のブレークポイント判断（`WindowSizeClass.fromWidth`、
+  `MediaQuery.sizeOf`ベースの幅判定）はorientationに依存しない設計のため、
+  この方針転換によるコード変更は発生しない。
