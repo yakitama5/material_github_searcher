@@ -2,6 +2,8 @@ import 'package:designsystem/designsystem.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../i18n/strings.g.dart';
+
 /// 画面幅に応じてナビゲーションを切り替えるアプリケーションシェル。
 class AdaptiveAppShell extends StatelessWidget {
   /// [navigationShell] が管理する各ブランチの状態を保ったまま表示する。
@@ -15,6 +17,26 @@ class AdaptiveAppShell extends StatelessWidget {
     final windowSizeClass = WindowSizeClass.fromWidth(
       MediaQuery.widthOf(context),
     );
+    final destinations = [
+      NavigationDestination(
+        icon: const Icon(Icons.search),
+        label: context.i18n.common.navigation.search,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.settings),
+        label: context.i18n.common.navigation.settings,
+      ),
+    ];
+    final railDestinations = [
+      NavigationRailDestination(
+        icon: const Icon(Icons.search),
+        label: Text(context.i18n.common.navigation.search),
+      ),
+      NavigationRailDestination(
+        icon: const Icon(Icons.settings),
+        label: Text(context.i18n.common.navigation.settings),
+      ),
+    ];
 
     return switch (windowSizeClass) {
       WindowSizeClass.compact => Scaffold(
@@ -22,7 +44,7 @@ class AdaptiveAppShell extends StatelessWidget {
         bottomNavigationBar: NavigationBar(
           selectedIndex: navigationShell.currentIndex,
           onDestinationSelected: _onDestinationSelected,
-          destinations: _navigationDestinations,
+          destinations: destinations,
         ),
       ),
       WindowSizeClass.medium || WindowSizeClass.expanded => Scaffold(
@@ -32,7 +54,7 @@ class AdaptiveAppShell extends StatelessWidget {
               extended: windowSizeClass == WindowSizeClass.expanded,
               selectedIndex: navigationShell.currentIndex,
               onDestinationSelected: _onDestinationSelected,
-              destinations: _navigationRailDestinations,
+              destinations: railDestinations,
             ),
             Expanded(child: navigationShell),
           ],
@@ -54,16 +76,3 @@ class AdaptiveAppShell extends StatelessWidget {
     );
   }
 }
-
-const _navigationDestinations = [
-  NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
-  NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-];
-
-const _navigationRailDestinations = [
-  NavigationRailDestination(icon: Icon(Icons.search), label: Text('Search')),
-  NavigationRailDestination(
-    icon: Icon(Icons.settings),
-    label: Text('Settings'),
-  ),
-];

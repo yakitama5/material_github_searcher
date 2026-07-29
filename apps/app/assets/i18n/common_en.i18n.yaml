@@ -1,2 +1,5 @@
 pushCountLabel: You have pushed the button this many times
 incrementTooltip: Increment
+navigation:
+  search: Search
+  settings: Settings

@@ -1,2 +1,5 @@
 pushCountLabel: ボタンを押した回数
 incrementTooltip: 追加
+navigation:
+  search: 検索
+  settings: 設定

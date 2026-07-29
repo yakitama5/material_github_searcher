@@ -56,6 +56,23 @@ class Translations$common$ja {
 
 	/// ja: '追加'
 	String get incrementTooltip => '追加';
+
+	late final Translations$common$navigation$ja navigation = Translations$common$navigation$ja.internal(_root);
+}
+
+// Path: common.navigation
+class Translations$common$navigation$ja {
+	Translations$common$navigation$ja.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// ja: '検索'
+	String get search => '検索';
+
+	/// ja: '設定'
+	String get settings => '設定';
 }
 
 /// The flat map containing all translations for locale <ja>.
@@ -68,6 +85,8 @@ extension on Translations {
 		return switch (path) {
 			'common.pushCountLabel' => 'ボタンを押した回数',
 			'common.incrementTooltip' => '追加',
+			'common.navigation.search' => '検索',
+			'common.navigation.settings' => '設定',
 			_ => null,
 		};
 	}

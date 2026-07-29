@@ -1,9 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
+import 'package:material_github_searcher/src/router/app_routes.dart';
+import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/router/router_keys.dart';
 
 const _config = AppBuildConfig(
@@ -39,10 +44,15 @@ void main() {
 
   testWidgets('NavigationBarでSettings branchを選択できる', (tester) async {
     await _pumpAtWidth(tester, 402);
+    final router = _routerFor(tester);
 
-    await _selectDestination(tester, 'Settings');
+    await _selectDestination(tester, 1);
 
-    expect(find.text('Settings'), findsWidgets);
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      1,
+    );
+    expect(router.routeInformationProvider.value.uri.path, settingsPath);
   });
 
   testWidgets('branch切替後もSearchのscroll位置を保持する', (tester) async {
@@ -53,8 +63,8 @@ void main() {
     await tester.pumpAndSettle();
     final offset = tester.state<ScrollableState>(scrollable).position.pixels;
 
-    await _selectDestination(tester, 'Settings');
-    await _selectDestination(tester, 'Search');
+    await _selectDestination(tester, 1);
+    await _selectDestination(tester, 0);
 
     expect(
       tester.state<ScrollableState>(find.byType(Scrollable)).position.pixels,
@@ -74,8 +84,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await _selectDestination(tester, 'Settings');
-    await _selectDestination(tester, 'Search');
+    await _selectDestination(tester, 1);
+    await _selectDestination(tester, 0);
 
     expect(find.text('Search subpage'), findsOneWidget);
   });
@@ -92,7 +102,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await _selectDestination(tester, 'Search');
+    await _selectDestination(tester, 0);
 
     expect(find.text('Search subpage'), findsNothing);
     expect(find.text('Search item 0'), findsOneWidget);
@@ -100,7 +110,7 @@ void main() {
 
   testWidgets('Settings branchのNavigator stackを保持する', (tester) async {
     await _pumpAtWidth(tester, 402);
-    await _selectDestination(tester, 'Settings');
+    await _selectDestination(tester, 1);
 
     unawaited(
       settingsBranchNavigatorKey.currentState!.push<void>(
@@ -111,14 +121,70 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await _selectDestination(tester, 'Search');
-    await _selectDestination(tester, 'Settings');
+    await _selectDestination(tester, 0);
+    await _selectDestination(tester, 1);
 
     expect(find.text('Settings subpage'), findsOneWidget);
   });
+
+  for (final locale in [
+    (appLocale: AppLocale.ja, searchLabel: '検索', settingsLabel: '設定'),
+    (appLocale: AppLocale.en, searchLabel: 'Search', settingsLabel: 'Settings'),
+  ]) {
+    testWidgets('${locale.appLocale}ではNavigationBarのラベルを表示する', (
+      tester,
+    ) async {
+      await _pumpAtWidth(tester, 402, locale: locale.appLocale);
+
+      final navigationBar = find.byType(NavigationBar);
+      expect(
+        find.descendant(
+          of: navigationBar,
+          matching: find.text(locale.searchLabel),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: navigationBar,
+          matching: find.text(locale.settingsLabel),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('${locale.appLocale}ではNavigationRailのラベルを表示する', (
+      tester,
+    ) async {
+      await _pumpAtWidth(tester, 1024, locale: locale.appLocale);
+
+      final navigationRail = find.byType(NavigationRail);
+      expect(
+        find.descendant(
+          of: navigationRail,
+          matching: find.text(locale.searchLabel),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: navigationRail,
+          matching: find.text(locale.settingsLabel),
+        ),
+        findsOneWidget,
+      );
+    });
+  }
 }
 
-Future<void> _pumpAtWidth(WidgetTester tester, double width) async {
+Future<void> _pumpAtWidth(
+  WidgetTester tester,
+  double width, {
+  AppLocale locale = AppLocale.ja,
+}) async {
+  final previousLocale = LocaleSettings.currentLocale;
+  addTearDown(() => LocaleSettings.setLocale(previousLocale));
+  await LocaleSettings.setLocale(locale);
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = Size(width, 900);
   addTearDown(tester.view.reset);
@@ -127,10 +193,21 @@ Future<void> _pumpAtWidth(WidgetTester tester, double width) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _selectDestination(WidgetTester tester, String label) async {
+GoRouter _routerFor(WidgetTester tester) {
+  final context = tester.element(find.byType(MyApp));
+  return ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(goRouterProvider);
+}
+
+Future<void> _selectDestination(WidgetTester tester, int index) async {
   final navigationBar = find.byType(NavigationBar);
   await tester.tap(
-    find.descendant(of: navigationBar, matching: find.text(label)),
+    find.descendant(
+      of: navigationBar,
+      matching: find.byType(NavigationDestination).at(index),
+    ),
   );
   await tester.pumpAndSettle();
 }
