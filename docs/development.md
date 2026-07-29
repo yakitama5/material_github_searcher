@@ -109,6 +109,43 @@ Patrol CLIの`package_name` / `bundle_id`はflavor設定ファイルを参照で
 重複して記載する。`flavor/dev.json`のIDを変更する場合は、Androidは
 `appIdAndroid + appIdSuffix`、iOSは`appIdIos + appIdSuffix`となるよう同セクションも同期する。
 
+## GitHub Actionsでの手動Build
+
+`.github/workflows/build_app.yaml`の`Build App` Workflowでは、Dev/ProdアプリのAndroid
+Debug APKと署名不要のiOS Simulator Buildを任意に生成できる。このWorkflowは
+`workflow_dispatch`専用であり、PRのRequired Status Checkや`main` push時の自動実行には
+含まれない。
+
+Workflowファイルがデフォルトブランチへマージされた後、GitHubのActions画面から
+`Build App`を開いて`Run workflow`を選択し、次の項目を指定する。
+
+- Branch: Build対象のBranch
+- `bump_type`: `none`、`patch`、`minor`、`major`、`build`
+- `flavor`: `dev`または`prod`
+- `platform`: `all`、`android`、`ios`
+
+`bump_type`が`none`以外の場合、固定版のCiderがRunner上の
+`apps/app/pubspec.yaml`だけを一時的に更新する。`patch`、`minor`、`major`ではSemVerと
+Build Numberを更新し、`build`ではBuild Numberだけを更新する。変更後のVersionは
+Build LogとArtifact名で確認できる。Repositoryのファイル、Commit、Tagには反映されず、
+WorkflowからGitへのpushも行わない。
+
+実行完了後はWorkflow Runの`Artifacts`から次の成果物を取得できる。保持期間は7日間。
+
+- Android: 選択FlavorのDebug APK
+- iOS: 選択Flavorの`Runner.app`を格納した`.tar.gz`
+
+iOS成果物は展開後の実行権限とシンボリックリンクを保持するため、`.app`を`tar.gz`へ
+格納している。iOS Simulator向けであり、物理端末へのインストールやApp Store Connectへの
+提出には利用できない。Android成果物もDebug署名されたFlavor検証用APKであり、Google
+Playへ提出するRelease AABではない。
+
+将来このWorkflowをCDへ拡張する場合は、Debug / Simulator BuildをRelease Buildへ
+置き換え、署名情報とストア認証情報をGitHub Secrets等で管理する。そのうえで、生成した
+成果物をCodemagic CLI Tools等から内部テストへ配布する工程をArtifact作成後に追加する。
+現在のWorkflowには、署名情報の復元、Release署名、Codemagic CLI Toolsのインストール、
+App Store Connect / Google Playへのアップロード処理は含めない。
+
 ## Android実機・iOS SimulatorでのE2E Test（Patrol）
 
 PatrolによるE2E Testは、ローカルで接続したAndroid実機または起動中の

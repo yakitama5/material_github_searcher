@@ -1,0 +1,251 @@
+name: Build App
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: Version bump (noneは現在のバージョンでビルド)
+        required: true
+        default: none
+        type: choice
+        options: [none, patch, minor, major, build]
+      flavor:
+        description: Flavor to build
+        required: true
+        default: dev
+        type: choice
+        options: [dev, prod]
+      platform:
+        description: Platform to build
+        required: true
+        default: all
+        type: choice
+        options: [all, android, ios]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.ref }}-${{ inputs.flavor }}-${{ inputs.platform }}-${{ inputs.bump_type }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    name: Build Android APK
+    if: inputs.platform == 'all' || inputs.platform == 'android'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Prepare app version
+        id: version
+        working-directory: apps/app
+        env:
+          BUMP_TYPE: ${{ inputs.bump_type }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dart pub global activate cider 0.2.10
+          if [[ "$BUMP_TYPE" == "build" ]]; then
+            dart pub global run cider bump build
+          elif [[ "$BUMP_TYPE" != "none" ]]; then
+            dart pub global run cider bump "$BUMP_TYPE" --bump-build
+          fi
+
+          app_version="$(dart pub global run cider version)"
+          if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?\+[0-9]+$ ]]; then
+            echo "Unsupported app version: $app_version (expected <semver>+<numeric-build>)" >&2
+            exit 1
+          fi
+
+          version_name="${app_version%%+*}"
+          version_code="${app_version##*+}"
+          {
+            echo "version=$app_version"
+            echo "version_name=$version_name"
+            echo "version_code=$version_code"
+          } >> "$GITHUB_OUTPUT"
+          echo "Build version: $app_version"
+
+      - name: Install dependencies
+        working-directory: apps/app
+        run: flutter pub get
+
+      - name: Build Android debug APK
+        working-directory: apps/app
+        env:
+          FLAVOR: ${{ inputs.flavor }}
+        run: >-
+          flutter build apk
+          --flavor "$FLAVOR"
+          --debug
+          --no-pub
+          --dart-define-from-file="flavor/$FLAVOR.json"
+
+      - name: Verify Android artifact version
+        env:
+          EXPECTED_VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          EXPECTED_VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          FLAVOR: ${{ inputs.flavor }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          apk_path="apps/app/build/app/outputs/flutter-apk/app-${FLAVOR}-debug.apk"
+          test -f "$apk_path"
+
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          if [[ -z "$sdk_root" ]]; then
+            echo "ANDROID_SDK_ROOT or ANDROID_HOME is required." >&2
+            exit 1
+          fi
+
+          apkanalyzer_path="$(command -v apkanalyzer || true)"
+          if [[ -z "$apkanalyzer_path" ]]; then
+            apkanalyzer_path="$sdk_root/cmdline-tools/latest/bin/apkanalyzer"
+          fi
+          if [[ ! -x "$apkanalyzer_path" ]]; then
+            apkanalyzer_path="$(find "$sdk_root/cmdline-tools" -path '*/bin/apkanalyzer' -type f -perm -u+x -print | sort -V | tail -n 1)"
+          fi
+          if [[ ! -x "$apkanalyzer_path" ]]; then
+            echo "apkanalyzer was not found under $sdk_root." >&2
+            exit 1
+          fi
+
+          actual_version_name="$("$apkanalyzer_path" manifest version-name "$apk_path")"
+          actual_version_code="$("$apkanalyzer_path" manifest version-code "$apk_path")"
+          echo "APK version: ${actual_version_name}+${actual_version_code}"
+
+          if [[ "$actual_version_name" != "$EXPECTED_VERSION_NAME" ||
+            "$actual_version_code" != "$EXPECTED_VERSION_CODE" ]]; then
+            echo "APK version does not match the Cider version." >&2
+            exit 1
+          fi
+
+      # CD extension point: a distributable Android build would use Release signing
+      # credentials from Secrets and add an internal-test upload after artifact creation.
+      # Signing, credential restoration, and store upload are intentionally not implemented here.
+      - name: Upload Android APK
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: android-${{ inputs.flavor }}-${{ steps.version.outputs.version }}-debug-apk
+          path: apps/app/build/app/outputs/flutter-apk/app-${{ inputs.flavor }}-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+  build-ios:
+    name: Build iOS Simulator App
+    if: inputs.platform == 'all' || inputs.platform == 'ios'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Prepare app version
+        id: version
+        working-directory: apps/app
+        env:
+          BUMP_TYPE: ${{ inputs.bump_type }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dart pub global activate cider 0.2.10
+          if [[ "$BUMP_TYPE" == "build" ]]; then
+            dart pub global run cider bump build
+          elif [[ "$BUMP_TYPE" != "none" ]]; then
+            dart pub global run cider bump "$BUMP_TYPE" --bump-build
+          fi
+
+          app_version="$(dart pub global run cider version)"
+          if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?\+[0-9]+$ ]]; then
+            echo "Unsupported app version: $app_version (expected <semver>+<numeric-build>)" >&2
+            exit 1
+          fi
+
+          version_name="${app_version%%+*}"
+          version_code="${app_version##*+}"
+          {
+            echo "version=$app_version"
+            echo "version_name=$version_name"
+            echo "version_code=$version_code"
+          } >> "$GITHUB_OUTPUT"
+          echo "Build version: $app_version"
+
+      - name: Install dependencies
+        working-directory: apps/app
+        run: flutter pub get
+
+      - name: Build iOS simulator app
+        working-directory: apps/app
+        env:
+          FLAVOR: ${{ inputs.flavor }}
+        run: >-
+          flutter build ios
+          --flavor "$FLAVOR"
+          --debug
+          --simulator
+          --no-pub
+          --dart-define-from-file="flavor/$FLAVOR.json"
+
+      - name: Verify and archive iOS artifact
+        id: archive
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+          EXPECTED_VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          EXPECTED_VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          FLAVOR: ${{ inputs.flavor }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          app_path="apps/app/build/ios/iphonesimulator/Runner.app"
+          info_plist_path="$app_path/Info.plist"
+          archive_path="$RUNNER_TEMP/material-github-searcher-${FLAVOR}-${APP_VERSION}-ios-simulator.tar.gz"
+          test -d "$app_path"
+          test -f "$info_plist_path"
+
+          actual_version_name="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$info_plist_path")"
+          actual_version_code="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$info_plist_path")"
+          echo "iOS app version: ${actual_version_name}+${actual_version_code}"
+
+          if [[ "$actual_version_name" != "$EXPECTED_VERSION_NAME" ||
+            "$actual_version_code" != "$EXPECTED_VERSION_CODE" ]]; then
+            echo "iOS app version does not match the Cider version." >&2
+            exit 1
+          fi
+
+          tar -czf "$archive_path" -C "$(dirname "$app_path")" "$(basename "$app_path")"
+          test -s "$archive_path"
+          tar -tzf "$archive_path" >/dev/null
+          echo "archive_path=$archive_path" >> "$GITHUB_OUTPUT"
+
+      # CD extension point: a distributable iOS build would use signing and
+      # App Store Connect credentials from Secrets, then add an internal-test upload.
+      # Signing, credential restoration, and store upload are intentionally not implemented here.
+      - name: Upload iOS simulator app
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ios-${{ inputs.flavor }}-${{ steps.version.outputs.version }}-simulator-app
+          path: ${{ steps.archive.outputs.archive_path }}
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0

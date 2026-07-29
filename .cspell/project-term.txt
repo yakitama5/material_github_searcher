@@ -11,3 +11,5 @@ Slurper
 worktree
 worktrees
 yakitama
+Codemagic
+nanto
