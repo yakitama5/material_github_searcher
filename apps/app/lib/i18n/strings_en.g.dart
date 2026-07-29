@@ -51,6 +51,18 @@ class _Translations$common$en extends Translations$common$ja {
 	// Translations
 	@override String get pushCountLabel => 'You have pushed the button this many times';
 	@override String get incrementTooltip => 'Increment';
+	@override late final _Translations$common$navigation$en navigation = _Translations$common$navigation$en._(_root);
+}
+
+// Path: common.navigation
+class _Translations$common$navigation$en extends Translations$common$navigation$ja {
+	_Translations$common$navigation$en._(TranslationsEn root) : this._root = root, super.internal(root);
+
+	final TranslationsEn _root; // ignore: unused_field
+
+	// Translations
+	@override String get search => 'Search';
+	@override String get settings => 'Settings';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -63,6 +75,8 @@ extension on TranslationsEn {
 		return switch (path) {
 			'common.pushCountLabel' => 'You have pushed the button this many times',
 			'common.incrementTooltip' => 'Increment',
+			'common.navigation.search' => 'Search',
+			'common.navigation.settings' => 'Settings',
 			_ => null,
 		};
 	}
