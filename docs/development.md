@@ -77,13 +77,18 @@ Build Configuration（`Debug-dev`/`Release-dev`/`Profile-dev` など）を切り
 Xcodeを直接開いて実行する場合も、無印の `Runner` Schemeではなく `dev`/`prod` Scheme を
 選択すること（無印Schemeは Flavor の dart-define が渡らず起動時エラーになる）。
 
-Bundle IDやアプリ名の切り替え値（`PRODUCT_BUNDLE_IDENTIFIER` / `APP_DISPLAY_NAME`）は
-`apps/app/flavor/dev.json` / `prod.json` の値を `project.pbxproj` 側にも複製している。
-AndroidはGradleから `flavor/*.json` を直接読み取り単一ソース化しているが、Xcodeの
-Build Configurationは静的な値しか持てないため、iOSでは値を複製する方式を採っている。
-Flavor設定ファイルの `appName` / `appIdIos` / `appIdSuffix` を変更した場合は、
-`project.pbxproj` 内の対応する `Debug-<flavor>` / `Release-<flavor>` / `Profile-<flavor>`
-設定も合わせて更新すること。
+Bundle IDやアプリ名（`PRODUCT_BUNDLE_IDENTIFIER` / `APP_DISPLAY_NAME`）は
+`apps/app/flavor/dev.json` / `prod.json` を唯一のソースとして解決される。
+`ios/scripts/extract_dart_defines.sh` が `dev`/`prod` Scheme のBuild Pre-actionとして
+実行され、`--dart-define-from-file` の内容（`DART_DEFINES`）をデコードして
+`ios/Flutter/Environment.xcconfig`（gitignore対象、都度生成）へ書き出し、
+`Debug-<flavor>`/`Release-<flavor>`/`Profile-<flavor>` の
+`PRODUCT_BUNDLE_IDENTIFIER = "$(appIdIos)$(appIdSuffix)"` /
+`APP_DISPLAY_NAME = "$(appName)"` がそれを参照する。Androidの
+`build.gradle.kts`（`flavor/*.json` を直接読み取り）と同様、flavor設定ファイルの
+値を変更するだけでiOS側にも反映され、pbxprojへの追随修正は不要。
+無印の `Debug`/`Release`/`Profile`（既存の `Runner` Scheme用）はこの仕組みの
+対象外で、従来どおりの固定値のまま変更していない。
 
 ## Flutterのアップグレード
 
