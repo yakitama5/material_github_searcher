@@ -57,10 +57,10 @@ dart run tools/check_package_dependencies.dart
 各パッケージの `pubspec.yaml` の `resolution: workspace` による Dart 標準の
 Pub Workspace のみで運用する。
 
-現状は Flutter の雛形だけで、複数パッケージを横断するテストの対象が存在しない。
-バージョン統一や `melos exec` による一括処理を導入しても、現時点では運用コストに
-見合わないためである。複数パッケージでテストが必要になった時点で、Melos の導入
-または単純なシェルスクリプトによる代替を再検討する。
+Melos を使うほど依存関係が多くなるアプリになる想定ではないため、複数パッケージを
+横断するテストの対象は存在しない。バージョン統一や `melos exec` による一括処理を
+導入しても、現時点では運用コストに見合わないためである。複数パッケージでテストが
+必要になった時点で、Melos の導入または単純なシェルスクリプトによる代替を再検討する。
 
 多言語対応は `apps/app` の `slang`/`slang_flutter` で実現している。コード生成対象は
 `apps/app` 単体のため、`build_runner` の `--workspace` フラグを使い、Melos を導入せず

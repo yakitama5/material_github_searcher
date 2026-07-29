@@ -21,6 +21,12 @@ const _config = AppBuildConfig(
 );
 
 void main() {
+  // LocaleSettings は static singleton のため、各テストが変更した locale が
+  // 後続テストへ残らないよう、テストごとに基準となる ja へ戻す。
+  setUp(() async {
+    await LocaleSettings.setLocale(AppLocale.ja);
+  });
+
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(
