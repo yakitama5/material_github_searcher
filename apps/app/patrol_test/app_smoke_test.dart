@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:patrol/patrol.dart';
 
@@ -9,6 +10,7 @@ void main() {
     await pumpTestApp($);
 
     expect(AppBuildConfig.current.flavor, Flavor.dev);
+    expect(LocaleSettings.currentLocale, AppLocale.ja);
     expect($('Dev - Material GitHub Searcher'), findsOneWidget);
   });
 }
