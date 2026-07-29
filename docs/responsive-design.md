@@ -100,6 +100,9 @@ Breakpoints.maxContentWidth`を指定し中央寄せする形を想定する。
   - compact: 402（iPhone 17 Pro）
   - medium: 744（iPad mini）
   - expanded: 1024（iPad Pro 12.9インチ）
+- `tester.view.physicalSize`は幅・高さのペアが必要になる。高さも検証に絡む場合は、
+  各機種のportrait時の論理高さ（874 / 1133 / 1366）を目安にする。幅のみで判定する
+  テストでは高さは固定値（例: 900）でよい。
 - 全てのWidget Testに全代表幅を要求するのではなく、幅によって表示・レイアウトが
   変わるWidget/画面に限定して追加する。
 
@@ -125,3 +128,6 @@ Breakpoints.maxContentWidth`を指定し中央寄せする形を想定する。
 - 共通Widget（`ResponsiveContentWidth`のようなラッパー等）の実装
 - Widget Test用の共通テストヘルパー（ユーティリティ関数等）の実装
 - デスクトップ・外部ディスプレイ向けの`large`/`extraLarge`クラスの追加
+- macOS/Web/Windows/Linux向けの画面回転・レスポンシブ対応。`apps/app`には
+  `flutter create`が生成したこれらプラットフォームのディレクトリが存在するが、
+  本ドキュメントのPortrait固定・ブレークポイント方針はiOS/Androidを対象とする

@@ -74,6 +74,10 @@ Widget Testを書く場合は、`tester.view.physicalSize`と`tester.view.device
 - medium: 744（iPad mini）
 - expanded: 1024（iPad Pro 12.9インチ）
 
+`tester.view.physicalSize`は幅・高さのペアが必要になる。高さも検証に絡む場合は、
+各機種のportrait時の論理高さ（874 / 1133 / 1366）を目安にする。幅のみで判定する
+テストでは高さは固定値（例: 900）でよい。
+
 全てのWidget Testに全代表幅を要求するのではなく、幅によって表示・レイアウトが
 変わるWidget/画面に限定して追加する（前述の「変更した振る舞いをテストする」方針に
 従う）。
