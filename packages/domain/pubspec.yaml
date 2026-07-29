@@ -10,4 +10,7 @@ dependencies:
   foundation:
     path: ../foundation
 
+dev_dependencies:
+  test: 1.31.0
+
 resolution: workspace

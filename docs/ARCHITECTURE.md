@@ -14,6 +14,7 @@ flowchart LR
   app --> application
   app --> dependency_override
   designsystem --> application
+  designsystem --> domain
   application --> domain
   dependency_override --> application
   dependency_override --> infrastructure
@@ -35,9 +36,16 @@ flowchart LR
 矢印はパッケージの依存方向を表す。`domain` は Dart のみで構成し、Flutter、
 状態管理ライブラリ、外部 I/O に依存させない。`foundation` も特定のドメインや
 Flutter に依存させず、複数レイヤーから利用できる純粋なユーティリティに限定する。
-図にない依存は追加しない。`designsystem` から `application` への依存は、アプリ状態を
-参照する共通 UI に限定し、`domain`、`infrastructure`、`dependency_override`、`app` を
-直接参照させない。
+図にない依存は追加しない。`designsystem` は内側の円である `application` と `domain`
+に依存してよいが、`infrastructure`、`dependency_override`、`app` は直接参照させない。
+`application` への依存はアプリ状態を参照する共通 UI に限定する。`domain` への依存は、
+`AppException` のようにドメインが所有する契約（ユーザー操作の結果として UI が扱う
+例外の型など）を参照する用途に限定する。
+
+`AppException` 系（`sealed`）を `domain` に置くのは、`sealed` により基底型と全サブ
+タイプが同一ライブラリへ集約される一方、個別の業務・通信例外の分類はリポジトリ契約
+と同じくドメイン知識であり、`foundation`（ドメイン非依存の純粋ユーティリティ）へは
+置けないためである。
 
 ### 依存関係の機械的な保証
 

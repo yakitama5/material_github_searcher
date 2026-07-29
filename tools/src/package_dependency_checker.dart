@@ -12,7 +12,7 @@ const allowedPackageDependencies = <String, Set<String>>{
     'dependency_override',
     'designsystem',
   },
-  'designsystem': {'application'},
+  'designsystem': {'application', 'domain'},
   'application': {'domain', 'foundation'},
   'dependency_override': {'application', 'infrastructure_mock'},
   'infrastructure_mock': {'domain'},

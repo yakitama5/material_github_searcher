@@ -1,4 +1,4 @@
-import 'package:application/application.dart';
+import 'package:domain/domain.dart';
 import 'package:flutter/foundation.dart';
 
 import '../widgets/snack_bar_manager.dart';

@@ -1,5 +1,5 @@
-import 'package:application/application.dart';
 import 'package:designsystem/designsystem.dart';
+import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
