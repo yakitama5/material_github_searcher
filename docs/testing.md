@@ -59,6 +59,25 @@
   リポジトリ直下の `test/tools/` に置く（既存の `sync_sdk_versions_test.dart` などを
   踏襲する）。
 
+## 画面幅に応じたWidget Test
+
+`designsystem`・`apps/app`で、幅によって表示・レイアウトが変わるWidget/画面の
+Widget Testを書く場合は、`tester.view.physicalSize`と`tester.view.devicePixelRatio`
+を設定し、代表的な画面幅で検証する（`addTearDown(tester.view.reset)`で後続テストへ
+の影響を防ぐ）。判断基準・ブレークポイントの定義自体は `docs/responsive-design.md`
+を参照する。
+
+代表幅は、Window size class（compact/medium/expanded）につき1つ、現行の主流機種の
+論理幅を採用する。
+
+- compact: 402（iPhone 17 Pro）
+- medium: 744（iPad mini）
+- expanded: 1024（iPad Pro 12.9インチ）
+
+全てのWidget Testに全代表幅を要求するのではなく、幅によって表示・レイアウトが
+変わるWidget/画面に限定して追加する（前述の「変更した振る舞いをテストする」方針に
+従う）。
+
 ## Fake/Mock の方針
 
 - 外部サービスへ直接接続するテストは書かず、`domain` に定義したリポジトリ抽象を

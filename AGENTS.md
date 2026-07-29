@@ -19,6 +19,7 @@
 - ブランチ戦略: `docs/branching.md`
 - エージェント活用開発フロー: `docs/agent-driven-development.md`
 - テスト戦略: `docs/testing.md`
+- レスポンシブ対応方針: `docs/responsive-design.md`
 
 ## 複数エージェントによる並列開発（git worktree runner）
 

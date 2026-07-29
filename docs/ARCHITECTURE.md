@@ -27,7 +27,7 @@ flowchart LR
 | `packages/domain` | エンティティ、値オブジェクト、リポジトリ抽象、業務ルール。Flutter や外部 I/O に依存しない |
 | `packages/application` | ユースケース、アプリ状態、リポジトリ抽象を注入する Provider |
 | `packages/infrastructure/*` | API やローカルストレージなど、外部サービスを利用するリポジトリ実装 |
-| `packages/designsystem` | テーマ、共通 Widget、画面に依存しない UI 表現 |
+| `packages/designsystem` | テーマ、共通 Widget、画面に依存しない UI 表現。レスポンシブ対応の判断基準・ブレークポイントは `docs/responsive-design.md` を参照 |
 | `packages/dependency_override` | application の Provider と infrastructure の実装の結線 |
 | `packages/foundation` | ロガーなど、ドメインに依存しない汎用ユーティリティ |
 | `apps/app` | 画面、ルーティング、ローカライズ、composition root |
