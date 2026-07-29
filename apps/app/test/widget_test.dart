@@ -29,9 +29,7 @@ void main() {
 
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(
-      TranslationProvider(child: const MyApp(config: _config)),
-    );
+    await tester.pumpWidget(createApp(config: _config));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
@@ -50,9 +48,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await LocaleSettings.setLocale(AppLocale.ja);
-    await tester.pumpWidget(
-      TranslationProvider(child: const MyApp(config: _config)),
-    );
+    await tester.pumpWidget(createApp(config: _config));
 
     expect(find.text('ボタンを押した回数'), findsOneWidget);
     expect(
@@ -65,9 +61,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await LocaleSettings.setLocale(AppLocale.en);
-    await tester.pumpWidget(
-      TranslationProvider(child: const MyApp(config: _config)),
-    );
+    await tester.pumpWidget(createApp(config: _config));
 
     expect(
       find.text('You have pushed the button this many times'),
