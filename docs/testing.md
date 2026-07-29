@@ -137,15 +137,23 @@ E2E Test は Required Status Check に含めず、ローカルで実行する。
 
 Golden Test ライブラリは [alchemist](https://pub.dev/packages/alchemist) を使う。
 
+**Golden Test は CI では実行せず、コミット前にローカルで実行して見た目の変化に
+気づくための開発者向けチェックと位置付ける。** 導入時に検証した結果、
+alchemist の CI Golden（`Ahem` フォント固定でプラットフォーム間の描画差を吸収する
+仕組み）を使っても、円形アイコンなどアンチエイリアシングを伴う描画は macOS
+ローカルと Linux 上の GitHub Actions runner で微小に異なり、`diffThreshold: 0`
+では決定的に比較できないことが分かった。Docker 等で CI と同一の描画環境を
+再現する運用コストは、現状の規模（個人開発、PR 作成者がそのままレビューも行う）
+に見合わないと判断し、CI での強制は行わない方針とした。この判断により
+「CI 環境で決定的に比較できる」という当初の想定は満たさない
+（経緯は `plans/47-golden-test-infrastructure.md` 参照）。将来チーム開発になる、
+または Golden 化するコンポーネントが増えて重要度が上がった場合は、
+CI runner を `macos-latest` にする等の再導入を検討する。
+
 - 共通設定は `packages/designsystem/test/flutter_test_config.dart` に置く。
-  `--dart-define=CI=true` の有無でプラットフォーム Golden（`goldens/<platform>/`、
-  実際のフォントで描画される人が読める画像）の生成有無を切り替える。
-- alchemist は CI Golden（`goldens/ci/`）をデフォルトで常に生成・比較する。
-  CI Golden はプラットフォーム間の描画差を避けるため **フォントを `Ahem` に固定し、
-  文字列は色付きブロックとして描画する**（アイコンやアイコン背景色などフォント
-  以外の描画は通常どおり比較対象になる）。CI（`check_pr.yaml`）では
-  `flutter test --dart-define=CI=true` を実行し、この CI Golden のみで決定的に
-  比較する。
+  CI Golden（`goldens/ci/`、Ahemフォント固定で文字が読めないブロック表示になる）は
+  `CiGoldensConfig(enabled: false)` で無効化し、実フォント・実アイコンで描画され
+  人が読める **プラットフォーム Golden（`goldens/<platform>/`）のみ**を比較対象にする。
 - 画面サイズは各シナリオ（`GoldenTestScenario`）を `SizedBox` で固定して包む。
   locale はシナリオを包む `MaterialApp` に `locale:` を明示指定して固定する。
   `MaterialApp` は既定では `supportedLocales` が `en_US` のみのため、`locale:` の
@@ -155,36 +163,33 @@ Golden Test ライブラリは [alchemist](https://pub.dev/packages/alchemist) �
   も合わせて指定する。
 - Golden Test には alchemist の `goldenTest` がデフォルトで `golden` タグを
   付与するが、意図を明示するためテストファイル先頭にも
-  `@Tags(['golden'])` を明記する。
-- Golden 画像は `test/**/goldens/ci/` 配下のみ Git 管理する。プラットフォーム
-  Golden（`test/**/goldens/<platform>/`）と差分画像（`test/**/failures/`）は
-  環境依存のため各パッケージの `.gitignore` で除外する。
-- プラットフォーム Golden は Git 管理しないため、`clone` 直後や `.gitignore` 対象を
-  削除した直後にローカルで `--dart-define=CI=true` なしの `flutter test` を実行すると、
-  比較対象のプラットフォーム Golden 画像が存在せず失敗する。その場合は一度
-  `flutter test --update-goldens` を実行してプラットフォーム Golden を生成する
-  （CI Golden 側は `test/**/goldens/ci/` に既にコミットされているため上書きされる
-  差分がないか確認したうえでコミットする）。
+  `@Tags(['golden'])` を明記する。CI（`check_pr.yaml`）はこのタグを使って
+  `flutter test --exclude-tags=golden` を実行し、Golden Test を除外する。
+- Golden 画像（`test/**/goldens/`）は Git 管理する。差分確認用の一時出力
+  （`test/**/failures/`）のみ `.gitignore` で除外する。
+  **コミットする Golden 画像は生成した環境（現状は開発者の macOS）に固有**であり、
+  他 OS 上で生成し直すと差分が出る可能性がある点に留意する。
 
 ```sh
 cd packages/designsystem
 
-# 通常のWidget Test・Unit Testのみ実行(Golden Testを除外)
+# 通常のWidget Test・Unit Testのみ実行(Golden Testを除外。CIもこのコマンドを使う)
 flutter test --exclude-tags=golden
 
-# Golden Testのみ実行
+# Golden Testのみ実行(コミット前にローカルで必ず実行する)
 flutter test --tags=golden
 
 # Golden画像を更新(見た目の変更を意図的に行った場合)
 flutter test --tags=golden --update-goldens
-
-# 全テストをCIと同条件(決定的な比較)で実行
-flutter test --dart-define=CI=true
 ```
 
-Golden 画像を更新する際は、変更が意図したものであることを PR の説明に明記した
-うえで `--update-goldens` を実行し、生成された差分画像を目視で確認してから
-コミットする。
+Golden Test を持つ Widget を変更した場合は、コミット前に必ず
+`flutter test --tags=golden` をローカルで実行し、意図しない見た目の変化が
+無いことを確認する。見た目の変更を意図的に行った場合は、変更が意図したもので
+あることを PR の説明に明記したうえで `--update-goldens` を実行し、
+生成された Golden 画像を目視で確認してからコミットする。CI では実行されないため、
+レビュアーは PR 説明にローカルでの Golden Test 実行結果（または確認済みの旨）が
+記載されているかを確認する。
 
 ## テスト追加基準（今後の機能 PR 向け）
 
@@ -194,7 +199,9 @@ Golden 画像を更新する際は、変更が意図したものであること�
   追加する。
 - `designsystem`・`apps/app` に新しい Widget や画面を追加した場合: 表示内容と
   ユーザー操作を検証する Widget Test を追加する。見た目の回帰を防ぎたい共通 Widget は
-  Golden Test の追加も検討する（基盤導入後）。
+  Golden Test の追加も検討する。Golden Test は CI では実行されないため、
+  追加・更新した場合は必ずコミット前にローカルで
+  `flutter test --tags=golden` を実行して確認する。
 - `apps/app` に翻訳リソース（`slang`）を追加・変更した場合: 対応するロケール
   （日本語・英語）ごとに表示文字列を検証する Widget Test を追加する。
   `LocaleSettings.setLocale` でロケールを明示的に指定し、端末ロケールに依存せず

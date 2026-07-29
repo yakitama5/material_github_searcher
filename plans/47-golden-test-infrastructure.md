@@ -331,6 +331,52 @@ flutter test --dart-define=CI=true
   と `supportedLocales: [Locale('ja')]` を明示することで実際に `ja` が
   解決されることを確認し、`docs/testing.md` の記述も補足した。
 
+## CI実行方針の転換（Draft PR作成後）
+
+Draft PR作成後、CI（`check_pr.yaml`）の `Test` ジョブが実際に失敗した
+（「初回のGolden画像がCIで一致しない可能性」として下記リスク欄に記載していた
+懸念が的中した）。
+
+- **事象**: ローカル(macOS)で生成しコミットした CI Golden
+  (`goldens/ci/meta_info_row.png`) と、GitHub Actions runner(Linux)上で
+  実際に描画した結果が0.52%(562px)一致しなかった。alchemist の CI Golden は
+  文字列を `Ahem` フォント固定のブロック表示にしてプラットフォーム間の描画差を
+  吸収する仕組みだが、`MetaInfoRow` の見た目の主な検証対象である
+  `CircleAvatar`（円形）と `Icon`（グリフ）はテキストではないためこの吸収の
+  対象外で、アンチエイリアシングの描画差が macOS と Linux の間でそのまま
+  残ってしまうことが原因だった。
+- **さらに判明した設計上の不備**: `flutter_test_config.dart` は
+  `platformGoldensConfig` のみ上書きしており `ciGoldensConfig` は常に
+  `enabled: true`（既定値）のままだった。そのため CI Golden はローカル(macOS)と
+  CI(Linux)の両方で比較される状態になっており、どちらか一方の環境で生成した
+  画像をコミットしても、もう一方の環境では必ず失敗する構造的な欠陥があった。
+- **検討した選択肢**: (a) Docker で Linux 環境を用意し CI Golden をそこで生成、
+  (b) GitHub Actions 上で一時的に `--update-goldens` を実行しartifactとして
+  取得、(c) CI runner を `macos-latest` に変更、(d) `diffThreshold` で微小差を
+  許容、(e) CI での Golden Test 実行自体をやめ、ローカルでの事前確認のみに
+  限定する。(a)(c)は継続的な運用コスト（Docker管理、GitHub Actionsのmacosランナー
+  課金レートの高さ）が今回の規模に見合わない。(d)は実測ベースで「アイコン1個が
+  丸ごと変色する規模の回帰」と「今回のノイズ」がほぼ同じ大きさ（画像全体の
+  0.4〜0.5%程度）であり、検出力を保てないと判断した。
+- **決定**: (e) を採用。個人開発で PR 作成者がそのままレビューも行う運用のため、
+  「コミット前にローカルで Golden Test を実行して見た目の変化に気づく」運用で
+  実用上十分と判断し、ユーザーが明示的にこの判断を承認した。
+  - `flutter_test_config.dart`: `ciGoldensConfig: CiGoldensConfig(enabled: false)`
+    とし、CI Golden(Ahem)自体を使わない。プラットフォーム Golden（実フォント・
+    実アイコン、人が読める画像）のみを比較対象にする。
+  - `check_pr.yaml`: `--dart-define=CI=true` を削除し、
+    `flutter test --exclude-tags=golden` として Golden Test を CI から除外する。
+  - `.gitignore`: プラットフォーム Golden を Git 管理対象に変更する（従来の
+    「CI Goldenのみ管理」から「プラットフォームGoldenを管理し、生成環境に依存する
+    ことを許容する」方針に転換）。
+  - `docs/testing.md`: 上記方針とローカルでの実行を徹底する運用ルールを明記する。
+- **完了条件への影響**: 当初の完了条件「CI環境で決定的に比較できる」は、この
+  方針転換により満たさなくなった。CIでの強制力を手放す代わりに得られるのは
+  「実フォント・実アイコンで人が読める、ローカルレビュー向けの Golden 画像」
+  というシンプルな構成である。将来チーム開発になる、または Golden 化する
+  コンポーネントが増えて重要度が上がった場合は、CI runner を `macos-latest`
+  にする等の再導入を検討する余地を残す。
+
 ## リスクと対応
 
 - **CI Golden（Ahemフォント固定）下でテキストが色付きブロック化すると、
