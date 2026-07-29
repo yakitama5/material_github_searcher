@@ -312,6 +312,25 @@ flutter test --dart-define=CI=true
   `flutter test` が失敗する。`docs/testing.md` に対応（`--update-goldens` を
   一度実行する）を追記した。
 
+## フレッシュエージェントによるレビューと対応
+
+実装完了後、新規コンテキストのエージェントに差分レビューを依頼し、指摘2件に
+実装で対応した。
+
+- **バグ**: `MetaInfoRow` の `value` の `Text` が `Expanded`/`Flexible` で
+  幅制約されておらず、`overflow: TextOverflow.ellipsis` が機能していなかった
+  （長い `value` で `RenderFlex overflowed` 例外が発生することをレビュー側が実測）。
+  `Flexible` で包んで修正し、あわせてシナリオ3の `value` を短い数値文字列から
+  実際にオーバーフローする長さの文字列に変更し、Golden Testがこの不備を
+  検出できるようにした。
+- **ドキュメント不整合**: `docs/testing.md` に「`MaterialApp` の `locale:` で
+  固定する」と書いたが、`supportedLocales` 未指定では既定の `en_US` に
+  フォールバックし実際には `ja` が反映されていなかった（レビュー側が
+  `Localizations.maybeLocaleOf` で実測）。`flutter_localizations` を
+  designsystemの `dev_dependencies` に追加し、`GlobalMaterialLocalizations.delegates`
+  と `supportedLocales: [Locale('ja')]` を明示することで実際に `ja` が
+  解決されることを確認し、`docs/testing.md` の記述も補足した。
+
 ## リスクと対応
 
 - **CI Golden（Ahemフォント固定）下でテキストが色付きブロック化すると、

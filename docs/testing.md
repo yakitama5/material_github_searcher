@@ -148,6 +148,11 @@ Golden Test ライブラリは [alchemist](https://pub.dev/packages/alchemist) �
   比較する。
 - 画面サイズは各シナリオ（`GoldenTestScenario`）を `SizedBox` で固定して包む。
   locale はシナリオを包む `MaterialApp` に `locale:` を明示指定して固定する。
+  `MaterialApp` は既定では `supportedLocales` が `en_US` のみのため、`locale:` の
+  指定だけでは実際のロケール解決に反映されない。`ja` を実際に反映させたい場合は
+  `flutter_localizations`（`dev_dependencies` に `sdk: flutter` で追加）の
+  `GlobalMaterialLocalizations.delegates` と、対象言語を含む `supportedLocales`
+  も合わせて指定する。
 - Golden Test には alchemist の `goldenTest` がデフォルトで `golden` タグを
   付与するが、意図を明示するためテストファイル先頭にも
   `@Tags(['golden'])` を明記する。

@@ -4,6 +4,7 @@ library;
 import 'package:alchemist/alchemist.dart';
 import 'package:designsystem/designsystem.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() async {
@@ -41,7 +42,7 @@ void main() async {
               icon: Icons.info_outline,
               iconColor: Colors.teal,
               label: '非常に長いラベル文字列でオーバーフローの挙動を確認する行',
-              value: '9,999,999,999+',
+              value: '非常に長い値文字列でオーバーフローの挙動を確認する',
             ),
           ),
         ),
@@ -60,6 +61,8 @@ class _Scenario extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       locale: const Locale('ja'),
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('ja')],
       home: Material(
         child: SizedBox(
           width: 300,
