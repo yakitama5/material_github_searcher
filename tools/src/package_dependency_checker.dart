@@ -4,18 +4,28 @@ import 'package:yaml/yaml.dart';
 
 /// `docs/ARCHITECTURE.md` に定義したパッケージ間の直接依存を表す。
 ///
-/// 推移的な依存は許可しない。たとえば `app` は `application` に直接依存できるが、
-/// `application` の依存先である `domain` へ直接依存することはできない。
+/// コアである `foundation` と `domain` は、同心円の内側として外側のどの
+/// パッケージからでも直接依存してよい（レイヤーをまたいだ直接依存を許容する）。
+/// たとえば `app` や `infrastructure` は `domain` へ直接依存できる。
+/// コア以外のパッケージ間では推移的な依存を許可せず、たとえば `designsystem` は
+/// `infrastructure`・`dependency_override`・`app` を参照できない。
 const allowedPackageDependencies = <String, Set<String>>{
   'material_github_searcher': {
     'application',
     'dependency_override',
     'designsystem',
+    'domain',
+    'foundation',
   },
-  'designsystem': {'application', 'domain'},
+  'designsystem': {'application', 'domain', 'foundation'},
   'application': {'domain', 'foundation'},
-  'dependency_override': {'application', 'infrastructure_mock'},
-  'infrastructure_mock': {'domain'},
+  'dependency_override': {
+    'application',
+    'infrastructure_mock',
+    'domain',
+    'foundation',
+  },
+  'infrastructure_mock': {'domain', 'foundation'},
   'domain': {'foundation'},
   'foundation': {},
 };
