@@ -2,15 +2,23 @@
 flutter = "3.44.8"
 
 [tasks."test:e2e"]
-description = "Android実機でDev FlavorのPatrol E2E Testを実行する"
+description = "接続済み端末でDev FlavorのPatrol E2E Testを実行する"
 dir = "apps/app"
-usage = 'arg "<device>" help="flutter devicesに表示されるAndroid端末ID"'
+usage = 'arg "<device>" help="flutter devicesに表示されるAndroid端末またはiOS SimulatorのID"'
 env = { PATROL_FLUTTER_COMMAND = "mise exec -- flutter" }
 run = '''
 set -eu
 
-if [ -z "${ANDROID_HOME:-}" ]; then
-  echo "ANDROID_HOMEが未設定です。docs/development.mdのPatrolセットアップを確認してください。" >&2
+device_id="${usage_device?}"
+is_booted_ios_simulator=false
+if command -v xcrun >/dev/null 2>&1 &&
+  xcrun simctl list devices booted 2>/dev/null | grep -Fq "($device_id) (Booted)"; then
+  is_booted_ios_simulator=true
+fi
+
+if [ "$is_booted_ios_simulator" = false ] && [ -z "${ANDROID_HOME:-}" ]; then
+  echo "指定端末が起動中のiOS Simulatorとして検出されませんでした。" >&2
+  echo "Android実機で実行する場合はANDROID_HOMEを設定してください。" >&2
   exit 1
 fi
 
@@ -32,5 +40,5 @@ esac
 patrol test \
   --flavor dev \
   --dart-define-from-file=flavor/dev.json \
-  --device "${usage_device?}"
+  --device "$device_id"
 '''

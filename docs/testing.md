@@ -135,15 +135,17 @@ E2E Test も Required Status Check に含めず、ローカルで実行する。
 
 ### Patrol E2E Test 基盤（`apps/app`）
 
-Patrol Testは`apps/app/patrol_test/`へ配置し、ローカルのAndroid実機で実行する。
-環境構築と実機接続の詳細は`docs/development.md`を参照する。
+Patrol Testは`apps/app/patrol_test/`へ配置し、ローカルのAndroid実機または
+iOS Simulatorで実行する。iOS物理端末は対象外とする。環境構築と端末接続の詳細は
+`docs/development.md`を参照する。
 
 ```sh
 # リポジトリルートで実行する
-mise run test:e2e <Android device ID>
+mise run test:e2e <Android device ID または iOS Simulator ID>
 ```
 
-共通タスクはDev Flavorと`apps/app/flavor/dev.json`を必ず使用する。端末localeによる
+共通タスクはDev Flavorと`apps/app/flavor/dev.json`を必ず使用する。iOSではDev Schemeと
+DevのBundle IDを使い、SwiftPMを維持した`RunnerUITests` targetから起動する。端末localeによる
 結果差を防ぐため、`patrol_test/support/pump_test_app.dart`で`AppLocale.ja`へ固定して
 から、本番と共通の`createApp`をpumpする。テスト側から`main()`、`runApp()`、
 `WidgetsFlutterBinding.ensureInitialized()`は呼ばない。

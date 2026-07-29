@@ -91,7 +91,7 @@ Build Configuration（`Debug-dev`/`Release-dev`/`Profile-dev` など）を切り
 Xcodeを直接開いて実行する場合も、無印の `Runner` Schemeではなく `dev`/`prod` Scheme を
 選択すること（無印Schemeは Flavor の dart-define が渡らず起動時エラーになる）。
 
-Bundle IDやアプリ名（`PRODUCT_BUNDLE_IDENTIFIER` / `APP_DISPLAY_NAME`）は
+アプリ本体のBundle IDやアプリ名（`PRODUCT_BUNDLE_IDENTIFIER` / `APP_DISPLAY_NAME`）は
 `apps/app/flavor/dev.json` / `prod.json` を唯一のソースとして解決される。
 `ios/scripts/extract_dart_defines.sh` が `dev`/`prod` Scheme のBuild Pre-actionとして
 実行され、`--dart-define-from-file` の内容（`DART_DEFINES`）をデコードして
@@ -104,16 +104,23 @@ Bundle IDやアプリ名（`PRODUCT_BUNDLE_IDENTIFIER` / `APP_DISPLAY_NAME`）�
 無印の `Debug`/`Release`/`Profile`（既存の `Runner` Scheme用）はこの仕組みの
 対象外で、従来どおりの固定値のまま変更していない。
 
-## Android実機でのE2E Test（Patrol）
+Patrol CLIの`package_name` / `bundle_id`はflavor設定ファイルを参照できず、インストール済み
+アプリを特定する最終IDが必要なため、`apps/app/pubspec.yaml`の`patrol`セクションにDevの値を
+重複して記載する。`flavor/dev.json`のIDを変更する場合は、Androidは
+`appIdAndroid + appIdSuffix`、iOSは`appIdIos + appIdSuffix`となるよう同セクションも同期する。
 
-PatrolによるE2E Testは、ローカルで接続したAndroid実機を対象に実行する。
-GitHub ActionsやPRのRequired Status Checkでは実行しない。
+## Android実機・iOS SimulatorでのE2E Test（Patrol）
+
+PatrolによるE2E Testは、ローカルで接続したAndroid実機または起動中の
+iOS Simulatorを対象に実行する。物理iOS端末は署名とProvisioning Profileの運用が
+必要になるため対象外とする。GitHub ActionsやPRのRequired Status Checkでは実行しない。
 
 ### Patrolのセットアップ
 
 Patrol package `4.8.0` と互換性のあるPatrol CLI `4.6.1`を固定して使う。
-CLIをインストールし、Dartのグローバル実行ファイルとAndroid SDKを環境変数へ追加する。
-macOSでAndroid Studioの既定パスを使う場合は次のように設定できる。
+CLIをインストールし、Dartのグローバル実行ファイルを`PATH`へ追加する。
+Android実機で実行する場合はAndroid SDKも環境変数へ追加する。macOSでAndroid Studioの
+既定パスを使う場合は次のように設定できる。
 
 ```sh
 mise exec -- dart pub global activate patrol_cli 4.6.1
@@ -127,8 +134,9 @@ export PATH="$PATH:$ANDROID_HOME/platform-tools"
 `export`行を追加する。Android SDKを別の場所へインストールしている場合は、
 Android StudioのSDK Managerに表示されるパスを`ANDROID_HOME`へ設定する。
 
-PatrolとAndroidの項目に問題がないことを確認する。iOSは本E2E Testの対象外なので、
-iOS関連ツールに関する警告は本Issueの実行を妨げない。
+Patrolと実行対象プラットフォームの項目に問題がないことを確認する。iOS Simulatorでは
+XcodeとCommand Line Toolsが必要になるため、`xcode-select -p`が利用するXcodeを
+指していることも確認する。
 
 ```sh
 PATROL_FLUTTER_COMMAND="mise exec -- flutter" patrol doctor
@@ -153,14 +161,38 @@ mise run test:e2e <Android device ID>
 
 端末IDは環境固有のため、`mise.toml`やテストコードへ保存しない。
 
+### iOS Simulatorの起動と実行
+
+1. Xcodeで利用するiOS Simulator runtimeをインストールする。
+2. Simulatorを起動し、リポジトリルートから端末IDを確認する。
+
+```sh
+xcrun simctl list devices booted
+mise exec -- flutter devices
+```
+
+表示されたiOS SimulatorのIDをAndroidと共通のタスクへ渡す。タスクはDev Scheme、
+DevのBundle ID `com.example.materialGithubSearcher.dev`、`flavor/dev.json`を使用する。
+PatrolのiOSネイティブテストは`RunnerUITests` targetから起動し、SwiftPMが生成する
+`FlutterGeneratedPluginSwiftPackage`経由でPatrolへリンクする。CocoaPodsは使用しない。
+Flavor用Build ConfigurationのUI Test Bundle IDは`flavor/*.json`由来の`appIdIos`から
+`$(appIdIos).RunnerUITests`として導出する。アプリ本体と異なり`appIdSuffix`を付けず、
+テストランナーのIDはDev/Prod間で共通とする。
+
+```sh
+mise run test:e2e <iOS Simulator ID>
+```
+
+物理iOS端末は選択しない。Simulator IDは環境固有のため、設定ファイルへ保存しない。
+
 ### トラブルシュート
 
 - `Patrol CLIが見つかりません`またはCLIのバージョンエラー
   - `mise exec -- dart pub global activate patrol_cli 4.6.1`を実行し、
     `$HOME/.pub-cache/bin`が`PATH`に含まれることを確認する。
 - `ANDROID_HOMEが未設定です`
-  - Android StudioのSDK ManagerでSDKの場所を確認し、そのパスを
-    `ANDROID_HOME`へ設定する。
+  - Android実機で実行する場合は、Android StudioのSDK ManagerでSDKの場所を確認し、
+    そのパスを`ANDROID_HOME`へ設定する。
 - `flutter devices`に実機が表示されない
   - USBケーブル、USBデバッグ、実機側の認証ダイアログを確認する。
     `adb kill-server`、`adb start-server`の順に実行してから再接続する。
@@ -174,6 +206,17 @@ mise run test:e2e <Android device ID>
   - 実機の画面ロックを解除し、Devアプリ
     `com.example.material_github_searcher.dev`が対象端末へインストール可能か確認する。
     ProdアプリとはApplication IDが異なるため、Patrol設定にはDevの最終IDを使う。
+- `xcodebuild`が利用するXcodeまたはSimulator runtimeを見つけられない
+  - `xcode-select -p`、`xcodebuild -version`、`xcrun simctl list devices`を確認する。
+    複数のXcodeがある場合は、利用するXcodeをCommand Line Toolsに設定する。
+- `RunnerUITests`またはSwift Packageの解決に失敗する
+  - `apps/app`で`mise exec -- flutter clean`を実行し、リポジトリルートで
+    `mise exec -- flutter pub get`を再実行する。その後、起動中のSimulatorを明示して
+    再試行する。Podfileや`pod install`は追加しない。
+- iOSでDevアプリの起動を待ち続ける
+  - 対象が物理端末ではなく起動中のSimulatorであることと、DevのBundle ID
+    `com.example.materialGithubSearcher.dev`が`flavor/dev.json`とPatrol設定の両方で
+    一致していることを確認する。
 
 ## Flutterのアップグレード
 
