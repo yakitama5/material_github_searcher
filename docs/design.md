@@ -51,6 +51,16 @@ Portraitに固定している。iPadは`UIRequiresFullScreen`も必要（無い�
 Split View等のマルチタスキング時に固定が効かない。引き換えにiPadでの
 マルチタスキング表示はできなくなる）。
 
+Androidは`targetSdkVersion`36（Android 16）以降、smallestWidthが600dp以上の
+大画面端末（タブレット・展開時のフォルダブル等）では`android:screenOrientation`が
+システムに無視されるため、`android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY`
+プロパティで一時的に固定を維持している。この互換プロパティは
+[`targetSdkVersion` 37で廃止されることがAndroid公式ドキュメントで明言されており](https://developer.android.com/about/versions/16/behavior-changes-16)、
+その時点では大画面Android端末でPortrait固定を維持する手段が無くなる（＝
+アプリ側の設定によらずシステムが回転・リサイズを許可する）。`docs/flutter-upgrade.md`
+に沿ってFlutterをアップグレードし`targetSdkVersion`が37以上になる際は、この方針
+（Portrait固定の前提）自体を再評価する。
+
 ### responsive_frameworkは不採用
 
 幅ベースの判断のみでFlutter標準APIの範囲内に収まるため導入しない。複数画面で

@@ -237,3 +237,21 @@ MD3準拠や今後実装する画面のデザイン方針全般を記載する`d
 方針へ変更した。本plan・`docs/testing.md`に残す詳細な設計根拠（一次情報の引用、
 検討した代替案等）は経緯の記録として維持し、実装が読む生きたドキュメント
 （`docs/design.md`）側は簡潔さを優先する。
+
+## 追記: Android大画面端末でのPortrait固定の限界（CodeRabbit指摘対応）
+
+PR #61へのCodeRabbitレビューで、`android:screenOrientation="portrait"`だけでは
+Android 16（`targetSdkVersion` 36、Flutter 3.44系のGradle Plugin既定値）以降、
+smallestWidthが600dp以上の大画面端末（タブレット・展開時のフォルダブル等）で
+システムがこの指定を無視するという指摘を受けた。[Android公式ドキュメント](https://developer.android.com/about/versions/16/behavior-changes-16)
+で裏取りした結果、指摘は正確だった。
+
+- 対応: `android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY`
+  プロパティを`AndroidManifest.xml`の`<application>`へ追加し、現行の
+  `targetSdkVersion` 36の間はPortrait固定を維持する。
+- 制約: このプロパティによるopt-outはAndroid公式ドキュメントで
+  「`targetSdkVersion` 37では廃止される」と明言されている。`docs/flutter-upgrade.md`
+  に沿ってFlutterをアップグレードし`targetSdkVersion`が37以上になった時点で、
+  大画面Android端末でのPortrait固定は（アプリ側の設定によらず）保証できなくなる。
+  その時点で「画面回転をPortraitに固定する」という本Issueの前提自体を再評価する
+  必要がある。`docs/design.md`にも同様の注記を追加した。

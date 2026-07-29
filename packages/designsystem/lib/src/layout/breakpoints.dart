@@ -1,7 +1,7 @@
 /// Material Design 3 の Window size classes に基づく幅の分類。
 ///
 /// デバイス種別ではなく利用可能な幅(dp)でレイアウトを判断する方針の一部として、
-/// `docs/responsive-design.md` の定義をコードに反映したもの。
+/// `docs/design.md` の定義をコードに反映したもの。
 /// 参考: https://m3.material.io/foundations/layout/breakpoints/overview
 enum WindowSizeClass {
   /// 0dp以上 [Breakpoints.medium] 未満。

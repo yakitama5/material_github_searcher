@@ -31,6 +31,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- targetSdkVersion 36(Android 16)以降、smallestWidthが600dp以上の大画面端末では
+             android:screenOrientation がシステムに無視されるため、この互換プロパティで
+             Portrait固定を維持する。ただしこのopt-outはtargetSdkVersion 37で廃止される
+             ことがAndroid公式ドキュメントで明言されており、その時点では大画面端末での
+             Portrait固定を維持する手段が無くなる（docs/design.md参照）。 -->
+        <property
+            android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+            android:value="true" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

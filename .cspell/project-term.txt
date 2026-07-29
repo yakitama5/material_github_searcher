@@ -6,6 +6,7 @@ designsystem
 gtr
 gtrconfig
 numstat
+RESIZABILITY
 Slurper
 worktree
 worktrees
