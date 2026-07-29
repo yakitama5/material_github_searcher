@@ -29,3 +29,4 @@
 - 元々は [`ymm-oss/flutter-mobile-project-template`](https://github.com/ymm-oss/flutter-mobile-project-template)の方式を好んで利用していた
 - 今回の対応の中で改めて調査し、自前のビルドスクリプトで実現する案よりも各種ライブラリ(Firebaseなど)の公式仕様に沿って対応した方がよいと判断
 - `productFlavors`と`--dart-define-from-file`の齟齬が発生するリスクも考慮して`AppBuildConfig`の初期化処理で判定を入れている
+- ただし、アプリ名やIDを二重管理するのは避けたいので、iOSではデコード方式を採用したまま(ここは迷った)
