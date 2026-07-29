@@ -65,9 +65,12 @@ else
     esac
 
     # dart format の対象は analyze と同じ Dart Workspace のソース・依存設定。
+    # apps/app/build.yaml と assets/i18n/*.i18n.yaml は slang のコード生成入力で、
+    # 変更しても再生成(*.g.dart への反映)を忘れると検知できないため対象に含める。
     case "$path" in
       *.dart | */pubspec.yaml | pubspec.yaml | */pubspec.lock | pubspec.lock | \
-        mise.toml | .github/actions/setup-flutter/action.yaml)
+        mise.toml | .github/actions/setup-flutter/action.yaml | \
+        apps/app/build.yaml | apps/app/assets/i18n/*.i18n.yaml)
         format=true
         ;;
     esac
@@ -76,7 +79,8 @@ else
     case "$path" in
       *.dart | */pubspec.yaml | pubspec.yaml | */pubspec.lock | pubspec.lock | \
         analysis_options.yaml | apps/app/flavor/*.json | mise.toml | \
-        .github/actions/setup-flutter/action.yaml)
+        .github/actions/setup-flutter/action.yaml | \
+        apps/app/build.yaml | apps/app/assets/i18n/*.i18n.yaml)
         analyze=true
         ;;
     esac
@@ -84,7 +88,8 @@ else
     # Dart のテストコードも *.dart に含まれる。解析設定だけの変更では Test は不要。
     case "$path" in
       *.dart | */pubspec.yaml | pubspec.yaml | */pubspec.lock | pubspec.lock | \
-        apps/app/flavor/*.json | mise.toml | .github/actions/setup-flutter/action.yaml)
+        apps/app/flavor/*.json | mise.toml | .github/actions/setup-flutter/action.yaml | \
+        apps/app/build.yaml | apps/app/assets/i18n/*.i18n.yaml)
         test=true
         ;;
     esac

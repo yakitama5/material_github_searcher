@@ -79,6 +79,16 @@ assert_paths \
   $'format=true\nanalyze=true\ntest=true\ncspell=false\nmarkdown_lint=false\npackage_dependencies=false' \
   packages/domain/lib/model.g.dart
 
+assert_paths \
+  "slang build.yaml" \
+  $'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false' \
+  apps/app/build.yaml
+
+assert_paths \
+  "slang translation resource" \
+  $'format=true\nanalyze=true\ntest=true\ncspell=true\nmarkdown_lint=false\npackage_dependencies=false' \
+  apps/app/assets/i18n/common_ja.i18n.yaml
+
 assert_paths "shared detector" "$ALL" .github/scripts/detect_ci_changes.sh
 
 assert_paths \
