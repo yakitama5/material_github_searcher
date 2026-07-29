@@ -12,6 +12,27 @@ FlutterのThemeDataは`useMaterial3`が既定で`true`（Flutter 3.16以降）�
 設定は不要。`ColorScheme.fromSeed`等、MD3のカラーシステムに沿ったAPIを使う
 （`apps/app/lib/main.dart`参照）。
 
+## Skeleton
+
+読み込み中の共通プレースホルダーは`packages/designsystem`の`SkeletonScope`と
+`SkeletonBox`/`SkeletonText`/`SkeletonCircle`を使う。外部Skeleton packageは導入せず、
+Flutter標準の`AnimationController`と`AnimatedBuilder`で実装する。
+
+複数のプレースホルダーは同じ`SkeletonScope`で包む。Scope内部で1つだけTickerを所有し、
+各プリミティブは同じanimationを購読するため、テキストの複数行などでControllerを増やさない。
+Scopeの破棄時にはControllerも破棄する。`MediaQuery.disableAnimations`が有効な場合は
+アニメーションを停止し、静的な表示へ切り替える。
+
+色は`Theme.of(context).colorScheme`から導出する。通常色に
+`surfaceContainerHighest`、ハイライトに`onSurfaceVariant`を8%のalphaで合成した色を使い、
+その間を`easeInOut`で補間する。1200msの`repeat(reverse: true)`による穏やかな色pulseとし、
+Light/DarkおよびDynamic Colorを含むColorSchemeの変更に追従する。Skeleton自体は意味を
+持たない装飾なので、各プリミティブをSemantics treeから除外する。Repository固有の
+Skeletonレイアウトはdesignsystemへ追加せず、各画面の責務とする。
+
+Golden TestではScopeの1200ms周期に対して`tester.pump`へ固定のDurationを渡し、
+アニメーション位相を決定的にする。repeat中のため`pumpAndSettle`は使わない。
+
 ## レスポンシブ対応
 
 デバイス種別ではなく利用可能幅で判断する。画面全体のレイアウト切り替えには
