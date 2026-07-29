@@ -1,0 +1,5 @@
+# alchemistのプラットフォームgoldenは環境依存のため管理対象外とする。
+# CI golden(goldens/ci/)のみgit管理する。
+test/**/goldens/**/*.*
+test/**/failures/**/*.*
+!test/**/goldens/ci/*.*

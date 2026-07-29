@@ -130,9 +130,56 @@ E2E Test は Required Status Check に含めず、ローカルで実行する。
 - **Patrol**: 実機・エミュレータ上で複数画面をまたぐ主要ユーザーフロー
   （例: 検索してリポジトリ詳細を開く）を検証する E2E Test。外部サービスへの
   依存は `dependency_override` で決定的な Fake に差し替えたうえで実行する想定とする。
-- Golden Test・Patrol とも、本ドキュメント執筆時点では基盤（Golden Test 用ライブラリ、
-  Patrol のセットアップ）を導入していない。基盤導入は別 Issue で行い、導入後に
-  実行コマンドとディレクトリ構成を本ドキュメントへ追記する。
+- Patrol は本ドキュメント執筆時点では基盤（セットアップ）を導入していない。
+  基盤導入は別 Issue で行い、導入後に実行コマンドを本ドキュメントへ追記する。
+
+### Golden Test 基盤（`packages/designsystem`）
+
+Golden Test ライブラリは [alchemist](https://pub.dev/packages/alchemist) を使う。
+
+- 共通設定は `packages/designsystem/test/flutter_test_config.dart` に置く。
+  `--dart-define=CI=true` の有無でプラットフォーム Golden（`goldens/<platform>/`、
+  実際のフォントで描画される人が読める画像）の生成有無を切り替える。
+- alchemist は CI Golden（`goldens/ci/`）をデフォルトで常に生成・比較する。
+  CI Golden はプラットフォーム間の描画差を避けるため **フォントを `Ahem` に固定し、
+  文字列は色付きブロックとして描画する**（アイコンやアイコン背景色などフォント
+  以外の描画は通常どおり比較対象になる）。CI（`check_pr.yaml`）では
+  `flutter test --dart-define=CI=true` を実行し、この CI Golden のみで決定的に
+  比較する。
+- 画面サイズは各シナリオ（`GoldenTestScenario`）を `SizedBox` で固定して包む。
+  locale はシナリオを包む `MaterialApp` に `locale:` を明示指定して固定する。
+- Golden Test には alchemist の `goldenTest` がデフォルトで `golden` タグを
+  付与するが、意図を明示するためテストファイル先頭にも
+  `@Tags(['golden'])` を明記する。
+- Golden 画像は `test/**/goldens/ci/` 配下のみ Git 管理する。プラットフォーム
+  Golden（`test/**/goldens/<platform>/`）と差分画像（`test/**/failures/`）は
+  環境依存のため各パッケージの `.gitignore` で除外する。
+- プラットフォーム Golden は Git 管理しないため、`clone` 直後や `.gitignore` 対象を
+  削除した直後にローカルで `--dart-define=CI=true` なしの `flutter test` を実行すると、
+  比較対象のプラットフォーム Golden 画像が存在せず失敗する。その場合は一度
+  `flutter test --update-goldens` を実行してプラットフォーム Golden を生成する
+  （CI Golden 側は `test/**/goldens/ci/` に既にコミットされているため上書きされる
+  差分がないか確認したうえでコミットする）。
+
+```sh
+cd packages/designsystem
+
+# 通常のWidget Test・Unit Testのみ実行(Golden Testを除外)
+flutter test --exclude-tags=golden
+
+# Golden Testのみ実行
+flutter test --tags=golden
+
+# Golden画像を更新(見た目の変更を意図的に行った場合)
+flutter test --tags=golden --update-goldens
+
+# 全テストをCIと同条件(決定的な比較)で実行
+flutter test --dart-define=CI=true
+```
+
+Golden 画像を更新する際は、変更が意図したものであることを PR の説明に明記した
+うえで `--update-goldens` を実行し、生成された差分画像を目視で確認してから
+コミットする。
 
 ## テスト追加基準（今後の機能 PR 向け）
 

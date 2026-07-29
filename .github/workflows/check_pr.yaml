@@ -95,7 +95,10 @@ jobs:
 
       - name: Test designsystem package
         working-directory: packages/designsystem
-        run: flutter test
+        # CI環境ではAlchemistのプラットフォームgolden生成を無効化し、
+        # CI golden(Ahemフォント固定)のみで決定的に比較する
+        # (packages/designsystem/test/flutter_test_config.dart 参照)。
+        run: flutter test --dart-define=CI=true
 
       - name: Test Flutter app
         working-directory: apps/app

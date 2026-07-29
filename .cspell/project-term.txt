@@ -10,3 +10,4 @@ RESIZABILITY
 Slurper
 worktree
 worktrees
+yakitama
