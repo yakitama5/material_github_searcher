@@ -93,6 +93,10 @@ jobs:
       - name: Test SDK synchronization tool
         run: dart test test/tools
 
+      - name: Test designsystem package
+        working-directory: packages/designsystem
+        run: flutter test
+
       - name: Test Flutter app
         working-directory: apps/app
         run: flutter test
