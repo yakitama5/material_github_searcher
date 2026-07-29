@@ -21,6 +21,20 @@ mise exec -- dart tools/sync_sdk_versions.dart --check
 mise exec -- flutter pub get
 ```
 
+## 多言語化（slang）のコード生成
+
+`apps/app` は `slang`/`slang_flutter` で日本語・英語の文言を管理する。設定は
+`apps/app/build.yaml`、翻訳リソースは `apps/app/assets/i18n/*.i18n.yaml` に置く。
+`build_runner` の `--workspace` フラグにより、リポジトリルートから次のコマンドで
+生成できる（`apps/app` へ `cd` する必要はない）。
+
+```sh
+mise exec -- dart run build_runner build --workspace -d
+```
+
+生成された `apps/app/lib/i18n/*.g.dart` はリポジトリにコミットする。翻訳
+リソースを変更したら、コミット前に上記コマンドで再生成すること。
+
 ## アプリの実行・テスト・build
 
 Flutterアプリの実行、テスト、buildは `apps/app` で行う。
