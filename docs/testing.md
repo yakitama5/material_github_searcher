@@ -64,7 +64,7 @@
 `designsystem`・`apps/app`で、幅によって表示・レイアウトが変わるWidget/画面の
 Widget Testを書く場合は、`tester.view.physicalSize`と`tester.view.devicePixelRatio`
 を設定し、代表的な画面幅で検証する（`addTearDown(tester.view.reset)`で後続テストへ
-の影響を防ぐ）。判断基準・ブレークポイントの定義自体は `docs/responsive-design.md`
+の影響を防ぐ）。判断基準・ブレークポイントの定義自体は `docs/design.md`
 を参照する。
 
 代表幅は、Window size class（compact/medium/expanded）につき1つ、現行の主流機種の
