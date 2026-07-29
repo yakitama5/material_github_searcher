@@ -8,6 +8,8 @@ environment:
   flutter: 3.44.8
 
 dependencies:
+  # アプリ状態を参照する共通UI（今後追加予定）で application の Provider を
+  # 監視するために保持する。現時点では未使用（docs/ARCHITECTURE.md 参照）。
   application:
     path: ../application
   domain:
