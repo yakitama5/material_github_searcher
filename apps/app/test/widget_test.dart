@@ -8,22 +8,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
 
+const _config = AppBuildConfig(
+  flavor: Flavor.dev,
+  appName: 'Dev - Material GitHub Searcher',
+  appIdAndroid: 'com.example.material_github_searcher',
+  appIdIos: 'com.example.materialGithubSearcher',
+  appIdSuffix: '.dev',
+);
+
 void main() {
+  // LocaleSettings は static singleton のため、各テストが変更した locale が
+  // 後続テストへ残らないよう、テストごとに基準となる ja へ戻す。
+  setUp(() async {
+    await LocaleSettings.setLocale(AppLocale.ja);
+  });
+
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(
-      const MyApp(
-        config: AppBuildConfig(
-          flavor: Flavor.dev,
-          appName: 'Dev - Material GitHub Searcher',
-          appIdAndroid: 'com.example.material_github_searcher',
-          appIdIos: 'com.example.materialGithubSearcher',
-          appIdSuffix: '.dev',
-        ),
-      ),
+      TranslationProvider(child: const MyApp(config: _config)),
     );
 
     // Verify that our counter starts at 0.
@@ -37,5 +44,35 @@ void main() {
     // Verify that our counter has incremented.
     expect(find.text('0'), findsNothing);
     expect(find.text('1'), findsOneWidget);
+  });
+
+  testWidgets('Displays Japanese strings for AppLocale.ja', (
+    WidgetTester tester,
+  ) async {
+    await LocaleSettings.setLocale(AppLocale.ja);
+    await tester.pumpWidget(
+      TranslationProvider(child: const MyApp(config: _config)),
+    );
+
+    expect(find.text('ボタンを押した回数'), findsOneWidget);
+    expect(
+      find.byTooltip('追加'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Displays English strings for AppLocale.en', (
+    WidgetTester tester,
+  ) async {
+    await LocaleSettings.setLocale(AppLocale.en);
+    await tester.pumpWidget(
+      TranslationProvider(child: const MyApp(config: _config)),
+    );
+
+    expect(
+      find.text('You have pushed the button this many times'),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('Increment'), findsOneWidget);
   });
 }

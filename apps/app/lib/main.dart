@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'i18n/strings.g.dart';
 import 'src/config/app_build_config.dart';
 
-void main() {
-  runApp(MyApp(config: AppBuildConfig.current));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await LocaleSettings.useDeviceLocale();
+  runApp(TranslationProvider(child: MyApp(config: AppBuildConfig.current)));
 }
 
 /// アプリケーションのルートとなるウィジェット。
@@ -18,6 +22,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: config.appName,
+      locale: TranslationProvider.of(context).flutterLocale,
+      supportedLocales: AppLocaleUtils.supportedLocales,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -108,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: .center,
           children: [
-            const Text('You have pushed the button this many times:'),
+            Text(context.i18n.common.pushCountLabel),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
@@ -118,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
-        tooltip: 'Increment',
+        tooltip: context.i18n.common.incrementTooltip,
         child: const Icon(Icons.add),
       ),
     );

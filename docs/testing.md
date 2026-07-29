@@ -120,6 +120,10 @@ E2E Test は Required Status Check に含めず、ローカルで実行する。
 - `designsystem`・`apps/app` に新しい Widget や画面を追加した場合: 表示内容と
   ユーザー操作を検証する Widget Test を追加する。見た目の回帰を防ぎたい共通 Widget は
   Golden Test の追加も検討する（基盤導入後）。
+- `apps/app` に翻訳リソース（`slang`）を追加・変更した場合: 対応するロケール
+  （日本語・英語）ごとに表示文字列を検証する Widget Test を追加する。
+  `LocaleSettings.setLocale` でロケールを明示的に指定し、端末ロケールに依存せず
+  決定的に検証する。
 - 主要ユーザーフローに影響する変更を行った場合: Patrol シナリオの追加・更新を
   検討する（基盤導入後）。
 - 不具合を修正した場合: その不具合を再現するテストを追加する。
