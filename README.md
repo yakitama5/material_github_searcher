@@ -15,6 +15,9 @@ A new Flutter project.
 
 パッケージの責務と依存方向は [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) を参照。
 
+技術選定・不選定の理由と背景は
+[`docs/technical-decisions.md`](docs/technical-decisions.md) を参照。
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
