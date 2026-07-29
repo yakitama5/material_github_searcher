@@ -39,9 +39,17 @@ Issue: <https://github.com/yakitama5/material_github_searcher/issues/47>
     ブロック表示**になる。
   - プラットフォーム Golden（`goldens/<platform>/`）は人が読める実際のレンダリングだが
     **デフォルトでは生成のみで比較はされない**。
+    **【訂正・実装後追記】この記述は誤り。`enabled: true`（デフォルト）の
+    `GoldensConfig` は生成だけでなく通常どおり比較まで行われることを、
+    alchemist本体のソース（`goldenTest`/`GoldenTestRunner.run`）で確認した。
+    後述の「CI実行方針の転換」で採用した最終方針（プラットフォームGoldenのみを
+    比較対象にする）は、この訂正後の理解を前提にしても実際に見た目の回帰を
+    検出できる設計になっている。**
   - つまり `PlatformGoldensConfig(enabled: !isCi)` は「比較の有無」ではなく
     「CI環境でプラットフォーム Golden を無駄に生成しない」ための最適化であり、
     決定性そのものは CI Golden のデフォルト仕様（Ahem 固定）が担保する。
+    （この段落は導入検討時点の設計意図の記録。最終的にはCI Golden自体を
+    使わない方針に転換したため、下記「CI実行方針の転換」を参照。）
   - この標準仕様（CI で比較する PNG は文字が読めないブロック表示になる）は
     ユーザー確認済み。実フォントロードは行わない。
 - CI（`.github/workflows/check_pr.yaml`）の `test` ジョブは現状
@@ -124,6 +132,10 @@ Issue: <https://github.com/yakitama5/material_github_searcher/issues/47>
 
 ### 完了条件・対応内容とのトレーサビリティ
 
+**【実装後注記】以下の表はプラン確定時点（実装方針）の対応内容であり、
+「CI環境で決定的に比較できる」を含む一部はDraft PR作成後に方針転換した。
+最終的な対応内容は後述の「CI実行方針の転換（Draft PR作成後）」を参照。**
+
 | Issue記載 | 対応 |
 | --- | --- |
 | Golden Test用ライブラリを導入する | `packages/designsystem/pubspec.yaml` に `alchemist: 0.14.0` を追加 |
@@ -142,6 +154,10 @@ Issue: <https://github.com/yakitama5/material_github_searcher/issues/47>
 | ✅ 通常テストとGolden TestをTagで区別できる | `--tags=golden` / `--exclude-tags=golden` |
 
 ### ディレクトリ構成
+
+**【実装後注記】下記構成図もプラン確定時点のもの。最終的には `goldens/ci/` は
+使わず `goldens/macos/`（生成環境固有、Git管理）のみになった。詳細は
+「CI実行方針の転換（Draft PR作成後）」を参照。**
 
 ```text
 packages/designsystem/
