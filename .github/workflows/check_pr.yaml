@@ -93,6 +93,10 @@ jobs:
       - name: Test SDK synchronization tool
         run: dart test test/tools
 
+      - name: Test application package
+        working-directory: packages/application
+        run: dart test
+
       - name: Test designsystem package
         working-directory: packages/designsystem
         # Golden TestはOS間の描画差(アンチエイリアシング等)によりCI上で

@@ -1,5 +1,8 @@
+import 'package:dependency_override/dependency_override.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 
 import 'i18n/strings.g.dart';
 import 'src/config/app_build_config.dart';
@@ -7,15 +10,26 @@ import 'src/config/app_build_config.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocaleSettings.useDeviceLocale();
-  runApp(createApp(config: AppBuildConfig.current));
+  runApp(
+    createApp(
+      config: AppBuildConfig.current,
+      overrides: createProductionOverrides(),
+    ),
+  );
 }
 
 /// 指定されたビルド設定でアプリケーションのルートWidgetを生成する。
 ///
 /// 通常起動とWidget Test・E2E Testで同じComposition Rootを利用するため、設定は
 /// 呼び出し元が明示的に注入する。
-Widget createApp({required AppBuildConfig config}) {
-  return TranslationProvider(child: MyApp(config: config));
+Widget createApp({
+  required AppBuildConfig config,
+  List<Override> overrides = const [],
+}) {
+  return ProviderScope(
+    overrides: overrides,
+    child: TranslationProvider(child: MyApp(config: config)),
+  );
 }
 
 /// アプリケーションのルートとなるウィジェット。

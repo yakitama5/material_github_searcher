@@ -11,5 +11,6 @@ dependencies:
     path: ../application
   infrastructure_mock:
     path: ../infrastructure/mock
+  riverpod: 3.4.2
 
 resolution: workspace

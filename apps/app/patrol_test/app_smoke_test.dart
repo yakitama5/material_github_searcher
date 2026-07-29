@@ -1,3 +1,4 @@
+import 'package:dependency_override/dependency_override.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
@@ -7,7 +8,7 @@ import 'support/pump_test_app.dart';
 
 void main() {
   patrolTest('Dev Flavorでアプリが起動する', ($) async {
-    await pumpTestApp($);
+    await pumpTestApp($, overrides: createMockOverrides());
 
     expect(AppBuildConfig.current.flavor, Flavor.dev);
     expect(LocaleSettings.currentLocale, AppLocale.ja);
