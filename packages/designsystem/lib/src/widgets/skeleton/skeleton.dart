@@ -85,7 +85,7 @@ class _SkeletonScopeData extends InheritedWidget {
         .dependOnInheritedWidgetOfExactType<_SkeletonScopeData>();
     assert(
       scope != null,
-      'SkeletonBox、SkeletonText、SkeletonCircleはSkeletonScopeの子として配置してください。',
+      'Skeleton widgets must be placed below a SkeletonScope.',
     );
     return scope!;
   }
@@ -194,11 +194,15 @@ class _SkeletonShape extends StatelessWidget {
         builder: (context, child) {
           final colorScheme = Theme.of(context).colorScheme;
           final baseColor = colorScheme.surfaceContainerHighest;
+          // Theme由来の2色を補間して、固定色を導入せずにpulseを表現する。
+          // ignore: altive_lints_plugin/avoid_hardcoded_color
           final highlightColor = Color.alphaBlend(
             colorScheme.onSurfaceVariant.withValues(alpha: 0.08),
             baseColor,
           );
           final progress = Curves.easeInOut.transform(animation.value);
+          // Theme由来のbaseとhighlightの間だけを補間するために使う。
+          // ignore: altive_lints_plugin/avoid_hardcoded_color
           final color = Color.lerp(baseColor, highlightColor, progress)!;
 
           return DecoratedBox(
