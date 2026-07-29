@@ -1,2 +1,7 @@
 xcassets
 xcworkspace
+xcodeproj
+xcshareddata
+xcschemes
+xcscheme
+pbxproj
