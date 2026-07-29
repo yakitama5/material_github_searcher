@@ -114,6 +114,19 @@ mise exec -- dart tools/sync_sdk_versions.dart
 その override を適用する。これにより、アプリやユースケースを変更せずにモックと
 実サービスを切り替えられ、結線の詳細も画面コードから分離できる。
 
+Application層のProviderはRiverpod generatorを使わず、`package:riverpod`で手書きする。
+`application`はFlutter SDKへ依存させず、FlutterのWidgetからProviderを監視する
+パッケージだけが`package:flutter_riverpod`を利用する（現時点では`apps/app`）。
+画面固有のViewModelは追加せず、Application Providerをアプリ状態の
+Single Source of Truthとする。
+公開するProviderは`packages/application/lib/application.dart`からexportする。
+
+Composition Rootは`apps/app/lib/main.dart`の`createApp`に集約し、アプリ全体を
+`ProviderScope`で包む。通常起動では`createProductionOverrides()`、Widget TestやPatrol
+では必要に応じて`createMockOverrides()`またはテスト対象だけのoverrideを`createApp`へ
+渡す。Repository実装の追加後も新しいComposition Rootは作らず、
+`packages/dependency_override`の既存関数へ結線を追加する。
+
 ## 最初に用意する infrastructure
 
 最初は `packages/infrastructure/mock` のみを用意する。機能が未実装の段階では

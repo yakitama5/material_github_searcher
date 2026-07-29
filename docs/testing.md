@@ -36,18 +36,19 @@
 | `apps/app` | Widget Test | 画面の表示、ユーザー操作（tap 等）、ルーティング |
 | 主要ユーザーフロー | E2E Test（Patrol） | 複数画面をまたぐ実利用シナリオ |
 
-`packages/application` は状態管理ライブラリとして Riverpod を想定している
-（本ドキュメント執筆時点では `pubspec.yaml` に未追加で、正式な採用は未確定）。想定する
+`packages/application`の状態管理ライブラリにはRiverpodを採用し、Providerはgeneratorを
+使わず手書きする。Application層はFlutter SDKへ依存せず`package:riverpod`を利用し、
+Flutter Widget側だけが`package:flutter_riverpod`を利用する。画面固有のViewModelは
+追加せず、Application Providerをアプリ状態のSingle Source of Truthとして扱う。
 使い分けは次のとおり。
 
-- `application` 単体の Unit Test では、検証したい Provider だけを
-  `ProviderContainer`/`ProviderScope` の override 機能で Fake に差し替える。
+- `application`単体のUnit Testでは`ProviderContainer`を生成し、検証したいProvider
+  だけをoverrideしてFakeに差し替える。テスト終了時はContainerを必ず破棄する。
+- Widget Testでは本番と同じ`createApp`を使い、テスト固有の差し替えが必要な場合だけ
+  `createApp`の`overrides`へ対象Providerのoverrideを渡す。
 - アプリ全体を起動する E2E Test（Patrol）では、Provider 単位で個別に override せず、
   `dependency_override` が公開する Mock 向け override 一式をそのまま適用し、
   実装コードを変更せずに Fake へ切り替える。
-
-具体的な実装パターン（Provider の書き方など）は、Riverpod の採用が確定した後に
-本ドキュメントへ追記する。
 
 ## 配置と命名規約
 
@@ -117,9 +118,9 @@ E2E Test も Required Status Check に含めず、ローカルで実行する。
 `check_pr.yaml` 冒頭のコメント（`BuildとPatrolは実行時間・安定性の観点から対象外とする。`）
 で既に運用上の決定として明文化されており、本ドキュメントはこれを踏襲する。
 
-現状の `test` ジョブは `test/tools` と `apps/app` の `flutter test` のみを実行して
-おり、`packages/domain` 等に `test/` を追加した時点で、それらも CI 対象に含める
-必要がある。パッケージ横断でテストを一括実行する仕組み（Melos 等）は、
+現状の`test`ジョブは`test/tools`、`packages/application`、`packages/designsystem`、
+`apps/app`のテストを実行する。`packages/domain`等に`test/`を追加した時点で、それらも
+CI対象に含める必要がある。パッケージ横断でテストを一括実行する仕組み（Melos等）は、
 `docs/ARCHITECTURE.md` が定義するとおり複数パッケージのテストが実際に必要になった
 段階で再検討する。現時点ではパッケージごとに `dart test` / `flutter test` を
 直接実行する。
@@ -151,10 +152,10 @@ DevのBundle IDを使い、SwiftPMを維持した`RunnerUITests` targetから起
 `WidgetsFlutterBinding.ensureInitialized()`は呼ばない。
 
 現時点では外部サービスやRepositoryが未実装のため、起動Smoke Testは外部通信を
-行わない。外部サービスを利用する機能を追加する際は、
-`patrol_test/support/pump_test_app.dart`へ`dependency_override`が公開するMock向け
-override一式を必須引数として追加し、`infrastructure_mock`の決定的なFakeへ
-差し替える。Dev向けの実サービス結線を暗黙に利用してはならない。
+行わない。Patrolは`dependency_override`が公開するMock向けoverride一式を
+`patrol_test/support/pump_test_app.dart`の必須引数へ渡して起動する。外部サービスを
+利用する機能を追加する際は、`createMockOverrides()`へ`infrastructure_mock`の
+決定的なFakeとの結線を追加する。Dev向けの実サービス結線を暗黙に利用してはならない。
 
 検索機能とリポジトリ詳細画面が完成した時点で、現在の起動Smoke Testを
 「検索して結果を選択し、リポジトリ詳細を開く」主要検索フローへ置き換える。
