@@ -1,2 +1,36 @@
 [tools]
 flutter = "3.44.8"
+
+[tasks."test:e2e"]
+description = "Android実機でDev FlavorのPatrol E2E Testを実行する"
+dir = "apps/app"
+usage = 'arg "<device>" help="flutter devicesに表示されるAndroid端末ID"'
+env = { PATROL_FLUTTER_COMMAND = "mise exec -- flutter" }
+run = '''
+set -eu
+
+if [ -z "${ANDROID_HOME:-}" ]; then
+  echo "ANDROID_HOMEが未設定です。docs/development.mdのPatrolセットアップを確認してください。" >&2
+  exit 1
+fi
+
+if ! command -v patrol >/dev/null 2>&1; then
+  echo "Patrol CLIが見つかりません: mise exec -- dart pub global activate patrol_cli 4.6.1" >&2
+  exit 1
+fi
+
+patrol_version="$(patrol --version 2>&1)"
+case "$patrol_version" in
+  *"patrol_cli v4.6.1"*) ;;
+  *)
+    echo "Patrol CLI 4.6.1が必要です: mise exec -- dart pub global activate patrol_cli 4.6.1" >&2
+    echo "$patrol_version" >&2
+    exit 1
+    ;;
+esac
+
+patrol test \
+  --flavor dev \
+  --dart-define-from-file=flavor/dev.json \
+  --device "${usage_device?}"
+'''
