@@ -277,3 +277,6 @@ Portrait固定という方針自体を撤回し、Issue起票時の前提（画�
 - `packages/designsystem`のブレークポイント判断（`WindowSizeClass.fromWidth`、
   `MediaQuery.sizeOf`ベースの幅判定）はorientationに依存しない設計のため、
   この方針転換によるコード変更は発生しない。
+- iOSシミュレータ（iPhone 17 Pro）・Android実機（Pixel 8a）の双方で撤回後の
+  ビルドを実行し、回転操作（Simulatorの回転コマンド／`adb shell settings put
+  system user_rotation`）でLandscape表示に切り替わることを確認した。
