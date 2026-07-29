@@ -5,3 +5,5 @@ xcshareddata
 xcschemes
 xcscheme
 pbxproj
+iphonesimulator
+libexec
