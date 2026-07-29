@@ -78,6 +78,21 @@ void main() {
     expect(loading(), 0);
   });
 
+  test('actionが同期的にthrowしても例外を伝播しつつカウントが0へ戻る', () async {
+    final usecase = _TestUsecase();
+
+    // actionはコールバックとしてカウント区間内で呼ばれるため、同期throwでも
+    // finallyでカウントが確実に戻る（負数化しない）ことを検証する。
+    await expectLater(
+      usecase.call<void>(
+        ref,
+        action: () => throw Exception('sync failure'),
+      ),
+      throwsException,
+    );
+    expect(loading(), 0);
+  });
+
   test('disableLoading:true ではローディングカウントを変更しない', () async {
     final completer = Completer<int>();
     final usecase = _TestUsecase();

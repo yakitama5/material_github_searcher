@@ -23,6 +23,6 @@ mixin RunUsecaseMixin {
       return action();
     }
 
-    return ref.read(appLoadingProvider.notifier).wrap(action());
+    return ref.read(appLoadingProvider.notifier).wrap(action);
   }
 }

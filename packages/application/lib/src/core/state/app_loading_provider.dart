@@ -15,15 +15,16 @@ class AppLoadingNotifier extends Notifier<int> {
   @override
   int build() => 0;
 
-  /// [future] の実行前後で参照カウントを増減させる。
+  /// [action] の実行前後で参照カウントを増減させる。
   ///
-  /// 実行開始でカウントを `+1` し、成功・失敗いずれの場合も `finally` で
-  /// `-1` へ戻す。これによりカウントが負数になることはなく、成功・失敗の
-  /// 双方でローディング状態が確実に解除される。
-  Future<T> wrap<T>(Future<T> future) async {
+  /// カウントを `+1` してから [action] を呼び出すため、[action] の同期部分も
+  /// ローディング区間に含める。成功・失敗いずれの場合も `finally` で `-1` へ
+  /// 戻すため、カウントが負数になることはなく、成功・失敗の双方でローディング
+  /// 状態が確実に解除される。
+  Future<T> wrap<T>(Future<T> Function() action) async {
     state = state + 1;
     try {
-      return await future;
+      return await action();
     } finally {
       state = state - 1;
     }
