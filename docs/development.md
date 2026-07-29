@@ -104,6 +104,77 @@ Bundle IDやアプリ名（`PRODUCT_BUNDLE_IDENTIFIER` / `APP_DISPLAY_NAME`）�
 無印の `Debug`/`Release`/`Profile`（既存の `Runner` Scheme用）はこの仕組みの
 対象外で、従来どおりの固定値のまま変更していない。
 
+## Android実機でのE2E Test（Patrol）
+
+PatrolによるE2E Testは、ローカルで接続したAndroid実機を対象に実行する。
+GitHub ActionsやPRのRequired Status Checkでは実行しない。
+
+### Patrolのセットアップ
+
+Patrol package `4.8.0` と互換性のあるPatrol CLI `4.6.1`を固定して使う。
+CLIをインストールし、Dartのグローバル実行ファイルとAndroid SDKを環境変数へ追加する。
+macOSでAndroid Studioの既定パスを使う場合は次のように設定できる。
+
+```sh
+mise exec -- dart pub global activate patrol_cli 4.6.1
+
+export PATH="$PATH:$HOME/.pub-cache/bin"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$PATH:$ANDROID_HOME/platform-tools"
+```
+
+シェルを開き直しても設定を維持する場合は、利用中のシェルの設定ファイルへ
+`export`行を追加する。Android SDKを別の場所へインストールしている場合は、
+Android StudioのSDK Managerに表示されるパスを`ANDROID_HOME`へ設定する。
+
+PatrolとAndroidの項目に問題がないことを確認する。iOSは本E2E Testの対象外なので、
+iOS関連ツールに関する警告は本Issueの実行を妨げない。
+
+```sh
+PATROL_FLUTTER_COMMAND="mise exec -- flutter" patrol doctor
+```
+
+### Android実機の接続と実行
+
+1. 実機の開発者向けオプションとUSBデバッグを有効にする。
+2. USBで接続し、実機に表示されるデバッグ許可ダイアログを承認する。
+3. 実機の画面ロックを解除した状態で、リポジトリルートから端末IDを確認する。
+
+```sh
+mise exec -- flutter devices
+```
+
+表示されたAndroid端末IDを共通タスクへ渡す。タスクはDev Flavorと
+`flavor/dev.json`を必ず使用し、リポジトリで固定したFlutterからPatrolを実行する。
+
+```sh
+mise run test:e2e <Android device ID>
+```
+
+端末IDは環境固有のため、`mise.toml`やテストコードへ保存しない。
+
+### トラブルシュート
+
+- `Patrol CLIが見つかりません`またはCLIのバージョンエラー
+  - `mise exec -- dart pub global activate patrol_cli 4.6.1`を実行し、
+    `$HOME/.pub-cache/bin`が`PATH`に含まれることを確認する。
+- `ANDROID_HOMEが未設定です`
+  - Android StudioのSDK ManagerでSDKの場所を確認し、そのパスを
+    `ANDROID_HOME`へ設定する。
+- `flutter devices`に実機が表示されない
+  - USBケーブル、USBデバッグ、実機側の認証ダイアログを確認する。
+    `adb kill-server`、`adb start-server`の順に実行してから再接続する。
+- 端末が`unauthorized`と表示される
+  - 実機の「USBデバッグの許可を取り消す」を実行して再接続し、認証をやり直す。
+- InstrumentationまたはGradle buildが失敗する
+  - `PATROL_FLUTTER_COMMAND="mise exec -- flutter" patrol doctor`で環境を確認する。
+    その後`cd apps/app && mise exec -- flutter clean`、リポジトリルートで
+    `mise exec -- flutter pub get`を実行して再試行する。
+- Patrolがアプリの起動を待ち続ける
+  - 実機の画面ロックを解除し、Devアプリ
+    `com.example.material_github_searcher.dev`が対象端末へインストール可能か確認する。
+    ProdアプリとはApplication IDが異なるため、Patrol設定にはDevの最終IDを使う。
+
 ## Flutterのアップグレード
 
 手順は [`flutter-upgrade.md`](flutter-upgrade.md) を参照。
