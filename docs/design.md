@@ -60,6 +60,6 @@ Material 3の標準ブレークポイントでは表現しきれない連続的�
 ## 対象外
 
 - 検索画面・詳細画面の具体的なレスポンシブ実装
-- `responsive_framework`・DevicePreviewの導入
+- `responsive_framework`の導入（理由は前述）
 - デスクトップ・外部ディスプレイ向けの`large`/`extraLarge`クラス
 - macOS/Web/Windows/Linux向けの画面回転・レスポンシブ対応（iOS/Androidのみ対象）
