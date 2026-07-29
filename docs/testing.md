@@ -110,8 +110,10 @@ mise exec -- flutter test
 ```
 
 CI（`.github/workflows/check_pr.yaml`）は、実行時間・安定性の観点から Unit Test・
-Widget Test・Golden Test など高速かつ決定的なテストのみを対象にする。Patrol による
-E2E Test は Required Status Check に含めず、ローカルで実行する。この境界は
+Widget Test など高速かつ決定的なテストのみを対象にする。Golden Test は
+OS 間の描画差により決定的に比較できないため CI 対象外とし、ローカルでの
+実行のみに限定する（詳細は後述の「Golden Test 基盤」を参照）。Patrol による
+E2E Test も Required Status Check に含めず、ローカルで実行する。この境界は
 `check_pr.yaml` 冒頭のコメント（`BuildとPatrolは実行時間・安定性の観点から対象外とする。`）
 で既に運用上の決定として明文化されており、本ドキュメントはこれを踏襲する。
 
@@ -130,9 +132,66 @@ E2E Test は Required Status Check に含めず、ローカルで実行する。
 - **Patrol**: 実機・エミュレータ上で複数画面をまたぐ主要ユーザーフロー
   （例: 検索してリポジトリ詳細を開く）を検証する E2E Test。外部サービスへの
   依存は `dependency_override` で決定的な Fake に差し替えたうえで実行する想定とする。
-- Golden Test・Patrol とも、本ドキュメント執筆時点では基盤（Golden Test 用ライブラリ、
-  Patrol のセットアップ）を導入していない。基盤導入は別 Issue で行い、導入後に
-  実行コマンドとディレクトリ構成を本ドキュメントへ追記する。
+- Patrol は本ドキュメント執筆時点では基盤（セットアップ）を導入していない。
+  基盤導入は別 Issue で行い、導入後に実行コマンドを本ドキュメントへ追記する。
+
+### Golden Test 基盤（`packages/designsystem`）
+
+Golden Test ライブラリは [alchemist](https://pub.dev/packages/alchemist) を使う。
+
+**Golden Test は CI では実行せず、コミット前にローカルで実行して見た目の変化に
+気づくための開発者向けチェックと位置付ける。** 導入時に検証した結果、
+alchemist の CI Golden（`Ahem` フォント固定でプラットフォーム間の描画差を吸収する
+仕組み）を使っても、円形アイコンなどアンチエイリアシングを伴う描画は macOS
+ローカルと Linux 上の GitHub Actions runner で微小に異なり、`diffThreshold: 0`
+では決定的に比較できないことが分かった。Docker 等で CI と同一の描画環境を
+再現する運用コストは、現状の規模（個人開発、PR 作成者がそのままレビューも行う）
+に見合わないと判断し、CI での強制は行わない方針とした。この判断により
+「CI 環境で決定的に比較できる」という当初の想定は満たさない
+（経緯は `plans/47-golden-test-infrastructure.md` 参照）。将来チーム開発になる、
+または Golden 化するコンポーネントが増えて重要度が上がった場合は、
+CI runner を `macos-latest` にする等の再導入を検討する。
+
+- 共通設定は `packages/designsystem/test/flutter_test_config.dart` に置く。
+  CI Golden（`goldens/ci/`、Ahemフォント固定で文字が読めないブロック表示になる）は
+  `CiGoldensConfig(enabled: false)` で無効化し、実フォント・実アイコンで描画され
+  人が読める **プラットフォーム Golden（`goldens/<platform>/`）のみ**を比較対象にする。
+- 画面サイズは各シナリオ（`GoldenTestScenario`）を `SizedBox` で固定して包む。
+  locale はシナリオを包む `MaterialApp` に `locale:` を明示指定して固定する。
+  `MaterialApp` は既定では `supportedLocales` が `en_US` のみのため、`locale:` の
+  指定だけでは実際のロケール解決に反映されない。`ja` を実際に反映させたい場合は
+  `flutter_localizations`（`dev_dependencies` に `sdk: flutter` で追加）の
+  `GlobalMaterialLocalizations.delegates` と、対象言語を含む `supportedLocales`
+  も合わせて指定する。
+- Golden Test には alchemist の `goldenTest` がデフォルトで `golden` タグを
+  付与するが、意図を明示するためテストファイル先頭にも
+  `@Tags(['golden'])` を明記する。CI（`check_pr.yaml`）はこのタグを使って
+  `flutter test --exclude-tags=golden` を実行し、Golden Test を除外する。
+- Golden 画像（`test/**/goldens/`）は Git 管理する。差分確認用の一時出力
+  （`test/**/failures/`）のみ `.gitignore` で除外する。
+  **コミットする Golden 画像は生成した環境（現状は開発者の macOS）に固有**であり、
+  他 OS 上で生成し直すと差分が出る可能性がある点に留意する。
+
+```sh
+cd packages/designsystem
+
+# 通常のWidget Test・Unit Testのみ実行(Golden Testを除外。CIもこのコマンドを使う)
+flutter test --exclude-tags=golden
+
+# Golden Testのみ実行(コミット前にローカルで必ず実行する)
+flutter test --tags=golden
+
+# Golden画像を更新(見た目の変更を意図的に行った場合)
+flutter test --tags=golden --update-goldens
+```
+
+Golden Test を持つ Widget を変更した場合は、コミット前に必ず
+`flutter test --tags=golden` をローカルで実行し、意図しない見た目の変化が
+無いことを確認する。見た目の変更を意図的に行った場合は、変更が意図したもので
+あることを PR の説明に明記したうえで `--update-goldens` を実行し、
+生成された Golden 画像を目視で確認してからコミットする。CI では実行されないため、
+レビュアーは PR 説明にローカルでの Golden Test 実行結果（または確認済みの旨）が
+記載されているかを確認する。
 
 ## テスト追加基準（今後の機能 PR 向け）
 
@@ -142,7 +201,9 @@ E2E Test は Required Status Check に含めず、ローカルで実行する。
   追加する。
 - `designsystem`・`apps/app` に新しい Widget や画面を追加した場合: 表示内容と
   ユーザー操作を検証する Widget Test を追加する。見た目の回帰を防ぎたい共通 Widget は
-  Golden Test の追加も検討する（基盤導入後）。
+  Golden Test の追加も検討する。Golden Test は CI では実行されないため、
+  追加・更新した場合は必ずコミット前にローカルで
+  `flutter test --tags=golden` を実行して確認する。
 - `apps/app` に翻訳リソース（`slang`）を追加・変更した場合: 対応するロケール
   （日本語・英語）ごとに表示文字列を検証する Widget Test を追加する。
   `LocaleSettings.setLocale` でロケールを明示的に指定し、端末ロケールに依存せず

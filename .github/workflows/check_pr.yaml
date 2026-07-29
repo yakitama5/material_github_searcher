@@ -95,7 +95,10 @@ jobs:
 
       - name: Test designsystem package
         working-directory: packages/designsystem
-        run: flutter test
+        # Golden TestはOS間の描画差(アンチエイリアシング等)によりCI上で
+        # 決定的に比較できないため対象外とする。ローカルでの実行のみで
+        # 見た目の変化に気づく運用とする(docs/testing.md 参照)。
+        run: flutter test --exclude-tags=golden
 
       - name: Test Flutter app
         working-directory: apps/app

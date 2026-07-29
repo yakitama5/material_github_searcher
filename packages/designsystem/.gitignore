@@ -1,0 +1,3 @@
+# Golden画像(test/**/goldens/)はローカルでの見た目確認用の基準画像として
+# Git管理する。差分確認用の一時出力(failures/)のみ除外する。
+test/**/failures/**/*.*
