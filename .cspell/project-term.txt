@@ -6,5 +6,6 @@ designsystem
 gtr
 gtrconfig
 numstat
+Slurper
 worktree
 worktrees

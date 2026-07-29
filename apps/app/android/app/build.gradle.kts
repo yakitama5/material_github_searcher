@@ -1,7 +1,19 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// apps/app/flavor/<flavor>.json を単一のソースとして Gradle と Dart の
+// アプリ名・Application ID 設定を共有する。
+val flavorDir = rootDir.resolve("../flavor")
+
+fun readFlavorConfig(flavorName: String): Map<String, String> {
+    val file = flavorDir.resolve("$flavorName.json")
+    @Suppress("UNCHECKED_CAST")
+    return JsonSlurper().parse(file) as Map<String, String>
 }
 
 android {
@@ -14,8 +26,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // applicationId は productFlavors の各 create ブロックで flavor ごとに
+        // 上書きするため、ここでは namespace と同じ値を仮のデフォルトとして設定する。
         applicationId = "com.example.material_github_searcher"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -23,6 +40,23 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        listOf("dev", "prod").forEach { flavorName ->
+            create(flavorName) {
+                dimension = "environment"
+                val config = readFlavorConfig(flavorName)
+                // appIdSuffix だけでなく appIdAndroid 自体も flavor ごとに
+                // 独立して切り替えられるよう、flavor 自身の値をそのまま反映する。
+                applicationId = config.getValue("appIdAndroid")
+                config.getValue("appIdSuffix").takeIf { it.isNotEmpty() }?.let {
+                    applicationIdSuffix = it
+                }
+                resValue("string", "app_name", config.getValue("appName"))
+            }
+        }
     }
 
     buildTypes {
