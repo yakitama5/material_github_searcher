@@ -121,6 +121,36 @@ void main() {
       expect(current.status, SearchHistoryStatus.ready);
       expect(current.history.entries, [SearchHistoryEntry('flutter')]);
     });
+
+    test('先発loadの遅延完了は後発loadが確定させた最新履歴を上書きしない', () async {
+      final gateA = Completer<void>();
+      fake
+        ..loadGate = gateA
+        ..loadResult = SearchHistory().recordSubmittedKeyword('A');
+
+      // 先発loadはgateAで止める。
+      final loadFuture1 = controller().load();
+      expect(state().status, SearchHistoryStatus.loading);
+
+      // 後発loadは即座に異なる結果(B)で完了し、最新のreadyへ進む。
+      fake
+        ..loadGate = null
+        ..loadResult = SearchHistory().recordSubmittedKeyword('B');
+      await controller().load();
+      expect(state().status, SearchHistoryStatus.ready);
+      expect(state().history.entries, [SearchHistoryEntry('B')]);
+
+      // 先発loadを異なる結果(A)で完了させる。
+      fake.loadResult = SearchHistory().recordSubmittedKeyword('A');
+      gateA.complete();
+      await loadFuture1;
+
+      // 先発の遅延完了によって、後発が確定させた最新履歴(B)が
+      // 古いスナップショット(A)へ巻き戻らない。
+      final current = state();
+      expect(current.status, SearchHistoryStatus.ready);
+      expect(current.history.entries, [SearchHistoryEntry('B')]);
+    });
   });
 
   group('recordSubmittedKeyword', () {
