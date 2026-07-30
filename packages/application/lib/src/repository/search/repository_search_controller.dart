@@ -66,14 +66,15 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
   ///
   /// cancelは通知用のerror Stateへ遷移させない。Settings・OpenContainer遷移の
   /// 直前などに呼び、遅延responseによるState更新を抑止する。追加取得中
-  /// （[RepositorySearchStatus.loadingMore]）であれば、cancel後に遅延応答を
-  /// 待たず即座に末尾Skeletonが残り続けないよう`success`へ戻す。初回取得中
-  /// （[RepositorySearchStatus.loading]）はcancelしてもStateを変更しない
-  /// （既存の挙動を維持する）。
+  /// （[RepositorySearchStatus.loadingMore]）・Pull to Refresh中
+  /// （[RepositorySearchStatus.refreshing]）であれば、cancel後に遅延応答を
+  /// 待たず即座に末尾Skeleton・refreshingインジケーターが残り続けないよう
+  /// `success`へ戻す。初回取得中（[RepositorySearchStatus.loading]）はcancel
+  /// してもStateを変更しない（既存の挙動を維持する）。
   void cancelPendingRequest() {
     _pendingController?.cancel();
     _pendingController = null;
-    state = state.cancelLoadingMore();
+    state = state.cancelInFlight();
   }
 
   /// 直近に成功した検索の続きのページを追加取得する。
@@ -128,6 +129,67 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
       }
       _pendingController = null;
       state = state.appendFailed(error);
+    }
+  }
+
+  /// 直近に成功した検索結果を維持したまま、page1をPull to Refreshで再取得する。
+  ///
+  /// [RepositorySearchStatus.success]・[RepositorySearchStatus.loadingMore]・
+  /// 既に[RepositorySearchStatus.refreshing]中の場合のみ実行する。未検索
+  /// （[RepositorySearchStatus.initial]）・初回取得中
+  /// （[RepositorySearchStatus.loading]）・初回error
+  /// （[RepositorySearchStatus.error]）では何もしない。initial取得のやり直しは
+  /// [retry]が担い、Pull to Refreshは一度でも取得に成功して一覧を維持できる
+  /// 状態専用とする（未検索・初回取得中・初回errorの画面はpull gestureが
+  /// 届いても無視する）。`submit`・`retry`・`loadNextPage`と同じ
+  /// `_pendingController`・`_generation`を共有し、進行中の追加requestを
+  /// cancelしてから実行する。
+  Future<void> refresh() async {
+    final current = state;
+    if (current.status != RepositorySearchStatus.success &&
+        current.status != RepositorySearchStatus.loadingMore &&
+        current.status != RepositorySearchStatus.refreshing) {
+      return;
+    }
+    await _refresh(current.query!);
+  }
+
+  Future<void> _refresh(RepositorySearchQuery query) async {
+    _pendingController?.cancel();
+    final controller = CancellationController();
+    _pendingController = controller;
+    final generation = ++_generation;
+
+    state = state.toRefreshing();
+
+    final repository = ref.read(repositorySearchRepositoryProvider);
+    try {
+      final result = await repository.search(
+        query: query,
+        page: _firstPage,
+        perPage: _perPage,
+        cancellationToken: controller.token,
+      );
+      if (_isStale(generation, controller)) {
+        return;
+      }
+      _pendingController = null;
+      state = RepositorySearchState.success(
+        query: query,
+        result: result,
+        page: _firstPage,
+      );
+    } on RequestCancelledException {
+      // cancelは通知用error Stateへ遷移させない。cancel契機
+      // （cancelPendingRequest/supersession）で_pendingControllerは既に
+      // null化・更新済みのため、ここではクリアしない。
+      return;
+    } on AppException catch (error) {
+      if (_isStale(generation, controller)) {
+        return;
+      }
+      _pendingController = null;
+      state = state.refreshFailed(error);
     }
   }
 

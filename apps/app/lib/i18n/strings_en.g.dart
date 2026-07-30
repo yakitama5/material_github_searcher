@@ -70,6 +70,7 @@ class _Translations$repositorySearch$en extends Translations$repositorySearch$ja
 	@override String get errorGeneric => 'Something went wrong. Please try again later.';
 	@override String get errorRateLimited => 'GitHub API rate limit reached. Please try again later.';
 	@override String get retry => 'Retry';
+	@override String get refreshing => 'Refreshing';
 	@override String get languageUnset => 'Not set';
 	@override String get languageLabel => 'Language';
 	@override String get starsLabel => 'Stars';
@@ -113,6 +114,7 @@ extension on TranslationsEn {
 			'repositorySearch.errorGeneric' => 'Something went wrong. Please try again later.',
 			'repositorySearch.errorRateLimited' => 'GitHub API rate limit reached. Please try again later.',
 			'repositorySearch.retry' => 'Retry',
+			'repositorySearch.refreshing' => 'Refreshing',
 			'repositorySearch.languageUnset' => 'Not set',
 			'repositorySearch.languageLabel' => 'Language',
 			'repositorySearch.starsLabel' => 'Stars',

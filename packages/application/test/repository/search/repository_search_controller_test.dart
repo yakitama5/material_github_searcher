@@ -562,6 +562,173 @@ void main() {
     });
   });
 
+  group('refresh', () {
+    test('成功でpage1の結果へ置換し、page・hasMore・totalCountを更新する', () async {
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _pageWithItems(),
+      );
+      await controller().submit('flutter');
+
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _secondPageWithOverlap(),
+      );
+      await controller().refresh();
+
+      final current = state();
+      expect(current.status, RepositorySearchStatus.success);
+      expect(current.page, 1);
+      expect(current.hasMore, isTrue);
+      expect(current.totalCount, 42);
+      expect(current.items, _secondPageWithOverlap().items);
+      expect(current.appendError, isNull);
+      expect(current.refreshError, isNull);
+      expect(fake.calls.map((c) => c.page), [1, 1]);
+    });
+
+    test('0件成功はitems空のsuccessへ置換する', () async {
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _pageWithItems(),
+      );
+      await controller().submit('flutter');
+      expect(state().items, isNotEmpty);
+
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _emptyPage(),
+      );
+      await controller().refresh();
+
+      final current = state();
+      expect(current.status, RepositorySearchStatus.success);
+      expect(current.items, isEmpty);
+      expect(current.hasMore, isFalse);
+      expect(current.totalCount, 0);
+    });
+
+    test('失敗時は既存items・page・hasMoreを維持し、refreshErrorを設定する', () async {
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _pageWithItems(),
+      );
+      await controller().submit('flutter');
+      final before = state();
+
+      const exception = RepositorySearchException(message: 'refresh failed');
+      fake.setFailure(
+        query: RepositorySearchQuery('flutter'),
+        exception: exception,
+      );
+      await controller().refresh();
+
+      final current = state();
+      expect(current.status, RepositorySearchStatus.success);
+      expect(current.items, before.items);
+      expect(current.page, before.page);
+      expect(current.hasMore, before.hasMore);
+      expect(current.refreshError, same(exception));
+    });
+
+    test('未検索・初回取得中・初回errorでは何もしない', () async {
+      // 未検索
+      await controller().refresh();
+      expect(fake.callCount, 0);
+
+      // 初回取得中（loading）
+      final loadingGate = Completer<void>();
+      fake.setSuccess(
+        query: RepositorySearchQuery('loading'),
+        result: _pageWithItems(),
+        gate: loadingGate,
+      );
+      final submitFuture = controller().submit('loading');
+      expect(state().status, RepositorySearchStatus.loading);
+      await controller().refresh();
+      expect(fake.callCount, 1);
+      expect(state().status, RepositorySearchStatus.loading);
+      loadingGate.complete();
+      await submitFuture;
+
+      // 初回error
+      const exception = RepositorySearchException(message: 'failed');
+      fake.setFailure(
+        query: RepositorySearchQuery('boom'),
+        exception: exception,
+      );
+      await controller().submit('boom');
+      expect(state().status, RepositorySearchStatus.error);
+      await controller().refresh();
+      expect(fake.callCount, 2);
+      expect(state().status, RepositorySearchStatus.error);
+    });
+
+    test('追加取得中のrefreshは追加requestをcancelしpage1へ戻す', () async {
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _pageWithItems(),
+      );
+      await controller().submit('flutter');
+
+      final gate = Completer<void>();
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _secondPageWithOverlap(),
+        page: 2,
+        gate: gate,
+      );
+      final loadMoreFuture = controller().loadNextPage();
+      expect(state().status, RepositorySearchStatus.loadingMore);
+
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _emptyPage(),
+      );
+      final refreshFuture = controller().refresh();
+      expect(state().status, RepositorySearchStatus.refreshing);
+
+      gate.complete();
+      await Future.wait([loadMoreFuture, refreshFuture]);
+
+      final current = state();
+      expect(current.status, RepositorySearchStatus.success);
+      expect(current.page, 1);
+      expect(current.items, isEmpty);
+      expect(current.appendError, isNull);
+    });
+
+    test('進行中にcancelPendingRequestが呼ばれるとrefreshingからsuccessへ戻る', () async {
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _pageWithItems(),
+      );
+      await controller().submit('flutter');
+      final before = state();
+
+      final gate = Completer<void>();
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _emptyPage(),
+        gate: gate,
+      );
+      final future = controller().refresh();
+      expect(state().status, RepositorySearchStatus.refreshing);
+
+      controller().cancelPendingRequest();
+      expect(state().status, RepositorySearchStatus.success);
+      expect(state().items, before.items);
+      expect(state().page, before.page);
+      expect(state().hasMore, before.hasMore);
+      expect(state().refreshError, isNull);
+
+      gate.complete();
+      await future;
+      expect(state().status, RepositorySearchStatus.success);
+      expect(state().items, before.items);
+    });
+  });
+
   group('cancel・supersession', () {
     test('別query送信で旧requestをcancelし、最新queryを反映する', () async {
       final gateA = Completer<void>();

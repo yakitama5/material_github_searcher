@@ -116,6 +116,9 @@ class _RepositorySearchScreenState
     );
   }
 
+  Future<void> _refresh() =>
+      ref.read(repositorySearchControllerProvider.notifier).refresh();
+
   /// 一覧末尾付近までスクロールされたら次ページを先読みする。
   ///
   /// [CustomScrollView]自身が発するNotification（`depth == 0`）だけを対象と
@@ -158,8 +161,32 @@ class _RepositorySearchScreenState
         .toList();
   }
 
+  /// Pull to Refresh失敗を非破壊的なSnackbar（Retry付き）で通知する。
+  ///
+  /// 既存itemsは維持したままなので、全画面Error表示や末尾Error行のような
+  /// 破壊的な表示へは切り替えない。
+  void _handleSearchStateChange(
+    RepositorySearchState? previous,
+    RepositorySearchState next,
+  ) {
+    final refreshError = next.refreshError;
+    if (refreshError == null) {
+      return;
+    }
+    final i18n = context.i18n.repositorySearch;
+    SnackBarManager.showErrorSnackBar(
+      _resolveErrorMessage(context, refreshError),
+      actionLabel: i18n.retry,
+      onAction: () => unawaited(_refresh()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<RepositorySearchState>(
+      repositorySearchControllerProvider,
+      _handleSearchStateChange,
+    );
     final state = ref.watch(repositorySearchControllerProvider);
     final historyState = ref.watch(searchHistoryControllerProvider);
 
@@ -170,54 +197,60 @@ class _RepositorySearchScreenState
             constraints: const BoxConstraints(
               maxWidth: Breakpoints.maxContentWidth,
             ),
-            child: NotificationListener<ScrollNotification>(
-              onNotification: _handleScrollNotification,
-              child: CustomScrollView(
-                key: const PageStorageKey<String>(
-                  'repository-search-scroll',
+            child: M3RefreshIndicator(
+              refreshing: state.status == RepositorySearchStatus.refreshing,
+              onRefresh: _refresh,
+              semanticsLabel: context.i18n.repositorySearch.refreshing,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: _handleScrollNotification,
+                child: CustomScrollView(
+                  key: const PageStorageKey<String>(
+                    'repository-search-scroll',
+                  ),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverAppBar(
+                      floating: true,
+                      snap: true,
+                      automaticallyImplyLeading: false,
+                      titleSpacing: 16,
+                      title: RepositorySearchBar(
+                        controller: _queryController,
+                        focusNode: _searchFieldFocusNode,
+                        onSubmit: _submit,
+                      ),
+                    ),
+                    // 絞り込みは1文字入力ごとに発生するため、検索結果一覧を
+                    // 含む画面全体ではなく本sliverだけを`_queryController`の
+                    // 変更に反応させ、再構築範囲を最小化する。
+                    SliverToBoxAdapter(
+                      child: ListenableBuilder(
+                        listenable: _queryController,
+                        builder: (context, _) {
+                          if (!_suggestionsVisible) {
+                            return const SizedBox.shrink();
+                          }
+                          final suggestions = _filterSuggestions(
+                            historyState.history.entries,
+                          );
+                          if (suggestions.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return SearchHistorySuggestions(
+                            entries: suggestions,
+                            onSelect: _selectSuggestion,
+                            onClearAllConfirmed: _clearAllHistory,
+                          );
+                        },
+                      ),
+                    ),
+                    _RepositorySearchBody(
+                      state: state,
+                      onRetry: _retry,
+                      onRetryAppend: _loadNextPage,
+                    ),
+                  ],
                 ),
-                slivers: [
-                  SliverAppBar(
-                    floating: true,
-                    snap: true,
-                    automaticallyImplyLeading: false,
-                    titleSpacing: 16,
-                    title: RepositorySearchBar(
-                      controller: _queryController,
-                      focusNode: _searchFieldFocusNode,
-                      onSubmit: _submit,
-                    ),
-                  ),
-                  // 絞り込みは1文字入力ごとに発生するため、検索結果一覧を含む
-                  // 画面全体ではなく本sliverだけを`_queryController`の変更に
-                  // 反応させ、再構築範囲を最小化する。
-                  SliverToBoxAdapter(
-                    child: ListenableBuilder(
-                      listenable: _queryController,
-                      builder: (context, _) {
-                        if (!_suggestionsVisible) {
-                          return const SizedBox.shrink();
-                        }
-                        final suggestions = _filterSuggestions(
-                          historyState.history.entries,
-                        );
-                        if (suggestions.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        return SearchHistorySuggestions(
-                          entries: suggestions,
-                          onSelect: _selectSuggestion,
-                          onClearAllConfirmed: _clearAllHistory,
-                        );
-                      },
-                    ),
-                  ),
-                  _RepositorySearchBody(
-                    state: state,
-                    onRetry: _retry,
-                    onRetryAppend: _loadNextPage,
-                  ),
-                ],
               ),
             ),
           ),
@@ -262,10 +295,9 @@ class _RepositorySearchBody extends StatelessWidget {
           onRetry: onRetry,
         ),
       ),
-      // refreshingは後続Issue（#82）が専用UIを追加するまでの暫定として、
-      // 直近取得済みのitemsをsuccessと同じ表示のまま維持する。本Issueの
-      // controllerはこの状態へ遷移しないが、enumの網羅性のため分岐上ここへ
-      // 含める。
+      // refreshing中はPull to Refreshの進捗を`M3RefreshIndicator`の
+      // オーバーレイ（build内）だけで表す。一覧自体はsuccessと同じ表示を
+      // 維持し、既存itemsを隠さない。
       RepositorySearchStatus.success ||
       RepositorySearchStatus.loadingMore ||
       RepositorySearchStatus.refreshing => _buildResults(context),

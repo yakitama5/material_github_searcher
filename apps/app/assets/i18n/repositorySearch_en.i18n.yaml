@@ -6,6 +6,7 @@ empty: No repositories matched your search.
 errorGeneric: Something went wrong. Please try again later.
 errorRateLimited: GitHub API rate limit reached. Please try again later.
 retry: Retry
+refreshing: Refreshing
 languageUnset: Not set
 languageLabel: Language
 starsLabel: Stars

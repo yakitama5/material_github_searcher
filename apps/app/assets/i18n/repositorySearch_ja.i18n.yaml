@@ -6,6 +6,7 @@ empty: 条件に一致するリポジトリが見つかりませんでした
 errorGeneric: 通信エラーが発生しました。しばらくしてから再度お試しください
 errorRateLimited: GitHub APIの利用回数上限に達しました。しばらくしてから再度お試しください
 retry: 再試行
+refreshing: 更新中
 languageUnset: 未設定
 languageLabel: 言語
 starsLabel: スター数
