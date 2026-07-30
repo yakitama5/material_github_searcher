@@ -9,6 +9,8 @@ environment:
 dependencies:
   application:
     path: ../application
+  infrastructure_github:
+    path: ../infrastructure/github
   infrastructure_mock:
     path: ../infrastructure/mock
   riverpod: 3.4.2

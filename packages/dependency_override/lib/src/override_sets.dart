@@ -1,11 +1,28 @@
+import 'package:application/application.dart';
+import 'package:infrastructure_github/infrastructure_github.dart';
+import 'package:infrastructure_mock/infrastructure_mock.dart';
 import 'package:riverpod/misc.dart';
 
 /// 本番環境向けのProvider override一式を生成する。
 ///
-/// Repository実装が追加された後も、この関数へ結線を集約する。
-List<Override> createProductionOverrides() => const <Override>[];
+/// Repository検索は実GitHub APIを叩く[GitHubRepositorySearchRepository]へ
+/// 結線する。`Dio`は`createGitHubDio`が本番向けに生成し、Providerが初めて
+/// 参照された時点で遅延生成する。Provider dispose時に`Dio.close`でHTTP
+/// clientを解放し、socketの残留を防ぐ。
+List<Override> createProductionOverrides() => [
+  repositorySearchRepositoryProvider.overrideWith((ref) {
+    final dio = createGitHubDio();
+    ref.onDispose(dio.close);
+    return GitHubRepositorySearchRepository(dio: dio);
+  }),
+];
 
 /// テスト・開発環境向けのProvider override一式を生成する。
 ///
-/// Fake Repositoryが追加された後も、この関数へ結線を集約する。
-List<Override> createMockOverrides() => const <Override>[];
+/// Repository検索は決定的な[MockRepositorySearchRepository]へ結線し、実APIへ
+/// 接続せず同じシナリオ（成功・空・失敗・遅延・cancel）を再現できるようにする。
+List<Override> createMockOverrides() => [
+  repositorySearchRepositoryProvider.overrideWith(
+    (ref) => MockRepositorySearchRepository(),
+  ),
+];
