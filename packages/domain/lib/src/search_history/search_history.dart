@@ -36,6 +36,19 @@ final class SearchHistory {
     return SearchHistory(entries: next.take(maxEntries).toList());
   }
 
+  /// [keywords]を先頭から順に[recordSubmittedKeyword]で記録した履歴を返す。
+  ///
+  /// 保存/送信順が最近順（先頭が最新）の一覧をそのまま復元したい場合は、
+  /// 末尾（最も古いもの）から順に渡すと、trim・重複排除・最大件数のルール
+  /// を保ったまま元の順序を再現できる。
+  SearchHistory recordAll(Iterable<String> keywords) {
+    var history = this;
+    for (final keyword in keywords) {
+      history = history.recordSubmittedKeyword(keyword);
+    }
+    return history;
+  }
+
   /// 全履歴を削除した空の履歴を返す。
   SearchHistory clearAll() => SearchHistory();
 

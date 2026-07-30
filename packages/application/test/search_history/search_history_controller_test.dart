@@ -100,28 +100,6 @@ void main() {
       expect(current.history.entries, isEmpty);
     });
 
-    test('起動時loadの完了前に記録されたkeywordをloadの結果で上書きしない', () async {
-      final gate = Completer<void>();
-      fake
-        ..loadResult = SearchHistory().recordSubmittedKeyword('dart')
-        ..loadGate = gate;
-
-      // 起動時のload()が完了する前に、ユーザーがkeywordを送信したとする。
-      final loadFuture = controller().load();
-      await controller().recordSubmittedKeyword('flutter');
-      expect(state().status, SearchHistoryStatus.ready);
-      expect(state().history.entries, [SearchHistoryEntry('flutter')]);
-
-      // load()を完了させる。dartを含む永続化済み履歴で、flutterの記録を
-      // 巻き戻してはならない。
-      gate.complete();
-      await loadFuture;
-
-      final current = state();
-      expect(current.status, SearchHistoryStatus.ready);
-      expect(current.history.entries, [SearchHistoryEntry('flutter')]);
-    });
-
     test('先発loadの遅延完了は後発loadが確定させた最新履歴を上書きしない', () async {
       final gateA = Completer<void>();
       fake
@@ -155,6 +133,8 @@ void main() {
 
   group('recordSubmittedKeyword', () {
     test('trimして先頭に記録し永続化する', () async {
+      await controller().load();
+
       await controller().recordSubmittedKeyword('  flutter  ');
 
       final current = state();
@@ -169,11 +149,15 @@ void main() {
       expect(state().status, SearchHistoryStatus.loading);
       expect(state().history.entries, isEmpty);
       expect(fake.savedHistories, isEmpty);
+      // 空文字はloadを試行する前に無視されるべきno-opであることを確認する。
+      expect(fake.loadCallCount, 0);
     });
 
     test('検索APIの成否に関わらず無条件で記録する', () async {
       // recordSubmittedKeywordは検索結果を引数に取らないため、
       // API成功・失敗・0件のいずれの文脈からでも同じ挙動で記録できる。
+      await controller().load();
+
       await controller().recordSubmittedKeyword('no-results-keyword');
 
       expect(state().history.entries, [
@@ -182,6 +166,7 @@ void main() {
     });
 
     test('永続化失敗時も楽観更新した履歴は維持しpersistenceErrorへ遷移する', () async {
+      await controller().load();
       const error = SearchHistoryPersistenceException(message: 'save failed');
       fake.saveError = error;
 
@@ -194,6 +179,8 @@ void main() {
     });
 
     test('重複keywordは先頭へ移動して永続化する', () async {
+      await controller().load();
+
       await controller().recordSubmittedKeyword('flutter');
       await controller().recordSubmittedKeyword('dart');
       await controller().recordSubmittedKeyword('flutter');
@@ -206,6 +193,7 @@ void main() {
     });
 
     test('先発呼び出しの遅延失敗は後発が確定させた最新履歴を上書きしない', () async {
+      await controller().load();
       final gate = Completer<void>();
       fake.saveGate = gate;
 
@@ -239,6 +227,136 @@ void main() {
     });
   });
 
+  group('recordSubmittedKeyword: load未完了・失敗時の競合', () {
+    test('loadの完了前に記録すると、loadの結果を基点に記録する', () async {
+      final gate = Completer<void>();
+      fake
+        ..loadResult = SearchHistory().recordSubmittedKeyword('dart')
+        ..loadGate = gate;
+
+      // 起動時のload()が完了する前に、ユーザーがkeywordを送信したとする。
+      final loadFuture = controller().load();
+      final recordFuture = controller().recordSubmittedKeyword('flutter');
+
+      // load完了を待つ間も、楽観更新した内容は同期的に見える。
+      expect(state().status, SearchHistoryStatus.ready);
+      expect(state().history.entries, [SearchHistoryEntry('flutter')]);
+
+      // load()を完了させる。永続化済み履歴(dart)を基点に、記録した
+      // keyword(flutter)を積み直した結果になる（どちらも失わない）。
+      gate.complete();
+      await loadFuture;
+      await recordFuture;
+
+      final current = state();
+      expect(current.status, SearchHistoryStatus.ready);
+      expect(current.history.entries, [
+        SearchHistoryEntry('flutter'),
+        SearchHistoryEntry('dart'),
+      ]);
+      expect(fake.savedHistories.single.entries, current.history.entries);
+    });
+
+    test('loadの完了前に複数回記録すると、全てloadの結果の上に積み重ねられる', () async {
+      final gate = Completer<void>();
+      fake
+        ..loadResult = SearchHistory().recordSubmittedKeyword('old')
+        ..loadGate = gate;
+
+      final loadFuture = controller().load();
+      final future1 = controller().recordSubmittedKeyword('flutter');
+      final future2 = controller().recordSubmittedKeyword('dart');
+
+      gate.complete();
+      await loadFuture;
+      await Future.wait([future1, future2]);
+
+      final current = state();
+      expect(current.status, SearchHistoryStatus.ready);
+      expect(current.history.entries, [
+        SearchHistoryEntry('dart'),
+        SearchHistoryEntry('flutter'),
+        SearchHistoryEntry('old'),
+      ]);
+      // 最新の呼び出しが確定するまで、途中の再構築は永続化しない。
+      expect(fake.savedHistories, hasLength(1));
+    });
+
+    test('loadが失敗した状態で記録すると、再試行にも失敗した場合は永続化せずメモリ上のみ楽観更新する', () async {
+      const error = SearchHistoryPersistenceException(message: 'load failed');
+      fake.loadError = error;
+      await controller().load();
+      expect(state().status, SearchHistoryStatus.persistenceError);
+
+      await controller().recordSubmittedKeyword('flutter');
+
+      final current = state();
+      // 実体を確認できないまま上書きするとデータ損失になるため、
+      // メモリ上の楽観更新のみ維持し、save()は呼ばない。
+      expect(current.status, SearchHistoryStatus.persistenceError);
+      expect(current.error, error);
+      expect(current.history.entries, [SearchHistoryEntry('flutter')]);
+      expect(fake.savedHistories, isEmpty);
+    });
+
+    test('loadが失敗した状態で記録すると、再試行に成功した場合はその結果を基点に記録・永続化する', () async {
+      const error = SearchHistoryPersistenceException(message: 'load failed');
+      fake.loadError = error;
+      await controller().load();
+      expect(state().status, SearchHistoryStatus.persistenceError);
+
+      fake
+        ..loadError = null
+        ..loadResult = SearchHistory().recordSubmittedKeyword('dart');
+      await controller().recordSubmittedKeyword('flutter');
+
+      final current = state();
+      expect(current.status, SearchHistoryStatus.ready);
+      expect(current.history.entries, [
+        SearchHistoryEntry('flutter'),
+        SearchHistoryEntry('dart'),
+      ]);
+      expect(fake.savedHistories.single.entries, current.history.entries);
+    });
+
+    test('staleと判定され破棄された読込は、実体確認済みとして扱わない', () async {
+      final gateA = Completer<void>();
+      final gateB = Completer<void>();
+      fake
+        ..loadResult = SearchHistory().recordSubmittedKeyword('dart')
+        ..loadGate = gateA;
+
+      // 起動時load(世代1)を発行する。まだgateAで止まっている。
+      final loadFuture = controller().load();
+
+      // 以降の内部読込はgateBで止める。
+      fake.loadGate = gateB;
+      final futureA = controller().recordSubmittedKeyword('flutter');
+
+      // 起動時loadをgateAの完了で進める。この時点で世代は既にrecord(A)に
+      // よって進んでいるため、load自身はstaleとして結果(dart)を捨てる。
+      gateA.complete();
+      await loadFuture;
+
+      // loadのstaleな読込によって「実体確認済み」フラグが誤って立って
+      // いれば、この記録はdisk再読込を経ずメモリだけでsave()してしまい、
+      // まだ確認していない実体(dart)を永久に失う。
+      final futureB = controller().recordSubmittedKeyword('python');
+
+      gateB.complete();
+      await Future.wait([futureA, futureB]);
+
+      final current = state();
+      expect(current.status, SearchHistoryStatus.ready);
+      expect(current.history.entries, [
+        SearchHistoryEntry('python'),
+        SearchHistoryEntry('flutter'),
+        SearchHistoryEntry('dart'),
+      ]);
+      expect(fake.savedHistories.last.entries, current.history.entries);
+    });
+  });
+
   group('clearAll', () {
     test('履歴を空にして永続化する', () async {
       await controller().recordSubmittedKeyword('flutter');
@@ -262,6 +380,41 @@ void main() {
       expect(current.status, SearchHistoryStatus.persistenceError);
       expect(current.error, error);
       expect(current.history.entries, isEmpty);
+    });
+
+    test('loadが未完了の状態でも、以降の記録でdisk実体を積み直して復元しない', () async {
+      // loadは呼ばない（未完了・未実行のまま）。disk上には過去の履歴が
+      // あるとする。
+      fake.loadResult = SearchHistory().recordSubmittedKeyword('old');
+
+      await controller().clearAll();
+      expect(state().history.entries, isEmpty);
+
+      await controller().recordSubmittedKeyword('new');
+
+      final current = state();
+      expect(current.status, SearchHistoryStatus.ready);
+      expect(current.history.entries, [SearchHistoryEntry('new')]);
+      // clearAllの意図（空）を優先し、disk再読込を行っていないことを確認
+      // する。読み込んでいれば'old'が復元されてしまう。
+      expect(fake.loadCallCount, 0);
+    });
+
+    test('永続化失敗後の記録も、disk実体との統合を行わずメモリを基点にする', () async {
+      fake.loadResult = SearchHistory().recordSubmittedKeyword('old');
+      const error = SearchHistoryPersistenceException(message: 'save failed');
+      fake.saveError = error;
+
+      await controller().clearAll();
+      expect(state().status, SearchHistoryStatus.persistenceError);
+
+      fake.saveError = null;
+      await controller().recordSubmittedKeyword('new');
+
+      final current = state();
+      expect(current.status, SearchHistoryStatus.ready);
+      expect(current.history.entries, [SearchHistoryEntry('new')]);
+      expect(fake.loadCallCount, 0);
     });
   });
 }

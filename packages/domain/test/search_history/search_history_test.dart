@@ -69,6 +69,31 @@ void main() {
       });
     });
 
+    group('recordAll', () {
+      test('末尾から順に適用すると元の最近順を再現する', () {
+        final saved = SearchHistory()
+            .recordSubmittedKeyword('flutter')
+            .recordSubmittedKeyword('dart');
+
+        final restored = SearchHistory().recordAll(
+          saved.entries.reversed.map((entry) => entry.keyword),
+        );
+
+        expect(restored, saved);
+      });
+
+      test('trim・重複排除・最大件数のルールを保ったまま適用する', () {
+        final history = SearchHistory().recordAll([
+          '  flutter  ',
+          'flutter',
+          for (var i = 0; i < 12; i++) 'keyword-$i',
+        ]);
+
+        expect(history.entries, hasLength(SearchHistory.maxEntries));
+        expect(history.entries.first, SearchHistoryEntry('keyword-11'));
+      });
+    });
+
     group('clearAll', () {
       test('空の履歴を返す', () {
         final history = SearchHistory()
