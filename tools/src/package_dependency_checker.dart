@@ -21,6 +21,7 @@ const allowedPackageDependencies = <String, Set<String>>{
   'application': {'domain', 'foundation'},
   'dependency_override': {
     'application',
+    'infrastructure_github',
     'infrastructure_mock',
     'domain',
     'foundation',
