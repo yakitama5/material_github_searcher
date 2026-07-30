@@ -48,6 +48,29 @@ void main() {
       expect(mapped.message, contains('reset: 1700000000'));
     });
 
+    test(
+      '403でもremainingが枯渇していなければrate limit文言にしない '
+      '(secondary rate limit・abuse detectionの誤表示を避ける)',
+      () {
+        final error = DioException(
+          requestOptions: _options(),
+          type: DioExceptionType.badResponse,
+          response: _response(
+            statusCode: 403,
+            headers: {
+              'x-ratelimit-remaining': ['42'],
+            },
+          ),
+        );
+
+        final mapped = mapDioExceptionToAppException(error);
+
+        expect(mapped, isA<RepositorySearchException>());
+        expect(mapped.message, isNot(contains('rate limit')));
+        expect(mapped.message, contains('403'));
+      },
+    );
+
     test('429はrate limitのRepositorySearchExceptionへ変換される', () {
       final error = DioException(
         requestOptions: _options(),

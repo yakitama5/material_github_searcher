@@ -12,20 +12,18 @@ AppException mapDioExceptionToAppException(DioException error) {
   }
 
   final statusCode = error.response?.statusCode;
-  if (statusCode == 403 || statusCode == 429) {
-    final remaining = error.response?.headers.value('x-ratelimit-remaining');
+  final remaining = error.response?.headers.value('x-ratelimit-remaining');
+  // 403はsecondary rate limit・abuse detectionでも返るため、remainingが
+  // 明確に枯渇している場合のみrate limitの文言にする。それ以外は下の
+  // 一般的なstatusCode分岐へフォールスルーし、誤ったログを避ける。
+  final isRateLimited =
+      statusCode == 429 || (statusCode == 403 && remaining == '0');
+  if (isRateLimited) {
     final reset = error.response?.headers.value('x-ratelimit-reset');
-    // 403はsecondary rate limit・abuse detectionでも返るため、remainingが
-    // 明確に枯渇している場合のみrate limitの文言にする。それ以外はstatusCode
-    // をそのまま伝える一般的な文言にとどめ、誤ったログを避ける。
-    final isRateLimited = statusCode == 429 || remaining == '0';
     return RepositorySearchException(
-      message: isRateLimited
-          ? 'GitHub API rate limit exceeded (status: $statusCode, '
-                'remaining: ${remaining ?? 'unknown'}, '
-                'reset: ${reset ?? 'unknown'})'
-          : 'GitHub API request failed with status $statusCode: '
-                '${error.response?.statusMessage ?? error.message}',
+      message:
+          'GitHub API rate limit exceeded (status: $statusCode, '
+          'remaining: ${remaining ?? 'unknown'}, reset: ${reset ?? 'unknown'})',
     );
   }
   if (statusCode == 404) {

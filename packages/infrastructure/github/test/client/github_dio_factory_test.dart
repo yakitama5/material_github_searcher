@@ -22,5 +22,12 @@ void main() {
 
       expect(dio.options.headers.containsKey('Authorization'), isFalse);
     });
+
+    test('接続・受信タイムアウトが設定される', () {
+      final dio = createGitHubDio();
+
+      expect(dio.options.connectTimeout, isNotNull);
+      expect(dio.options.receiveTimeout, isNotNull);
+    });
   });
 }
