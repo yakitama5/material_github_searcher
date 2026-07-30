@@ -35,3 +35,15 @@ final class UnknownException extends AppException {
   /// 想定外エラー例外を生成する。
   const UnknownException({super.message});
 }
+
+/// Repository検索の失敗を表す例外。
+///
+/// HTTP・Rate Limitなど個別の失敗要因の分類はInfrastructure実装の詳細であり
+/// 本Issueの対象外とする。Applicationが「Repository検索由来の失敗」と
+/// 「その他の失敗（[UnknownException]）」を区別できるよう、まずは汎用の
+/// 契約として1種類だけ用意する。要因ごとの分類が必要になった時点で、
+/// `UnknownException`と同様に`AppException`の別サブタイプとして追加する。
+final class RepositorySearchException extends AppException {
+  /// Repository検索の失敗例外を生成する。
+  const RepositorySearchException({super.message});
+}

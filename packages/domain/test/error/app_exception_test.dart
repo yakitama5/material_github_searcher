@@ -30,4 +30,19 @@ void main() {
       expect(exception.message, 'unexpected');
     });
   });
+
+  group('RepositorySearchException', () {
+    test('AppException・Exceptionのサブタイプである', () {
+      const exception = RepositorySearchException();
+
+      expect(exception, isA<AppException>());
+      expect(exception, isA<Exception>());
+    });
+
+    test('messageを保持する', () {
+      const exception = RepositorySearchException(message: 'search failed');
+
+      expect(exception.message, 'search failed');
+    });
+  });
 }
