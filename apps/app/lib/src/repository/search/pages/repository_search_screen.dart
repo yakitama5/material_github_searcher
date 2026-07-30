@@ -13,6 +13,20 @@ import '../widgets/repository_search_bar.dart';
 import '../widgets/repository_search_message_view.dart';
 import '../widgets/search_history_suggestions.dart';
 
+/// 一覧末尾からこの距離（論理px）以内へスクロールしたら次ページを先読みする。
+///
+/// Repository一覧行は1行あたり概ね70〜80px前後のため、本値は2〜3行分の
+/// 「見えかけている」余白に相当する。
+const _loadMoreThresholdExtent = 240.0;
+
+/// 追加取得失敗時に末尾へ表示するRetryボタンのkey。
+///
+/// Widget Testから参照するため、`repositorySearchFieldKey`等と同じく
+/// 実装とテストで同一のリテラルを再定義せず本constを共有する。
+const repositoryAppendErrorRetryButtonKey = Key(
+  'repositoryAppendErrorRetryButton',
+);
+
 /// 送信式SearchBarとSliver検索結果一覧を持つRepository検索画面。
 ///
 /// [repositorySearchControllerProvider]のみをSingle Source of Truthとして
@@ -96,6 +110,42 @@ class _RepositorySearchScreenState
     unawaited(ref.read(repositorySearchControllerProvider.notifier).retry());
   }
 
+  void _loadNextPage() {
+    unawaited(
+      ref.read(repositorySearchControllerProvider.notifier).loadNextPage(),
+    );
+  }
+
+  /// 一覧末尾付近までスクロールされたら次ページを先読みする。
+  ///
+  /// [CustomScrollView]自身が発するNotification（`depth == 0`）だけを対象と
+  /// する。SearchBar内部の`TextField`（`EditableText`）も独自の横scroll用
+  /// Scrollableを持ち、そのNotificationは`depth`を1以上に増やしながら本
+  /// Widgetまでbubbleしてくるため、`depth`を見ないと入力中のcursor追従scroll
+  /// だけで誤発火する。
+  ///
+  /// 追加取得失敗時（[RepositorySearchState.appendError]が非`null`）は、
+  /// スクロールのたびに再試行を発火させず、末尾のRetryボタンでの明示的な
+  /// 再試行だけを許可する。`hasMore`・進行中判定自体はController側の
+  /// [RepositorySearchController.loadNextPage]が同期的にガードするため、
+  /// ここでは重複呼出しを気にせず呼んでよい。
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification.depth != 0) {
+      return false;
+    }
+    if (notification.metrics.extentAfter > _loadMoreThresholdExtent) {
+      return false;
+    }
+    final state = ref.read(repositorySearchControllerProvider);
+    if (state.status != RepositorySearchStatus.success ||
+        !state.hasMore ||
+        state.appendError != null) {
+      return false;
+    }
+    _loadNextPage();
+    return false;
+  }
+
   List<SearchHistoryEntry> _filterSuggestions(
     List<SearchHistoryEntry> entries,
   ) {
@@ -120,46 +170,55 @@ class _RepositorySearchScreenState
             constraints: const BoxConstraints(
               maxWidth: Breakpoints.maxContentWidth,
             ),
-            child: CustomScrollView(
-              key: const PageStorageKey<String>('repository-search-scroll'),
-              slivers: [
-                SliverAppBar(
-                  floating: true,
-                  snap: true,
-                  automaticallyImplyLeading: false,
-                  titleSpacing: 16,
-                  title: RepositorySearchBar(
-                    controller: _queryController,
-                    focusNode: _searchFieldFocusNode,
-                    onSubmit: _submit,
-                  ),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: _handleScrollNotification,
+              child: CustomScrollView(
+                key: const PageStorageKey<String>(
+                  'repository-search-scroll',
                 ),
-                // 絞り込みは1文字入力ごとに発生するため、検索結果一覧を含む
-                // 画面全体ではなく本sliverだけを`_queryController`の変更に
-                // 反応させ、再構築範囲を最小化する。
-                SliverToBoxAdapter(
-                  child: ListenableBuilder(
-                    listenable: _queryController,
-                    builder: (context, _) {
-                      if (!_suggestionsVisible) {
-                        return const SizedBox.shrink();
-                      }
-                      final suggestions = _filterSuggestions(
-                        historyState.history.entries,
-                      );
-                      if (suggestions.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-                      return SearchHistorySuggestions(
-                        entries: suggestions,
-                        onSelect: _selectSuggestion,
-                        onClearAllConfirmed: _clearAllHistory,
-                      );
-                    },
+                slivers: [
+                  SliverAppBar(
+                    floating: true,
+                    snap: true,
+                    automaticallyImplyLeading: false,
+                    titleSpacing: 16,
+                    title: RepositorySearchBar(
+                      controller: _queryController,
+                      focusNode: _searchFieldFocusNode,
+                      onSubmit: _submit,
+                    ),
                   ),
-                ),
-                _RepositorySearchBody(state: state, onRetry: _retry),
-              ],
+                  // 絞り込みは1文字入力ごとに発生するため、検索結果一覧を含む
+                  // 画面全体ではなく本sliverだけを`_queryController`の変更に
+                  // 反応させ、再構築範囲を最小化する。
+                  SliverToBoxAdapter(
+                    child: ListenableBuilder(
+                      listenable: _queryController,
+                      builder: (context, _) {
+                        if (!_suggestionsVisible) {
+                          return const SizedBox.shrink();
+                        }
+                        final suggestions = _filterSuggestions(
+                          historyState.history.entries,
+                        );
+                        if (suggestions.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return SearchHistorySuggestions(
+                          entries: suggestions,
+                          onSelect: _selectSuggestion,
+                          onClearAllConfirmed: _clearAllHistory,
+                        );
+                      },
+                    ),
+                  ),
+                  _RepositorySearchBody(
+                    state: state,
+                    onRetry: _retry,
+                    onRetryAppend: _loadNextPage,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -169,10 +228,15 @@ class _RepositorySearchScreenState
 }
 
 class _RepositorySearchBody extends StatelessWidget {
-  const _RepositorySearchBody({required this.state, required this.onRetry});
+  const _RepositorySearchBody({
+    required this.state,
+    required this.onRetry,
+    required this.onRetryAppend,
+  });
 
   final RepositorySearchState state;
   final VoidCallback onRetry;
+  final VoidCallback onRetryAppend;
 
   @override
   Widget build(BuildContext context) {
@@ -198,27 +262,80 @@ class _RepositorySearchBody extends StatelessWidget {
           onRetry: onRetry,
         ),
       ),
-      // loadingMore・refreshingは後続Issue（#81・#82）が専用UIを追加するまでの
-      // 暫定として、直近取得済みのitemsをsuccessと同じ表示のまま維持する。
-      // 本Issueのcontrollerはこれらの状態へ遷移しないが、enumの網羅性のため
-      // 分岐上はここへ含める。
+      // refreshingは後続Issue（#82）が専用UIを追加するまでの暫定として、
+      // 直近取得済みのitemsをsuccessと同じ表示のまま維持する。本Issueの
+      // controllerはこの状態へ遷移しないが、enumの網羅性のため分岐上ここへ
+      // 含める。
       RepositorySearchStatus.success ||
       RepositorySearchStatus.loadingMore ||
-      RepositorySearchStatus.refreshing =>
-        state.items.isEmpty
-            ? SliverFillRemaining(
-                hasScrollBody: false,
-                child: RepositorySearchMessageView(
-                  icon: Icons.inbox_outlined,
-                  message: i18n.empty,
-                ),
-              )
-            : SliverList.builder(
-                itemCount: state.items.length,
-                itemBuilder: (context, index) =>
-                    RepositoryListItem(summary: state.items[index]),
-              ),
+      RepositorySearchStatus.refreshing => _buildResults(context),
     };
+  }
+
+  Widget _buildResults(BuildContext context) {
+    final i18n = context.i18n.repositorySearch;
+
+    if (state.items.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: RepositorySearchMessageView(
+          icon: Icons.inbox_outlined,
+          message: i18n.empty,
+        ),
+      );
+    }
+
+    final appendError = state.appendError;
+    final trailingWidget = switch (state.status) {
+      RepositorySearchStatus.loadingMore => const RepositoryListItemSkeleton(),
+      _ when appendError != null => _AppendErrorRow(
+        message: _resolveErrorMessage(context, appendError),
+        onRetry: onRetryAppend,
+      ),
+      _ => null,
+    };
+
+    return SliverList.builder(
+      itemCount: state.items.length + (trailingWidget == null ? 0 : 1),
+      itemBuilder: (context, index) => index < state.items.length
+          ? RepositoryListItem(summary: state.items[index])
+          : trailingWidget!,
+    );
+  }
+}
+
+/// 追加ページ取得失敗時に一覧末尾へ表示するError/Retry行。
+///
+/// 全画面表示の[RepositorySearchMessageView]と異なり、既存の一覧を維持した
+/// まま末尾1行分だけに収める。
+class _AppendErrorRow extends StatelessWidget {
+  const _AppendErrorRow({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = context.i18n.repositorySearch;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: colorScheme.error),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: Theme.of(context).textTheme.bodyMedium),
+          ),
+          TextButton(
+            key: repositoryAppendErrorRetryButtonKey,
+            onPressed: onRetry,
+            child: Text(i18n.retry),
+          ),
+        ],
+      ),
+    );
   }
 }
 

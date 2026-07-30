@@ -15,6 +15,12 @@ final class FakeRepositorySearchRepository
   /// これまでの`search`呼出履歴（呼び出された順）。
   final calls = <RepositorySearchQuery>[];
 
+  /// これまでの`search`呼出履歴（query・page、呼び出された順）。
+  ///
+  /// [calls]は既存テストとの互換のためqueryのみを保持するため、page単位の
+  /// 検証（無限スクロールのpagination等）にはこちらを使う。
+  final pageCalls = <(RepositorySearchQuery query, int page)>[];
+
   /// [query]・[page]の組に対する成功応答を設定する。
   ///
   /// [gate]を渡すと、[gate]の[Completer.complete]呼び出しまで応答を保留する。
@@ -47,6 +53,7 @@ final class FakeRepositorySearchRepository
     required CancellationToken cancellationToken,
   }) async {
     calls.add(query);
+    pageCalls.add((query, page));
     cancellationToken.throwIfCancelled();
 
     final response = _responses[(query.value, page)];

@@ -65,10 +65,88 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
   /// 進行中requestをcancelする。
   ///
   /// cancelは通知用のerror Stateへ遷移させない。Settings・OpenContainer遷移の
-  /// 直前などに呼び、遅延responseによるState更新を抑止する。
+  /// 直前などに呼び、遅延responseによるState更新を抑止する。追加取得中
+  /// （[RepositorySearchStatus.loadingMore]）であれば、cancel後に遅延応答を
+  /// 待たず即座に末尾Skeletonが残り続けないよう`success`へ戻す。初回取得中
+  /// （[RepositorySearchStatus.loading]）はcancelしてもStateを変更しない
+  /// （既存の挙動を維持する）。
   void cancelPendingRequest() {
     _pendingController?.cancel();
     _pendingController = null;
+    state = state.cancelLoadingMore();
+  }
+
+  /// 直近に成功した検索の続きのページを追加取得する。
+  ///
+  /// [RepositorySearchStatus.success]以外（初回取得中・初回未取得・エラー・
+  /// 既に追加取得中）または[RepositorySearchState.hasMore]が`false`の場合は
+  /// 何もしない。前者のガードは追加取得を開始した直後に同期的に`loadingMore`
+  /// へ遷移することで、awaitより前に発生した同時呼出しも取りこぼさず抑止する。
+  /// `submit`・`retry`と同じ`_pendingController`・`_generation`を共有し、新
+  /// queryの送信・retryが進行中の追加requestを自動でcancelする。
+  Future<void> loadNextPage() async {
+    final current = state;
+    if (current.status != RepositorySearchStatus.success || !current.hasMore) {
+      return;
+    }
+    final query = current.query!;
+    final nextPage = current.page + 1;
+
+    _pendingController?.cancel();
+    final controller = CancellationController();
+    _pendingController = controller;
+    final generation = ++_generation;
+
+    state = current.toLoadingMore();
+
+    final repository = ref.read(repositorySearchRepositoryProvider);
+    try {
+      final result = await repository.search(
+        query: query,
+        page: nextPage,
+        perPage: _perPage,
+        cancellationToken: controller.token,
+      );
+      if (_isStale(generation, controller)) {
+        return;
+      }
+      _pendingController = null;
+      state = state.appended(
+        items: _mergeDeduplicated(current.items, result.items),
+        page: nextPage,
+        hasMore: result.hasMore,
+        totalCount: result.totalCount,
+      );
+    } on RequestCancelledException {
+      // cancelは追加取得のappendErrorとしても表示させない。submitによる
+      // supersessionでは_pendingControllerが既に更新済みのため、ここでは
+      // クリアしない。
+      return;
+    } on AppException catch (error) {
+      if (_isStale(generation, controller)) {
+        return;
+      }
+      _pendingController = null;
+      state = state.appendFailed(error);
+    }
+  }
+
+  /// [existing]と[incoming]をRepository identityで重複排除してマージする。
+  ///
+  /// [existing]に既に存在するidentityは[incoming]側を採用せず、[existing]の
+  /// 並び順・値をそのまま維持する。
+  List<RepositorySummary> _mergeDeduplicated(
+    List<RepositorySummary> existing,
+    List<RepositorySummary> incoming,
+  ) {
+    final seenIdentities = existing.map((item) => item.identity).toSet();
+    final merged = [...existing];
+    for (final item in incoming) {
+      if (seenIdentities.add(item.identity)) {
+        merged.add(item);
+      }
+    }
+    return merged;
   }
 
   Future<void> _search(RepositorySearchQuery query) async {

@@ -27,6 +27,25 @@ class RepositoryListSkeleton extends StatelessWidget {
   }
 }
 
+/// 追加ページ取得中に一覧末尾へ表示する1行分のSkeleton。
+///
+/// [RepositoryListSkeleton]と異なりリスト全体を対象にしないため、単独で
+/// [SkeletonScope]を持つ。
+class RepositoryListItemSkeleton extends StatelessWidget {
+  /// 末尾用の1行Skeletonを生成する。
+  const RepositoryListItemSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonScope(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: _RepositoryRowSkeleton(),
+      ),
+    );
+  }
+}
+
 class _RepositoryRowSkeleton extends StatelessWidget {
   const _RepositoryRowSkeleton();
 
