@@ -375,6 +375,22 @@ void main() {
       await controller().loadNextPage();
       expect(fake.callCount, 0);
 
+      // 初回取得中（loading）。gateを開けたままloadNextPageを呼び、
+      // page2を呼ばずに即座に何もしないことを確認する。
+      final loadingGate = Completer<void>();
+      fake.setSuccess(
+        query: RepositorySearchQuery('loading'),
+        result: _pageWithItems(),
+        gate: loadingGate,
+      );
+      final submitFuture = controller().submit('loading');
+      expect(state().status, RepositorySearchStatus.loading);
+      await controller().loadNextPage();
+      expect(fake.callCount, 1);
+      expect(state().status, RepositorySearchStatus.loading);
+      loadingGate.complete();
+      await submitFuture;
+
       // 初回error
       const exception = RepositorySearchException(message: 'failed');
       fake.setFailure(
@@ -383,7 +399,7 @@ void main() {
       );
       await controller().submit('boom');
       await controller().loadNextPage();
-      expect(fake.callCount, 1);
+      expect(fake.callCount, 2);
 
       // hasMore false（0件成功）
       fake.setSuccess(
@@ -392,7 +408,7 @@ void main() {
       );
       await controller().submit('none');
       await controller().loadNextPage();
-      expect(fake.callCount, 2);
+      expect(fake.callCount, 3);
     });
 
     test('loadingMore中の重複呼出しはpage2を1回しか呼ばない', () async {

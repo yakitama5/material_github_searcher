@@ -19,6 +19,14 @@ import '../widgets/search_history_suggestions.dart';
 /// 「見えかけている」余白に相当する。
 const _loadMoreThresholdExtent = 240.0;
 
+/// 追加取得失敗時に末尾へ表示するRetryボタンのkey。
+///
+/// Widget Testから参照するため、`repositorySearchFieldKey`等と同じく
+/// 実装とテストで同一のリテラルを再定義せず本constを共有する。
+const repositoryAppendErrorRetryButtonKey = Key(
+  'repositoryAppendErrorRetryButton',
+);
+
 /// 送信式SearchBarとSliver検索結果一覧を持つRepository検索画面。
 ///
 /// [repositorySearchControllerProvider]のみをSingle Source of Truthとして
@@ -260,14 +268,11 @@ class _RepositorySearchBody extends StatelessWidget {
       // 含める。
       RepositorySearchStatus.success ||
       RepositorySearchStatus.loadingMore ||
-      RepositorySearchStatus.refreshing => _buildResults(
-        context,
-        onRetryAppend,
-      ),
+      RepositorySearchStatus.refreshing => _buildResults(context),
     };
   }
 
-  Widget _buildResults(BuildContext context, VoidCallback onRetryAppend) {
+  Widget _buildResults(BuildContext context) {
     final i18n = context.i18n.repositorySearch;
 
     if (state.items.isEmpty) {
@@ -324,7 +329,7 @@ class _AppendErrorRow extends StatelessWidget {
             child: Text(message, style: Theme.of(context).textTheme.bodyMedium),
           ),
           TextButton(
-            key: const Key('repositoryAppendErrorRetryButton'),
+            key: repositoryAppendErrorRetryButtonKey,
             onPressed: onRetry,
             child: Text(i18n.retry),
           ),

@@ -140,10 +140,13 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
     List<RepositorySummary> incoming,
   ) {
     final seenIdentities = existing.map((item) => item.identity).toSet();
-    final deduped = incoming.where(
-      (item) => seenIdentities.add(item.identity),
-    );
-    return [...existing, ...deduped];
+    final merged = [...existing];
+    for (final item in incoming) {
+      if (seenIdentities.add(item.identity)) {
+        merged.add(item);
+      }
+    }
+    return merged;
   }
 
   Future<void> _search(RepositorySearchQuery query) async {

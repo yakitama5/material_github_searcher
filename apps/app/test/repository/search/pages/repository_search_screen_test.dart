@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
+import 'package:material_github_searcher/src/repository/search/pages/repository_search_screen.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_item.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_skeleton.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_bar.dart';
@@ -504,7 +505,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.byKey(const Key('repositoryAppendErrorRetryButton')),
+        find.byKey(repositoryAppendErrorRetryButtonKey),
         findsOneWidget,
       );
       expect(find.text('owner/repo-34'), findsNothing);
@@ -518,7 +519,7 @@ void main() {
         pageNumber: 2,
       );
       await tester.tap(
-        find.byKey(const Key('repositoryAppendErrorRetryButton')),
+        find.byKey(repositoryAppendErrorRetryButtonKey),
       );
       await tester.pumpAndSettle();
 
