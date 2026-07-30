@@ -7,6 +7,8 @@ import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/navigation/adaptive_app_shell.dart';
 import 'package:material_github_searcher/src/repository/search/pages/repository_search_screen.dart';
 
+import 'support/fake_search_history_repository.dart';
+
 const _config = AppBuildConfig(
   flavor: Flavor.dev,
   appName: 'Dev - Material GitHub Searcher',
@@ -19,7 +21,9 @@ final _messageProvider = Provider<String>((ref) => 'default');
 
 void main() {
   testWidgets('アプリは検索ブランチから起動する', (tester) async {
-    await tester.pumpWidget(createApp(config: _config));
+    await tester.pumpWidget(
+      createApp(config: _config, overrides: [searchHistoryTestOverride()]),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(RepositorySearchScreen), findsOneWidget);
@@ -29,7 +33,10 @@ void main() {
     await tester.pumpWidget(
       createApp(
         config: _config,
-        overrides: [_messageProvider.overrideWithValue('injected')],
+        overrides: [
+          _messageProvider.overrideWithValue('injected'),
+          searchHistoryTestOverride(),
+        ],
       ),
     );
 
@@ -61,7 +68,12 @@ void main() {
     testWidgets(
       'ThemeData.platformは$platformに追従する',
       (tester) async {
-        await tester.pumpWidget(createApp(config: _config));
+        await tester.pumpWidget(
+          createApp(
+            config: _config,
+            overrides: [searchHistoryTestOverride()],
+          ),
+        );
         await tester.pumpAndSettle();
 
         final context = tester.element(find.byType(AdaptiveAppShell));

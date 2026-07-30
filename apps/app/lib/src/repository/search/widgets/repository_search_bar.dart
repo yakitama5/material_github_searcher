@@ -17,6 +17,7 @@ class RepositorySearchBar extends StatelessWidget {
   const RepositorySearchBar({
     required this.controller,
     required this.onSubmit,
+    this.focusNode,
     super.key,
   });
 
@@ -26,12 +27,18 @@ class RepositorySearchBar extends StatelessWidget {
   /// keyboard submit・search buttonタップの両方から呼ばれる送信handler。
   final ValueChanged<String> onSubmit;
 
+  /// 入力欄のフォーカス状態を呼び出し元が観測するためのFocusNode。
+  ///
+  /// 省略した場合は[TextField]が内部で生成する既定のFocusNodeを使う。
+  final FocusNode? focusNode;
+
   @override
   Widget build(BuildContext context) {
     final i18n = context.i18n.repositorySearch;
     return TextField(
       key: repositorySearchFieldKey,
       controller: controller,
+      focusNode: focusNode,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         hintText: i18n.searchFieldHint,

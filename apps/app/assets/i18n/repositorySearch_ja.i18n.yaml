@@ -9,3 +9,10 @@ retry: 再試行
 languageUnset: 未設定
 languageLabel: 言語
 starsLabel: スター数
+historySuggestionsLabel: 検索履歴
+historyClearAllLabel: すべて削除
+historyClearAllTooltip: 検索履歴をすべて削除
+historyClearAllDialogTitle: 検索履歴を削除しますか？
+historyClearAllDialogMessage: 保存されている検索履歴をすべて削除します。この操作は取り消せません。
+historyClearAllDialogConfirm: 削除
+historyClearAllDialogCancel: キャンセル

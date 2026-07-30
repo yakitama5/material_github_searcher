@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:application/application.dart';
 import 'package:dependency_override/dependency_override.dart';
 import 'package:designsystem/designsystem.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +42,7 @@ Widget createApp({
 }
 
 /// アプリケーションのルートとなるウィジェット。
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   /// ルートウィジェット [MyApp] を生成する。
   const MyApp({required this.config, super.key});
 
@@ -47,9 +50,23 @@ class MyApp extends ConsumerWidget {
   final AppBuildConfig config;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // 検索履歴の永続化済みloadはComposition Root起動時に一度だけ行う契約
+    // （SearchHistoryControllerのdoc参照）。画面固有のViewModelを持たない
+    // 方針のため、画面のinitStateではなくここで呼ぶ。
+    unawaited(ref.read(searchHistoryControllerProvider.notifier).load());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: config.appName,
+      title: widget.config.appName,
       scaffoldMessengerKey: SnackBarManager.rootScaffoldMessengerKey,
       locale: TranslationProvider.of(context).flutterLocale,
       supportedLocales: AppLocaleUtils.supportedLocales,

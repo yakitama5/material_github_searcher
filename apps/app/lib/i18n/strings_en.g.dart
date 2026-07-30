@@ -73,6 +73,13 @@ class _Translations$repositorySearch$en extends Translations$repositorySearch$ja
 	@override String get languageUnset => 'Not set';
 	@override String get languageLabel => 'Language';
 	@override String get starsLabel => 'Stars';
+	@override String get historySuggestionsLabel => 'Search history';
+	@override String get historyClearAllLabel => 'Clear all';
+	@override String get historyClearAllTooltip => 'Clear all search history';
+	@override String get historyClearAllDialogTitle => 'Delete search history?';
+	@override String get historyClearAllDialogMessage => 'This removes all saved search history. This action cannot be undone.';
+	@override String get historyClearAllDialogConfirm => 'Delete';
+	@override String get historyClearAllDialogCancel => 'Cancel';
 }
 
 // Path: common.navigation
@@ -109,6 +116,13 @@ extension on TranslationsEn {
 			'repositorySearch.languageUnset' => 'Not set',
 			'repositorySearch.languageLabel' => 'Language',
 			'repositorySearch.starsLabel' => 'Stars',
+			'repositorySearch.historySuggestionsLabel' => 'Search history',
+			'repositorySearch.historyClearAllLabel' => 'Clear all',
+			'repositorySearch.historyClearAllTooltip' => 'Clear all search history',
+			'repositorySearch.historyClearAllDialogTitle' => 'Delete search history?',
+			'repositorySearch.historyClearAllDialogMessage' => 'This removes all saved search history. This action cannot be undone.',
+			'repositorySearch.historyClearAllDialogConfirm' => 'Delete',
+			'repositorySearch.historyClearAllDialogCancel' => 'Cancel',
 			_ => null,
 		};
 	}

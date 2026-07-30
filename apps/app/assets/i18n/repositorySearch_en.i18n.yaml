@@ -9,3 +9,10 @@ retry: Retry
 languageUnset: Not set
 languageLabel: Language
 starsLabel: Stars
+historySuggestionsLabel: Search history
+historyClearAllLabel: Clear all
+historyClearAllTooltip: Clear all search history
+historyClearAllDialogTitle: Delete search history?
+historyClearAllDialogMessage: This removes all saved search history. This action cannot be undone.
+historyClearAllDialogConfirm: Delete
+historyClearAllDialogCancel: Cancel

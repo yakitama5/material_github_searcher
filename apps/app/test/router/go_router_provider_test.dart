@@ -7,6 +7,8 @@ import 'package:material_github_searcher/src/router/app_routes.dart';
 import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/router/router_keys.dart';
 
+import '../support/fake_search_history_repository.dart';
+
 const _config = AppBuildConfig(
   flavor: Flavor.dev,
   appName: 'Dev - Material GitHub Searcher',
@@ -17,7 +19,9 @@ const _config = AppBuildConfig(
 
 void main() {
   testWidgets('/searchと/settingsへ遷移できる', (tester) async {
-    await tester.pumpWidget(createApp(config: _config));
+    await tester.pumpWidget(
+      createApp(config: _config, overrides: [searchHistoryTestOverride()]),
+    );
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(MyApp));

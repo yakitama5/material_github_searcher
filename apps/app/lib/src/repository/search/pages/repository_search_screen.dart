@@ -11,6 +11,7 @@ import '../widgets/repository_list_item.dart';
 import '../widgets/repository_list_skeleton.dart';
 import '../widgets/repository_search_bar.dart';
 import '../widgets/repository_search_message_view.dart';
+import '../widgets/search_history_suggestions.dart';
 
 /// 送信式SearchBarとSliver検索結果一覧を持つRepository検索画面。
 ///
@@ -29,26 +30,88 @@ class RepositorySearchScreen extends ConsumerStatefulWidget {
 class _RepositorySearchScreenState
     extends ConsumerState<RepositorySearchScreen> {
   final _queryController = TextEditingController();
+  final _searchFieldFocusNode = FocusNode(
+    debugLabel: 'repositorySearchField',
+  );
+
+  /// SearchBarがフォーカスを得てから、送信・候補選択・全削除確定まで`true`。
+  ///
+  /// 候補タップ時にSearchBarがFocusを失ってもこのフラグは変化しないため、
+  /// タップの完了前に候補一覧が消えてタップを取りこぼす競合を避ける。
+  /// 一方でフォーカス喪失に反応させないため、SearchBar外へのタップでは
+  /// 閉じない（送信・候補選択・全削除確定という明示的な操作でのみ閉じる）。
+  bool _suggestionsVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFieldFocusNode.addListener(_handleFocusChange);
+  }
 
   @override
   void dispose() {
+    _searchFieldFocusNode
+      ..removeListener(_handleFocusChange)
+      ..dispose();
     _queryController.dispose();
     super.dispose();
   }
 
+  void _handleFocusChange() {
+    if (_searchFieldFocusNode.hasFocus) {
+      setState(() => _suggestionsVisible = true);
+    }
+  }
+
   void _submit(String rawQuery) {
+    final trimmed = rawQuery.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
     unawaited(
-      ref.read(repositorySearchControllerProvider.notifier).submit(rawQuery),
+      ref
+          .read(searchHistoryControllerProvider.notifier)
+          .recordSubmittedKeyword(trimmed),
     );
+    unawaited(
+      ref.read(repositorySearchControllerProvider.notifier).submit(trimmed),
+    );
+    setState(() => _suggestionsVisible = false);
+    _searchFieldFocusNode.unfocus();
+  }
+
+  void _selectSuggestion(String keyword) {
+    _queryController.value = TextEditingValue(
+      text: keyword,
+      selection: TextSelection.collapsed(offset: keyword.length),
+    );
+    _submit(keyword);
+  }
+
+  void _clearAllHistory() {
+    unawaited(ref.read(searchHistoryControllerProvider.notifier).clearAll());
   }
 
   void _retry() {
     unawaited(ref.read(repositorySearchControllerProvider.notifier).retry());
   }
 
+  List<SearchHistoryEntry> _filterSuggestions(
+    List<SearchHistoryEntry> entries,
+  ) {
+    final trimmed = _queryController.text.trim().toLowerCase();
+    if (trimmed.isEmpty) {
+      return entries;
+    }
+    return entries
+        .where((entry) => entry.keyword.toLowerCase().contains(trimmed))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(repositorySearchControllerProvider);
+    final historyState = ref.watch(searchHistoryControllerProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -67,7 +130,32 @@ class _RepositorySearchScreenState
                   titleSpacing: 16,
                   title: RepositorySearchBar(
                     controller: _queryController,
+                    focusNode: _searchFieldFocusNode,
                     onSubmit: _submit,
+                  ),
+                ),
+                // 絞り込みは1文字入力ごとに発生するため、検索結果一覧を含む
+                // 画面全体ではなく本sliverだけを`_queryController`の変更に
+                // 反応させ、再構築範囲を最小化する。
+                SliverToBoxAdapter(
+                  child: ListenableBuilder(
+                    listenable: _queryController,
+                    builder: (context, _) {
+                      if (!_suggestionsVisible) {
+                        return const SizedBox.shrink();
+                      }
+                      final suggestions = _filterSuggestions(
+                        historyState.history.entries,
+                      );
+                      if (suggestions.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return SearchHistorySuggestions(
+                        entries: suggestions,
+                        onSelect: _selectSuggestion,
+                        onClearAllConfirmed: _clearAllHistory,
+                      );
+                    },
                   ),
                 ),
                 _RepositorySearchBody(state: state, onRetry: _retry),
