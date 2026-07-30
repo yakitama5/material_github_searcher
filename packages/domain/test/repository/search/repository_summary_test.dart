@@ -71,9 +71,26 @@ void main() {
     });
 
     test('いずれかのフィールドが異なれば等価にならない', () {
+      const otherIdentity = RepositoryIdentity(owner: 'dart-lang', name: 'sdk');
       const base = RepositorySummary(
         identity: identity,
         ownerAvatarUrl: 'https://example.com/avatar.png',
+        language: 'Dart',
+        stargazersCount: 1,
+        forksCount: 2,
+        openIssuesCount: 3,
+      );
+      const differentIdentity = RepositorySummary(
+        identity: otherIdentity,
+        ownerAvatarUrl: 'https://example.com/avatar.png',
+        language: 'Dart',
+        stargazersCount: 1,
+        forksCount: 2,
+        openIssuesCount: 3,
+      );
+      const differentOwnerAvatarUrl = RepositorySummary(
+        identity: identity,
+        ownerAvatarUrl: 'https://example.com/other.png',
         language: 'Dart',
         stargazersCount: 1,
         forksCount: 2,
@@ -87,8 +104,37 @@ void main() {
         forksCount: 2,
         openIssuesCount: 3,
       );
+      const differentStargazersCount = RepositorySummary(
+        identity: identity,
+        ownerAvatarUrl: 'https://example.com/avatar.png',
+        language: 'Dart',
+        stargazersCount: 999,
+        forksCount: 2,
+        openIssuesCount: 3,
+      );
+      const differentForksCount = RepositorySummary(
+        identity: identity,
+        ownerAvatarUrl: 'https://example.com/avatar.png',
+        language: 'Dart',
+        stargazersCount: 1,
+        forksCount: 999,
+        openIssuesCount: 3,
+      );
+      const differentOpenIssuesCount = RepositorySummary(
+        identity: identity,
+        ownerAvatarUrl: 'https://example.com/avatar.png',
+        language: 'Dart',
+        stargazersCount: 1,
+        forksCount: 2,
+        openIssuesCount: 999,
+      );
 
+      expect(base, isNot(equals(differentIdentity)));
+      expect(base, isNot(equals(differentOwnerAvatarUrl)));
       expect(base, isNot(equals(differentLanguage)));
+      expect(base, isNot(equals(differentStargazersCount)));
+      expect(base, isNot(equals(differentForksCount)));
+      expect(base, isNot(equals(differentOpenIssuesCount)));
     });
   });
 }
