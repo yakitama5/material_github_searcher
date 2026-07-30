@@ -33,6 +33,8 @@ class RepositoryListItem extends StatelessWidget {
       label:
           '$fullName, ${i18n.languageLabel}: $languageLabel, '
           '${i18n.starsLabel}: $starsValue',
+      button: onTap != null,
+      onTap: onTap == null ? null : () => onTap(summary.identity),
       child: ExcludeSemantics(
         child: ListTile(
           onTap: onTap == null ? null : () => onTap(summary.identity),

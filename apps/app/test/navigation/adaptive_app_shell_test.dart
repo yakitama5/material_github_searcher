@@ -11,6 +11,7 @@ import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/repository/search/pages/repository_search_screen.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_item.dart';
+import 'package:material_github_searcher/src/repository/search/widgets/repository_search_bar.dart';
 import 'package:material_github_searcher/src/router/app_routes.dart';
 import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/router/router_keys.dart';
@@ -25,8 +26,8 @@ const _config = AppBuildConfig(
   appIdSuffix: '.dev',
 );
 
-const _searchFieldKey = Key('repositorySearchField');
-const _submitButtonKey = Key('repositorySearchSubmitButton');
+const _searchFieldKey = repositorySearchFieldKey;
+const _submitButtonKey = repositorySearchSubmitButtonKey;
 
 List<RepositorySummary> _manyRepositories(int count) => List.generate(
   count,

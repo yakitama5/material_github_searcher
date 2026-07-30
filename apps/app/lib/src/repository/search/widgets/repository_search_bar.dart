@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../i18n/strings.g.dart';
 
+/// [RepositorySearchBar]内の検索入力欄を指すKey。Widget Testから参照する。
+const repositorySearchFieldKey = Key('repositorySearchField');
+
+/// [RepositorySearchBar]内のsearch buttonを指すKey。Widget Testから参照する。
+const repositorySearchSubmitButtonKey = Key('repositorySearchSubmitButton');
+
 /// keyboard submitとsearch buttonタップを同じ[onSubmit]へ統一する送信式SearchBar。
 ///
 /// 入力中の文字列は[controller]がWidget側で保持し、Application Stateへは
@@ -24,7 +30,7 @@ class RepositorySearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = context.i18n.repositorySearch;
     return TextField(
-      key: const Key('repositorySearchField'),
+      key: repositorySearchFieldKey,
       controller: controller,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
@@ -35,7 +41,7 @@ class RepositorySearchBar extends StatelessWidget {
           borderSide: BorderSide.none,
         ),
         suffixIcon: IconButton(
-          key: const Key('repositorySearchSubmitButton'),
+          key: repositorySearchSubmitButtonKey,
           icon: const Icon(Icons.search),
           tooltip: i18n.searchButtonTooltip,
           onPressed: () => onSubmit(controller.text),

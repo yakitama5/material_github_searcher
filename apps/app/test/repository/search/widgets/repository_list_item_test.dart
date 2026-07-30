@@ -13,6 +13,13 @@ const _flutterRepo = RepositorySummary(
   openIssuesCount: 12000,
 );
 
+String get _expectedSemanticsLabel {
+  final i18n = AppLocale.ja.translations.repositorySearch;
+  return '${_flutterRepo.identity.fullName}, ${i18n.languageLabel}: '
+      '${_flutterRepo.language}, ${i18n.starsLabel}: '
+      '${_flutterRepo.stargazersCount}';
+}
+
 void main() {
   testWidgets('タップ時に指定したcallbackへidentityを渡す', (tester) async {
     RepositoryIdentity? tapped;
@@ -48,5 +55,51 @@ void main() {
 
     final listTile = tester.widget<ListTile>(find.byType(ListTile));
     expect(listTile.onTap, isNull);
+  });
+
+  testWidgets('onTapを渡した場合はSemanticsもtap操作可能なbuttonとして公開する', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TranslationProvider(
+          child: Scaffold(
+            body: RepositoryListItem(summary: _flutterRepo, onTap: (_) {}),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSemantics(find.byType(RepositoryListItem)),
+      matchesSemantics(
+        label: _expectedSemanticsLabel,
+        isButton: true,
+        hasTapAction: true,
+      ),
+    );
+    handle.dispose();
+  });
+
+  testWidgets('onTapを渡さない場合はSemanticsもbutton・tap操作を公開しない', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TranslationProvider(
+          child: const Scaffold(
+            body: RepositoryListItem(summary: _flutterRepo),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSemantics(find.byType(RepositoryListItem)),
+      matchesSemantics(label: _expectedSemanticsLabel),
+    );
+    handle.dispose();
   });
 }

@@ -8,6 +8,7 @@ import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_skeleton.dart';
+import 'package:material_github_searcher/src/repository/search/widgets/repository_search_bar.dart';
 
 import '../support/fake_repository_search_repository.dart';
 
@@ -19,8 +20,8 @@ const _config = AppBuildConfig(
   appIdSuffix: '.dev',
 );
 
-const _searchFieldKey = Key('repositorySearchField');
-const _submitButtonKey = Key('repositorySearchSubmitButton');
+const _searchFieldKey = repositorySearchFieldKey;
+const _submitButtonKey = repositorySearchSubmitButtonKey;
 const _retryButtonKey = Key('repositorySearchRetryButton');
 
 const _flutterRepo = RepositorySummary(
