@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
+import 'package:material_github_searcher/src/repository/search/widgets/repository_list_item.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_skeleton.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_bar.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/search_history_suggestions.dart';
@@ -72,6 +73,47 @@ RepositorySearchPage _singlePage(RepositorySummary item) =>
       nextPage: null,
       hasMore: false,
     );
+
+/// 無限スクロールの検証用に、viewportに収まらない件数のitemsを生成する。
+List<RepositorySummary> _manyItems(int count, {int startIndex = 0}) =>
+    List.generate(
+      count,
+      (i) => RepositorySummary(
+        identity: RepositoryIdentity(
+          owner: 'owner',
+          name: 'repo-${startIndex + i}',
+        ),
+        ownerAvatarUrl:
+            'https://example.invalid/avatars/repo-${startIndex + i}.png',
+        language: 'Dart',
+        stargazersCount: startIndex + i,
+        forksCount: 0,
+        openIssuesCount: 0,
+      ),
+    );
+
+RepositorySearchPage _pageOf(
+  List<RepositorySummary> items, {
+  required int totalCount,
+  int? nextPage,
+}) => RepositorySearchPage(
+  items: items,
+  totalCount: totalCount,
+  nextPage: nextPage,
+  hasMore: nextPage != null,
+);
+
+/// 大きく上方向へdragし、その時点のスクロール可能範囲の末尾付近まで進める。
+///
+/// drag対象には[RepositoryListItem]ではなく[CustomScrollView]自体を使う。
+/// スクロール後は先頭付近のitemがviewport外（cache extentの外）へ外れて
+/// hit-testできなくなることがあるため、常にviewport全体を覆う
+/// [CustomScrollView]を対象にする。末尾のSkeleton・追加item・error行は
+/// 追加取得の状態変化に応じて末尾の可スクロール範囲自体が伸びるため、直前の
+/// 末尾より後に描画される要素を見るには本関数を複数回呼び出す必要がある。
+Future<void> _scrollToBottom(WidgetTester tester) async {
+  await tester.drag(find.byType(CustomScrollView), const Offset(0, -5000));
+}
 
 void main() {
   testWidgets('未検索時は利用案内を表示する', (tester) async {
@@ -353,6 +395,194 @@ void main() {
       expect(find.text('flutter/flutter'), findsOneWidget);
     });
   }
+
+  group('無限スクロール', () {
+    testWidgets('末尾までスクロールするとpage2を取得して一覧へ追加する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository
+        ..setSuccess(
+          query: query,
+          page: _pageOf(_manyItems(30), totalCount: 35, nextPage: 2),
+        )
+        ..setSuccess(
+          query: query,
+          page: _pageOf(_manyItems(5, startIndex: 30), totalCount: 35),
+          pageNumber: 2,
+        );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      await _scrollToBottom(tester);
+      await tester.pumpAndSettle();
+
+      expect(repository.pageCalls, [(query, 1), (query, 2)]);
+
+      // page2追加直後は可スクロール範囲が伸びた分だけ再度スクロールしないと
+      // 末尾の新規itemが描画範囲（cache extent）に入らない。
+      await _scrollToBottom(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('owner/repo-34'), findsOneWidget);
+    });
+
+    testWidgets('追加取得中は末尾に1行Skeletonだけ表示し既存一覧を維持する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      final gate = Completer<void>();
+      repository
+        ..setSuccess(
+          query: query,
+          page: _pageOf(_manyItems(30), totalCount: 35, nextPage: 2),
+        )
+        ..setSuccess(
+          query: query,
+          page: _pageOf(_manyItems(5, startIndex: 30), totalCount: 35),
+          pageNumber: 2,
+          gate: gate,
+        );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      await _scrollToBottom(tester);
+      await tester.pump();
+      // loadingMoreへ遷移した直後は末尾Skeleton行の分だけ可スクロール範囲が
+      // 伸びるため、それを描画範囲へ収めるために再度スクロールする。
+      await _scrollToBottom(tester);
+      await tester.pump();
+
+      expect(find.byType(RepositoryListItemSkeleton), findsOneWidget);
+      expect(find.byType(RepositoryListSkeleton), findsNothing);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RepositoryListItemSkeleton), findsNothing);
+
+      await _scrollToBottom(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('owner/repo-34'), findsOneWidget);
+    });
+
+    testWidgets('追加取得の失敗時は末尾にRetry行を表示し、タップで再試行できる', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository
+        ..setSuccess(
+          query: query,
+          page: _pageOf(_manyItems(30), totalCount: 35, nextPage: 2),
+        )
+        ..setFailure(
+          query: query,
+          exception: const RepositorySearchException(
+            message: 'append failed',
+          ),
+          pageNumber: 2,
+        );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      await _scrollToBottom(tester);
+      await tester.pumpAndSettle();
+      // 追加取得失敗（末尾Error/Retry行の追加）で伸びた可スクロール範囲を
+      // 描画範囲へ収めるため、再度スクロールする。
+      await _scrollToBottom(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(AppLocale.ja.translations.repositorySearch.errorGeneric),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('repositoryAppendErrorRetryButton')),
+        findsOneWidget,
+      );
+      expect(find.text('owner/repo-34'), findsNothing);
+
+      repository.setSuccess(
+        query: query,
+        page: _pageOf(
+          _manyItems(5, startIndex: 30),
+          totalCount: 35,
+        ),
+        pageNumber: 2,
+      );
+      await tester.tap(
+        find.byKey(const Key('repositoryAppendErrorRetryButton')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(AppLocale.ja.translations.repositorySearch.errorGeneric),
+        findsNothing,
+      );
+
+      await _scrollToBottom(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('owner/repo-34'), findsOneWidget);
+    });
+
+    testWidgets('hasMore falseでは末尾スクロールしても追加requestを呼ばない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(
+        query: query,
+        page: _pageOf(_manyItems(30), totalCount: 30),
+      );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      await _scrollToBottom(tester);
+      await tester.pumpAndSettle();
+
+      expect(repository.pageCalls, [(query, 1)]);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('SearchBar内部scroll（cursor追従）では追加requestを呼ばない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(
+        query: query,
+        page: _pageOf(_manyItems(30), totalCount: 35, nextPage: 2),
+      );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      // SearchBarへ再フォーカスし、field幅を超える長文を入力する。
+      // EditableText自身のScrollable（横scroll）がcursor追従のため
+      // ScrollNotificationを発するが、これはCustomScrollView自身の末尾
+      // scrollではないため、追加requestを誘発してはならない。
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(_searchFieldKey),
+        'a very very very very very very very long query text',
+      );
+      // cursor追従scrollはScrollPositionのanimateToによる複数frameの
+      // アニメーションのため、1回のpumpでは進行せずpumpAndSettleが必要。
+      await tester.pumpAndSettle();
+
+      expect(repository.pageCalls, [(query, 1)]);
+    });
+  });
 
   group('検索履歴サジェスト', () {
     testWidgets('候補タップで即座に検索を実行しSearchBarへ反映する', (tester) async {
