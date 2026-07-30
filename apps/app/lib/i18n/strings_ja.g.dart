@@ -101,6 +101,27 @@ class Translations$repositorySearch$ja {
 
 	/// ja: 'スター数'
 	String get starsLabel => 'スター数';
+
+	/// ja: '検索履歴'
+	String get historySuggestionsLabel => '検索履歴';
+
+	/// ja: 'すべて削除'
+	String get historyClearAllLabel => 'すべて削除';
+
+	/// ja: '検索履歴をすべて削除'
+	String get historyClearAllTooltip => '検索履歴をすべて削除';
+
+	/// ja: '検索履歴を削除しますか？'
+	String get historyClearAllDialogTitle => '検索履歴を削除しますか？';
+
+	/// ja: '保存されている検索履歴をすべて削除します。この操作は取り消せません。'
+	String get historyClearAllDialogMessage => '保存されている検索履歴をすべて削除します。この操作は取り消せません。';
+
+	/// ja: '削除'
+	String get historyClearAllDialogConfirm => '削除';
+
+	/// ja: 'キャンセル'
+	String get historyClearAllDialogCancel => 'キャンセル';
 }
 
 // Path: common.navigation
@@ -141,6 +162,13 @@ extension on Translations {
 			'repositorySearch.languageUnset' => '未設定',
 			'repositorySearch.languageLabel' => '言語',
 			'repositorySearch.starsLabel' => 'スター数',
+			'repositorySearch.historySuggestionsLabel' => '検索履歴',
+			'repositorySearch.historyClearAllLabel' => 'すべて削除',
+			'repositorySearch.historyClearAllTooltip' => '検索履歴をすべて削除',
+			'repositorySearch.historyClearAllDialogTitle' => '検索履歴を削除しますか？',
+			'repositorySearch.historyClearAllDialogMessage' => '保存されている検索履歴をすべて削除します。この操作は取り消せません。',
+			'repositorySearch.historyClearAllDialogConfirm' => '削除',
+			'repositorySearch.historyClearAllDialogCancel' => 'キャンセル',
 			_ => null,
 		};
 	}

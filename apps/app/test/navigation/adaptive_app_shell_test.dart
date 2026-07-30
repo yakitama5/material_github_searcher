@@ -17,6 +17,7 @@ import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/router/router_keys.dart';
 
 import '../repository/search/support/fake_repository_search_repository.dart';
+import '../support/fake_search_history_repository.dart';
 
 const _config = AppBuildConfig(
   flavor: Flavor.dev,
@@ -283,13 +284,13 @@ Future<void> _pumpAtWidth(
   await tester.pumpWidget(
     createApp(
       config: _config,
-      overrides: repository == null
-          ? const []
-          : [
-              repositorySearchRepositoryProvider.overrideWith(
-                (ref) => repository,
-              ),
-            ],
+      overrides: [
+        searchHistoryTestOverride(),
+        if (repository != null)
+          repositorySearchRepositoryProvider.overrideWith(
+            (ref) => repository,
+          ),
+      ],
     ),
   );
   await tester.pumpAndSettle();

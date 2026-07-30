@@ -9,7 +9,9 @@ import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_skeleton.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_bar.dart';
+import 'package:material_github_searcher/src/repository/search/widgets/search_history_suggestions.dart';
 
+import '../../../support/fake_search_history_repository.dart';
 import '../support/fake_repository_search_repository.dart';
 
 const _config = AppBuildConfig(
@@ -351,13 +353,330 @@ void main() {
       expect(find.text('flutter/flutter'), findsOneWidget);
     });
   }
+
+  group('検索履歴サジェスト', () {
+    testWidgets('候補タップで即座に検索を実行しSearchBarへ反映する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('dart');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: SearchHistory()
+            .recordSubmittedKeyword('dart')
+            .recordSubmittedKeyword('flutter'),
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('dart'));
+      await tester.pumpAndSettle();
+
+      expect(repository.calls, [query]);
+      expect(
+        tester.widget<TextField>(find.byKey(_searchFieldKey)).controller?.text,
+        'dart',
+      );
+    });
+
+    testWidgets('フォーカス時に履歴を最近送信順で表示する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: SearchHistory()
+            .recordSubmittedKeyword('dart')
+            .recordSubmittedKeyword('flutter'),
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      expect(find.byKey(repositorySearchHistorySuggestionsKey), findsNothing);
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(repositorySearchHistorySuggestionsKey), findsOneWidget);
+      expect(_suggestionKeywords(tester), ['flutter', 'dart']);
+    });
+
+    testWidgets('SearchHistoryが返す最大10件の一覧をそのまま表示する', (tester) async {
+      // 最大10件への切り捨て自体はdomainの不変条件
+      // （packages/domain/test/search_history/search_history_test.dart
+      // 「最大10件を超える古い履歴は切り捨てる」で検証済み）。ここでは画面が
+      // SearchHistory.entriesをそのまま・順序を保って描画することだけを見る。
+      var history = SearchHistory();
+      for (var i = 0; i < 12; i++) {
+        history = history.recordSubmittedKeyword('keyword$i');
+      }
+      final repository = FakeRepositorySearchRepository();
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: history,
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+
+      expect(
+        _suggestionKeywords(tester),
+        history.entries.map((e) => e.keyword),
+      );
+    });
+
+    testWidgets('履歴0件時はフォーカスしてもサジェスト領域を表示しない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: FakeSearchHistoryRepository(),
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(repositorySearchHistorySuggestionsKey), findsNothing);
+    });
+
+    testWidgets('入力するとtrim・大文字小文字を無視して候補を絞り込む', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: SearchHistory()
+            .recordSubmittedKeyword('Dart')
+            .recordSubmittedKeyword('flutter'),
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+      expect(_suggestionKeywords(tester), ['flutter', 'Dart']);
+
+      await tester.enterText(find.byKey(_searchFieldKey), '  DA  ');
+      await tester.pump();
+
+      expect(_suggestionKeywords(tester), ['Dart']);
+      expect(repository.calls, isEmpty);
+    });
+
+    testWidgets('絞り込みで候補が0件になったらサジェスト領域自体を表示しない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: SearchHistory()
+            .recordSubmittedKeyword('dart')
+            .recordSubmittedKeyword('flutter'),
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+      expect(find.byKey(repositorySearchHistorySuggestionsKey), findsOneWidget);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'no-such-keyword');
+      await tester.pump();
+
+      expect(find.byKey(repositorySearchHistorySuggestionsKey), findsNothing);
+    });
+
+    testWidgets('通常送信でも履歴を先頭へ記録する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: SearchHistory().recordSubmittedKeyword('dart'),
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      // 送信直後はSearchBarに送信済みのkeywordがそのまま残るため、絞り込み
+      // を受けない状態を確認するために一度空にしてから再フォーカスする。
+      await tester.enterText(find.byKey(_searchFieldKey), '');
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+
+      expect(_suggestionKeywords(tester), ['flutter', 'dart']);
+    });
+
+    testWidgets('全削除は確認Dialogを表示しキャンセルでは履歴を変更しない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: SearchHistory().recordSubmittedKeyword('dart'),
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(repositorySearchHistoryClearAllButtonKey));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(repositorySearchHistoryClearAllCancelKey),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(repositorySearchHistoryClearAllCancelKey));
+      await tester.pumpAndSettle();
+
+      expect(_suggestionKeywords(tester), ['dart']);
+    });
+
+    testWidgets('全削除は確認Dialogで確定すると履歴を削除する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: SearchHistory().recordSubmittedKeyword('dart'),
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(repositorySearchHistoryClearAllButtonKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(repositorySearchHistoryClearAllConfirmKey));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(repositorySearchHistorySuggestionsKey), findsNothing);
+    });
+
+    testWidgets('load失敗時もRepository検索を継続する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      final historyRepository = FakeSearchHistoryRepository()
+        ..loadError = const SearchHistoryPersistenceException(
+          message: 'load failed',
+        );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(repository.calls, [query]);
+      expect(find.text('flutter/flutter'), findsOneWidget);
+    });
+
+    testWidgets('save失敗時もRepository検索を継続する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      final historyRepository = FakeSearchHistoryRepository()
+        ..saveError = const SearchHistoryPersistenceException(
+          message: 'save failed',
+        );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(repository.calls, [query]);
+      expect(find.text('flutter/flutter'), findsOneWidget);
+    });
+
+    for (final locale in [AppLocale.ja, AppLocale.en]) {
+      testWidgets('$localeでは検索履歴見出し・全削除ラベルをローカライズして表示する', (tester) async {
+        final repository = FakeRepositorySearchRepository();
+        final historyRepository = FakeSearchHistoryRepository(
+          initialHistory: SearchHistory().recordSubmittedKeyword('flutter'),
+        );
+        await _pumpSearchScreen(
+          tester,
+          repository: repository,
+          historyRepository: historyRepository,
+          locale: locale,
+        );
+
+        await tester.tap(find.byKey(_searchFieldKey));
+        await tester.pumpAndSettle();
+
+        final i18n = locale.translations.repositorySearch;
+        expect(find.text(i18n.historySuggestionsLabel), findsOneWidget);
+        expect(find.text(i18n.historyClearAllLabel), findsOneWidget);
+      });
+    }
+
+    testWidgets('Semanticsに候補keywordと全削除ボタンのラベルが含まれる', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: SearchHistory().recordSubmittedKeyword('flutter'),
+      );
+      final handle = tester.ensureSemantics();
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+
+      final suggestionSemantics = tester.getSemantics(
+        find.byKey(repositorySearchHistorySuggestionItemKey('flutter')),
+      );
+      expect(suggestionSemantics.label, contains('flutter'));
+
+      final clearAllSemantics = tester.getSemantics(
+        find.byKey(repositorySearchHistoryClearAllButtonKey),
+      );
+      expect(clearAllSemantics.label, isNotEmpty);
+      handle.dispose();
+    });
+  });
 }
+
+/// [SearchHistorySuggestions]へ渡された候補keywordを表示順で取得する。
+List<String> _suggestionKeywords(WidgetTester tester) => tester
+    .widget<SearchHistorySuggestions>(find.byType(SearchHistorySuggestions))
+    .entries
+    .map((entry) => entry.keyword)
+    .toList();
 
 Future<void> _pumpSearchScreen(
   WidgetTester tester, {
   required FakeRepositorySearchRepository repository,
   double width = 402,
   AppLocale locale = AppLocale.ja,
+  FakeSearchHistoryRepository? historyRepository,
 }) async {
   final previousLocale = LocaleSettings.currentLocale;
   addTearDown(() => LocaleSettings.setLocale(previousLocale));
@@ -371,6 +690,7 @@ Future<void> _pumpSearchScreen(
       config: _config,
       overrides: [
         repositorySearchRepositoryProvider.overrideWith((ref) => repository),
+        searchHistoryTestOverride(repository: historyRepository),
       ],
     ),
   );
