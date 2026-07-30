@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/navigation/adaptive_app_shell.dart';
+import 'package:material_github_searcher/src/repository/search/pages/repository_search_screen.dart';
 
 const _config = AppBuildConfig(
   flavor: Flavor.dev,
@@ -21,8 +22,7 @@ void main() {
     await tester.pumpWidget(createApp(config: _config));
     await tester.pumpAndSettle();
 
-    expect(find.text(_config.appName), findsOneWidget);
-    expect(find.text('Search item 0'), findsOneWidget);
+    expect(find.byType(RepositorySearchScreen), findsOneWidget);
   });
 
   testWidgets('createAppへ渡したProvider overrideを参照できる', (tester) async {
@@ -45,7 +45,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(_config.appName), findsOneWidget);
+    expect(find.byType(RepositorySearchScreen), findsOneWidget);
   });
 
   testWidgets('Mock overrideで起動できる', (tester) async {
@@ -54,7 +54,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(_config.appName), findsOneWidget);
+    expect(find.byType(RepositorySearchScreen), findsOneWidget);
   });
 
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {

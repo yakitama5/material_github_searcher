@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:application/application.dart';
+import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,9 +9,13 @@ import 'package:go_router/go_router.dart';
 import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
+import 'package:material_github_searcher/src/repository/search/pages/repository_search_screen.dart';
+import 'package:material_github_searcher/src/repository/search/widgets/repository_list_item.dart';
 import 'package:material_github_searcher/src/router/app_routes.dart';
 import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/router/router_keys.dart';
+
+import '../repository/search/support/fake_repository_search_repository.dart';
 
 const _config = AppBuildConfig(
   flavor: Flavor.dev,
@@ -17,6 +23,28 @@ const _config = AppBuildConfig(
   appIdAndroid: 'com.example.material_github_searcher',
   appIdIos: 'com.example.materialGithubSearcher',
   appIdSuffix: '.dev',
+);
+
+const _searchFieldKey = Key('repositorySearchField');
+const _submitButtonKey = Key('repositorySearchSubmitButton');
+
+List<RepositorySummary> _manyRepositories(int count) => List.generate(
+  count,
+  (index) => RepositorySummary(
+    identity: RepositoryIdentity(owner: 'owner$index', name: 'repo$index'),
+    ownerAvatarUrl: 'https://example.invalid/avatars/owner$index.png',
+    language: 'Dart',
+    stargazersCount: index,
+    forksCount: 0,
+    openIssuesCount: 0,
+  ),
+);
+
+/// Search内の縦scrollを行う本体のScrollable。SearchBar（TextField）内部の
+/// 横scroll用Scrollableと区別するため、axisDirectionで絞り込む。
+final _verticalScrollable = find.byWidgetPredicate(
+  (widget) =>
+      widget is Scrollable && widget.axisDirection == AxisDirection.down,
 );
 
 void main() {
@@ -55,20 +83,81 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, settingsPath);
   });
 
-  testWidgets('branch切替後もSearchのscroll位置を保持する', (tester) async {
-    await _pumpAtWidth(tester, 402);
-    final scrollable = find.byType(Scrollable);
+  testWidgets('branch切替後もSearchの検索結果とscroll位置を保持する', (tester) async {
+    final repository = FakeRepositorySearchRepository();
+    final query = RepositorySearchQuery('flutter');
+    repository.setSuccess(
+      query: query,
+      page: RepositorySearchPage(
+        items: _manyRepositories(30),
+        totalCount: 30,
+        nextPage: null,
+        hasMore: false,
+      ),
+    );
+    await _pumpAtWidth(tester, 402, repository: repository);
 
-    await tester.drag(scrollable, const Offset(0, -500));
+    await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+    await tester.tap(find.byKey(_submitButtonKey));
     await tester.pumpAndSettle();
-    final offset = tester.state<ScrollableState>(scrollable).position.pixels;
+
+    await tester.drag(_verticalScrollable, const Offset(0, -500));
+    await tester.pumpAndSettle();
+    final offset = tester
+        .state<ScrollableState>(_verticalScrollable)
+        .position
+        .pixels;
+    expect(offset, greaterThan(0));
 
     await _selectDestination(tester, 1);
     await _selectDestination(tester, 0);
 
+    expect(find.byType(RepositoryListItem), findsWidgets);
     expect(
-      tester.state<ScrollableState>(find.byType(Scrollable)).position.pixels,
+      tester.state<ScrollableState>(_verticalScrollable).position.pixels,
       closeTo(offset, 0.1),
+    );
+    // branch切替のみでは再検索が発生しない（保持であり再取得ではない）ことを
+    // 呼出回数で確認する。
+    expect(repository.calls, [query]);
+  });
+
+  testWidgets('Search branchから離脱すると進行中の検索をcancelする', (tester) async {
+    final repository = FakeRepositorySearchRepository();
+    final query = RepositorySearchQuery('flutter');
+    final gate = Completer<void>();
+    repository.setSuccess(
+      query: query,
+      page: RepositorySearchPage(
+        items: _manyRepositories(1),
+        totalCount: 1,
+        nextPage: null,
+        hasMore: false,
+      ),
+      gate: gate,
+    );
+    await _pumpAtWidth(tester, 402, repository: repository);
+
+    await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+    await tester.tap(find.byKey(_submitButtonKey));
+    await tester.pump();
+
+    final container = _containerFor(tester);
+    expect(
+      container.read(repositorySearchControllerProvider).status,
+      RepositorySearchStatus.loading,
+    );
+
+    await _selectDestination(tester, 1);
+
+    // cancel後に遅延応答が完了しても、cancel済みのrequestとして破棄され
+    // Stateはloadingのまま変化しないことを確認する。
+    gate.complete();
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(repositorySearchControllerProvider).status,
+      RepositorySearchStatus.loading,
     );
   });
 
@@ -105,7 +194,7 @@ void main() {
     await _selectDestination(tester, 0);
 
     expect(find.text('Search subpage'), findsNothing);
-    expect(find.text('Search item 0'), findsOneWidget);
+    expect(find.byType(RepositorySearchScreen), findsOneWidget);
   });
 
   testWidgets('Settings branchのNavigator stackを保持する', (tester) async {
@@ -181,6 +270,7 @@ Future<void> _pumpAtWidth(
   WidgetTester tester,
   double width, {
   AppLocale locale = AppLocale.ja,
+  FakeRepositorySearchRepository? repository,
 }) async {
   final previousLocale = LocaleSettings.currentLocale;
   addTearDown(() => LocaleSettings.setLocale(previousLocale));
@@ -189,16 +279,28 @@ Future<void> _pumpAtWidth(
   tester.view.physicalSize = Size(width, 900);
   addTearDown(tester.view.reset);
 
-  await tester.pumpWidget(createApp(config: _config));
+  await tester.pumpWidget(
+    createApp(
+      config: _config,
+      overrides: repository == null
+          ? const []
+          : [
+              repositorySearchRepositoryProvider.overrideWith(
+                (ref) => repository,
+              ),
+            ],
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
 GoRouter _routerFor(WidgetTester tester) {
+  return _containerFor(tester).read(goRouterProvider);
+}
+
+ProviderContainer _containerFor(WidgetTester tester) {
   final context = tester.element(find.byType(MyApp));
-  return ProviderScope.containerOf(
-    context,
-    listen: false,
-  ).read(goRouterProvider);
+  return ProviderScope.containerOf(context, listen: false);
 }
 
 Future<void> _selectDestination(WidgetTester tester, int index) async {
