@@ -13,6 +13,8 @@ dependencies:
     path: ../infrastructure/github
   infrastructure_mock:
     path: ../infrastructure/mock
+  infrastructure_shared_preferences:
+    path: ../infrastructure/shared_preferences
   riverpod: 3.4.2
 
 resolution: workspace

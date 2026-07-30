@@ -13,6 +13,7 @@ workspace:
   - packages/foundation
   - packages/infrastructure/github
   - packages/infrastructure/mock
+  - packages/infrastructure/shared_preferences
 
 dev_dependencies:
   altive_lints: 4.0.0

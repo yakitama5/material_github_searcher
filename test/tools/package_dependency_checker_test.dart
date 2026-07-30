@@ -259,6 +259,7 @@ const _workspacePaths = [
   'packages/foundation',
   'packages/infrastructure/github',
   'packages/infrastructure/mock',
+  'packages/infrastructure/shared_preferences',
 ];
 
 const _packageNames = {
@@ -270,6 +271,8 @@ const _packageNames = {
   'packages/foundation': 'foundation',
   'packages/infrastructure/github': 'infrastructure_github',
   'packages/infrastructure/mock': 'infrastructure_mock',
+  'packages/infrastructure/shared_preferences':
+      'infrastructure_shared_preferences',
 };
 
 const _defaultDependencies = <String, Map<String, String>>{
@@ -285,6 +288,7 @@ const _defaultDependencies = <String, Map<String, String>>{
   'dependency_override': {
     'application': '../application',
     'infrastructure_mock': '../infrastructure/mock',
+    'infrastructure_shared_preferences': '../infrastructure/shared_preferences',
   },
   'designsystem': {
     'application': '../application',
@@ -293,6 +297,7 @@ const _defaultDependencies = <String, Map<String, String>>{
   'domain': {'foundation': '../foundation'},
   'infrastructure_github': {'domain': '../../domain'},
   'infrastructure_mock': {'domain': '../../domain'},
+  'infrastructure_shared_preferences': {'domain': '../../domain'},
 };
 
 Directory _createFixture({
