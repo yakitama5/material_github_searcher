@@ -37,7 +37,7 @@ Provider追加とその結線は後続Issueに委ねる。
 
 ### パッケージ構成
 
-```
+```text
 packages/infrastructure/github/
 ├── pubspec.yaml                                 # dio: 5.11.0固定、domain依存のみ
 ├── lib/
@@ -156,11 +156,13 @@ DTOの`fromJson(Map<String, dynamic>)`は「型の合ったMapを受け取った
    `_packageNames`・`_defaultDependencies`の3箇所を同時に更新する
    （片方だけの更新は既存テストを壊す）。
 10. `.github/workflows/check_pr.yaml`の`test`ジョブへ以下を追加する。
+
     ```yaml
     - name: Test infrastructure_github package
       working-directory: packages/infrastructure/github
       run: dart test
     ```
+
 11. 全体検証（下記）を実行する。
 
 ## テスト観点

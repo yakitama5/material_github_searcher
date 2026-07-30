@@ -101,6 +101,10 @@ jobs:
         working-directory: packages/application
         run: dart test
 
+      - name: Test infrastructure_github package
+        working-directory: packages/infrastructure/github
+        run: dart test
+
       - name: Test designsystem package
         working-directory: packages/designsystem
         # Golden TestはOS間の描画差(アンチエイリアシング等)によりCI上で

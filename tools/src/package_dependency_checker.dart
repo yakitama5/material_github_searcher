@@ -26,6 +26,7 @@ const allowedPackageDependencies = <String, Set<String>>{
     'foundation',
   },
   'infrastructure_mock': {'domain', 'foundation'},
+  'infrastructure_github': {'domain'},
   'domain': {'foundation'},
   'foundation': {},
 };

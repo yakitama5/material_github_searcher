@@ -257,6 +257,7 @@ const _workspacePaths = [
   'packages/designsystem',
   'packages/domain',
   'packages/foundation',
+  'packages/infrastructure/github',
   'packages/infrastructure/mock',
 ];
 
@@ -267,6 +268,7 @@ const _packageNames = {
   'packages/designsystem': 'designsystem',
   'packages/domain': 'domain',
   'packages/foundation': 'foundation',
+  'packages/infrastructure/github': 'infrastructure_github',
   'packages/infrastructure/mock': 'infrastructure_mock',
 };
 
@@ -289,6 +291,7 @@ const _defaultDependencies = <String, Map<String, String>>{
     'domain': '../domain',
   },
   'domain': {'foundation': '../foundation'},
+  'infrastructure_github': {'domain': '../../domain'},
   'infrastructure_mock': {'domain': '../../domain'},
 };
 
