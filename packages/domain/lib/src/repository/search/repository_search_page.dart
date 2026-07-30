@@ -3,22 +3,29 @@ import 'package:meta/meta.dart';
 import 'repository_summary.dart';
 
 /// Repository検索結果の1ページ分。
+///
+/// [items] は生成時に [List.unmodifiable] でコピーする。呼び出し側が渡した
+/// 元Listを後から変更しても本インスタンスへは反映されず、[items] を介した
+/// 変更（`add`・`[]=`等）も例外になるため、真の意味で不変になる。この防御的
+/// コピーは呼び出し側で `const` 生成できる保証と両立しないため、本コンストラクタ
+/// は意図的に非`const`にしている。
 @immutable
 final class RepositorySearchPage {
   /// 検索結果ページを生成する。
   ///
-  /// [hasMore] は [nextPage] の有無と一致している必要がある。この不変条件は
-  /// デバッグ・テスト時の安全網として`assert`で検査するに留め、`const`での
-  /// 生成を妨げない。
-  const RepositorySearchPage({
-    required this.items,
+  /// [hasMore] が [nextPage] の有無と一致しない場合は [ArgumentError] を投げる。
+  RepositorySearchPage({
+    required List<RepositorySummary> items,
     required this.totalCount,
     required this.nextPage,
     required this.hasMore,
-  }) : assert(
-         hasMore == (nextPage != null),
-         'hasMore must be true exactly when nextPage is non-null',
-       );
+  }) : items = List.unmodifiable(items) {
+    if (hasMore != (nextPage != null)) {
+      throw ArgumentError(
+        'hasMore must be true exactly when nextPage is non-null',
+      );
+    }
+  }
 
   /// このページに含まれる検索結果。
   final List<RepositorySummary> items;

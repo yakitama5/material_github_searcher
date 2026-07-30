@@ -14,8 +14,8 @@ void main() {
     );
 
     test('次ページが存在する場合はhasMoreがtrue・nextPageが非null', () {
-      const page = RepositorySearchPage(
-        items: [summary],
+      final page = RepositorySearchPage(
+        items: const [summary],
         totalCount: 100,
         nextPage: 2,
         hasMore: true,
@@ -26,8 +26,8 @@ void main() {
     });
 
     test('最終ページの場合はhasMoreがfalse・nextPageがnull', () {
-      const page = RepositorySearchPage(
-        items: [summary],
+      final page = RepositorySearchPage(
+        items: const [summary],
         totalCount: 1,
         nextPage: null,
         hasMore: false,
@@ -38,8 +38,8 @@ void main() {
     });
 
     test('該当0件のページを表現できる', () {
-      const page = RepositorySearchPage(
-        items: [],
+      final page = RepositorySearchPage(
+        items: const [],
         totalCount: 0,
         nextPage: null,
         hasMore: false,
@@ -49,7 +49,7 @@ void main() {
       expect(page.totalCount, 0);
     });
 
-    test('hasMoreとnextPageが矛盾する場合はAssertionErrorを投げる', () {
+    test('hasMoreとnextPageが矛盾する場合はArgumentErrorを投げる', () {
       expect(
         () => RepositorySearchPage(
           items: const [],
@@ -57,7 +57,7 @@ void main() {
           nextPage: 2,
           hasMore: false,
         ),
-        throwsA(isA<AssertionError>()),
+        throwsArgumentError,
       );
       expect(
         () => RepositorySearchPage(
@@ -66,19 +66,44 @@ void main() {
           nextPage: null,
           hasMore: true,
         ),
-        throwsA(isA<AssertionError>()),
+        throwsArgumentError,
       );
     });
 
+    test('生成後に元Listを変更してもitemsへ反映されない', () {
+      final source = [summary];
+      final page = RepositorySearchPage(
+        items: source,
+        totalCount: 1,
+        nextPage: null,
+        hasMore: false,
+      );
+
+      source.add(summary);
+
+      expect(page.items, hasLength(1));
+    });
+
+    test('itemsは変更できない', () {
+      final page = RepositorySearchPage(
+        items: const [summary],
+        totalCount: 1,
+        nextPage: null,
+        hasMore: false,
+      );
+
+      expect(() => page.items.add(summary), throwsUnsupportedError);
+    });
+
     test('items・totalCount・nextPage・hasMoreが等しければ等価である', () {
-      const a = RepositorySearchPage(
-        items: [summary],
+      final a = RepositorySearchPage(
+        items: const [summary],
         totalCount: 100,
         nextPage: 2,
         hasMore: true,
       );
-      const b = RepositorySearchPage(
-        items: [summary],
+      final b = RepositorySearchPage(
+        items: const [summary],
         totalCount: 100,
         nextPage: 2,
         hasMore: true,
@@ -98,14 +123,14 @@ void main() {
         forksCount: 5,
         openIssuesCount: 6,
       );
-      const a = RepositorySearchPage(
-        items: [summary, summary2],
+      final a = RepositorySearchPage(
+        items: const [summary, summary2],
         totalCount: 2,
         nextPage: null,
         hasMore: false,
       );
-      const b = RepositorySearchPage(
-        items: [summary2, summary],
+      final b = RepositorySearchPage(
+        items: const [summary2, summary],
         totalCount: 2,
         nextPage: null,
         hasMore: false,
@@ -117,28 +142,28 @@ void main() {
     test(
       'totalCountが異なる、または(nextPage・hasMore)の組が異なれば等価にならない',
       () {
-        // hasMoreとnextPageはassertで連動するため独立には変えられず、
-        // ページング状態の組として差分を検証する。
-        const base = RepositorySearchPage(
-          items: [summary],
+        // hasMoreとnextPageは生成時のArgumentErrorで連動するため独立には
+        // 変えられず、ページング状態の組として差分を検証する。
+        final base = RepositorySearchPage(
+          items: const [summary],
           totalCount: 100,
           nextPage: 2,
           hasMore: true,
         );
-        const differentTotalCount = RepositorySearchPage(
-          items: [summary],
+        final differentTotalCount = RepositorySearchPage(
+          items: const [summary],
           totalCount: 999,
           nextPage: 2,
           hasMore: true,
         );
-        const differentNextPageValue = RepositorySearchPage(
-          items: [summary],
+        final differentNextPageValue = RepositorySearchPage(
+          items: const [summary],
           totalCount: 100,
           nextPage: 3,
           hasMore: true,
         );
-        const finalPageState = RepositorySearchPage(
-          items: [summary],
+        final finalPageState = RepositorySearchPage(
+          items: const [summary],
           totalCount: 100,
           nextPage: null,
           hasMore: false,
