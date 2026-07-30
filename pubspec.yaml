@@ -11,6 +11,7 @@ workspace:
   - packages/designsystem
   - packages/domain
   - packages/foundation
+  - packages/infrastructure/github
   - packages/infrastructure/mock
 
 dev_dependencies:

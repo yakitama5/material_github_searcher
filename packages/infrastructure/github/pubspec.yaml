@@ -1,0 +1,17 @@
+name: infrastructure_github
+description: GitHub REST Search API repository implementation.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: 3.12.2
+
+dependencies:
+  dio: 5.11.0
+  domain:
+    path: ../../domain
+
+dev_dependencies:
+  test: 1.31.0
+
+resolution: workspace
