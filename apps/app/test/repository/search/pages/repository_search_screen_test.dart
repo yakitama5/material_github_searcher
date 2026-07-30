@@ -383,7 +383,7 @@ void main() {
       );
     });
 
-    testWidgets('フォーカス時に最近送信順で最大10件の履歴を表示する', (tester) async {
+    testWidgets('フォーカス時に履歴を最近送信順で表示する', (tester) async {
       final repository = FakeRepositorySearchRepository();
       final historyRepository = FakeSearchHistoryRepository(
         initialHistory: SearchHistory()
@@ -403,6 +403,34 @@ void main() {
 
       expect(find.byKey(repositorySearchHistorySuggestionsKey), findsOneWidget);
       expect(_suggestionKeywords(tester), ['flutter', 'dart']);
+    });
+
+    testWidgets('SearchHistoryが返す最大10件の一覧をそのまま表示する', (tester) async {
+      // 最大10件への切り捨て自体はdomainの不変条件
+      // （packages/domain/test/search_history/search_history_test.dart
+      // 「最大10件を超える古い履歴は切り捨てる」で検証済み）。ここでは画面が
+      // SearchHistory.entriesをそのまま・順序を保って描画することだけを見る。
+      var history = SearchHistory();
+      for (var i = 0; i < 12; i++) {
+        history = history.recordSubmittedKeyword('keyword$i');
+      }
+      final repository = FakeRepositorySearchRepository();
+      final historyRepository = FakeSearchHistoryRepository(
+        initialHistory: history,
+      );
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.tap(find.byKey(_searchFieldKey));
+      await tester.pumpAndSettle();
+
+      expect(
+        _suggestionKeywords(tester),
+        history.entries.map((e) => e.keyword),
+      );
     });
 
     testWidgets('履歴0件時はフォーカスしてもサジェスト領域を表示しない', (tester) async {
