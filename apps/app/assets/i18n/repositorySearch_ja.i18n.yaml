@@ -1,0 +1,11 @@
+searchFieldLabel: リポジトリ検索
+searchFieldHint: リポジトリ名やキーワードを入力
+searchButtonTooltip: 検索する
+guidance: キーワードを入力し、キーボードの検索または検索ボタンで検索してください
+empty: 条件に一致するリポジトリが見つかりませんでした
+errorGeneric: 通信エラーが発生しました。しばらくしてから再度お試しください
+errorRateLimited: GitHub APIの利用回数上限に達しました。しばらくしてから再度お試しください
+retry: 再試行
+languageUnset: 未設定
+languageLabel: 言語
+starsLabel: スター数

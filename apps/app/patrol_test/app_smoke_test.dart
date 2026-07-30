@@ -12,6 +12,9 @@ void main() {
 
     expect(AppBuildConfig.current.flavor, Flavor.dev);
     expect(LocaleSettings.currentLocale, AppLocale.ja);
-    expect($('Dev - Material GitHub Searcher'), findsOneWidget);
+    expect(
+      $(AppLocale.ja.translations.repositorySearch.guidance),
+      findsOneWidget,
+    );
   });
 }

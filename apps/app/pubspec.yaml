@@ -15,6 +15,8 @@ dependencies:
     path: ../../packages/dependency_override
   designsystem:
     path: ../../packages/designsystem
+  domain:
+    path: ../../packages/domain
   flutter:
     sdk: flutter
   flutter_localizations:

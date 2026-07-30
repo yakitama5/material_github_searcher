@@ -40,6 +40,7 @@ class TranslationsEn extends Translations with BaseTranslations<AppLocale, Trans
 
 	// Translations
 	@override late final _Translations$common$en common = _Translations$common$en._(_root);
+	@override late final _Translations$repositorySearch$en repositorySearch = _Translations$repositorySearch$en._(_root);
 }
 
 // Path: common
@@ -52,6 +53,26 @@ class _Translations$common$en extends Translations$common$ja {
 	@override String get pushCountLabel => 'You have pushed the button this many times';
 	@override String get incrementTooltip => 'Increment';
 	@override late final _Translations$common$navigation$en navigation = _Translations$common$navigation$en._(_root);
+}
+
+// Path: repositorySearch
+class _Translations$repositorySearch$en extends Translations$repositorySearch$ja {
+	_Translations$repositorySearch$en._(TranslationsEn root) : this._root = root, super.internal(root);
+
+	final TranslationsEn _root; // ignore: unused_field
+
+	// Translations
+	@override String get searchFieldLabel => 'Search repositories';
+	@override String get searchFieldHint => 'Enter a repository name or keyword';
+	@override String get searchButtonTooltip => 'Search';
+	@override String get guidance => 'Enter a keyword, then submit from the keyboard or the search button.';
+	@override String get empty => 'No repositories matched your search.';
+	@override String get errorGeneric => 'Something went wrong. Please try again later.';
+	@override String get errorRateLimited => 'GitHub API rate limit reached. Please try again later.';
+	@override String get retry => 'Retry';
+	@override String get languageUnset => 'Not set';
+	@override String get languageLabel => 'Language';
+	@override String get starsLabel => 'Stars';
 }
 
 // Path: common.navigation
@@ -77,6 +98,17 @@ extension on TranslationsEn {
 			'common.incrementTooltip' => 'Increment',
 			'common.navigation.search' => 'Search',
 			'common.navigation.settings' => 'Settings',
+			'repositorySearch.searchFieldLabel' => 'Search repositories',
+			'repositorySearch.searchFieldHint' => 'Enter a repository name or keyword',
+			'repositorySearch.searchButtonTooltip' => 'Search',
+			'repositorySearch.guidance' => 'Enter a keyword, then submit from the keyboard or the search button.',
+			'repositorySearch.empty' => 'No repositories matched your search.',
+			'repositorySearch.errorGeneric' => 'Something went wrong. Please try again later.',
+			'repositorySearch.errorRateLimited' => 'GitHub API rate limit reached. Please try again later.',
+			'repositorySearch.retry' => 'Retry',
+			'repositorySearch.languageUnset' => 'Not set',
+			'repositorySearch.languageLabel' => 'Language',
+			'repositorySearch.starsLabel' => 'Stars',
 			_ => null,
 		};
 	}

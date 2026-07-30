@@ -41,6 +41,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
 	// Translations
 	late final Translations$common$ja common = Translations$common$ja.internal(_root);
+	late final Translations$repositorySearch$ja repositorySearch = Translations$repositorySearch$ja.internal(_root);
 }
 
 // Path: common
@@ -58,6 +59,48 @@ class Translations$common$ja {
 	String get incrementTooltip => '追加';
 
 	late final Translations$common$navigation$ja navigation = Translations$common$navigation$ja.internal(_root);
+}
+
+// Path: repositorySearch
+class Translations$repositorySearch$ja {
+	Translations$repositorySearch$ja.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// ja: 'リポジトリ検索'
+	String get searchFieldLabel => 'リポジトリ検索';
+
+	/// ja: 'リポジトリ名やキーワードを入力'
+	String get searchFieldHint => 'リポジトリ名やキーワードを入力';
+
+	/// ja: '検索する'
+	String get searchButtonTooltip => '検索する';
+
+	/// ja: 'キーワードを入力し、キーボードの検索または検索ボタンで検索してください'
+	String get guidance => 'キーワードを入力し、キーボードの検索または検索ボタンで検索してください';
+
+	/// ja: '条件に一致するリポジトリが見つかりませんでした'
+	String get empty => '条件に一致するリポジトリが見つかりませんでした';
+
+	/// ja: '通信エラーが発生しました。しばらくしてから再度お試しください'
+	String get errorGeneric => '通信エラーが発生しました。しばらくしてから再度お試しください';
+
+	/// ja: 'GitHub APIの利用回数上限に達しました。しばらくしてから再度お試しください'
+	String get errorRateLimited => 'GitHub APIの利用回数上限に達しました。しばらくしてから再度お試しください';
+
+	/// ja: '再試行'
+	String get retry => '再試行';
+
+	/// ja: '未設定'
+	String get languageUnset => '未設定';
+
+	/// ja: '言語'
+	String get languageLabel => '言語';
+
+	/// ja: 'スター数'
+	String get starsLabel => 'スター数';
 }
 
 // Path: common.navigation
@@ -87,6 +130,17 @@ extension on Translations {
 			'common.incrementTooltip' => '追加',
 			'common.navigation.search' => '検索',
 			'common.navigation.settings' => '設定',
+			'repositorySearch.searchFieldLabel' => 'リポジトリ検索',
+			'repositorySearch.searchFieldHint' => 'リポジトリ名やキーワードを入力',
+			'repositorySearch.searchButtonTooltip' => '検索する',
+			'repositorySearch.guidance' => 'キーワードを入力し、キーボードの検索または検索ボタンで検索してください',
+			'repositorySearch.empty' => '条件に一致するリポジトリが見つかりませんでした',
+			'repositorySearch.errorGeneric' => '通信エラーが発生しました。しばらくしてから再度お試しください',
+			'repositorySearch.errorRateLimited' => 'GitHub APIの利用回数上限に達しました。しばらくしてから再度お試しください',
+			'repositorySearch.retry' => '再試行',
+			'repositorySearch.languageUnset' => '未設定',
+			'repositorySearch.languageLabel' => '言語',
+			'repositorySearch.starsLabel' => 'スター数',
 			_ => null,
 		};
 	}
