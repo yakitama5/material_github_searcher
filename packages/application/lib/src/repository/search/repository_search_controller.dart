@@ -95,19 +95,24 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
       if (_isStale(generation, controller)) {
         return;
       }
+      // ガード通過時点で自世代のcontrollerだと確定するため解放してよい。
+      _pendingController = null;
       state = RepositorySearchState.success(
         query: query,
         result: result,
         page: _firstPage,
       );
     } on RequestCancelledException {
-      // cancelは通知用error Stateへ遷移させない。
+      // cancelは通知用error Stateへ遷移させない。cancel契機
+      // （cancelPendingRequest/supersession）で_pendingControllerは既に
+      // null化・更新済みのため、ここではクリアしない。
       return;
     } on AppException catch (error) {
       // 成功パスと同じく、遅延失敗が最新Stateを上書きしないよう二重ガードする。
       if (_isStale(generation, controller)) {
         return;
       }
+      _pendingController = null;
       state = RepositorySearchState.failure(query: query, error: error);
     }
   }

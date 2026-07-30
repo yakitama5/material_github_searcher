@@ -7,11 +7,14 @@ import 'package:riverpod/misc.dart';
 ///
 /// Repository検索は実GitHub APIを叩く[GitHubRepositorySearchRepository]へ
 /// 結線する。`Dio`は`createGitHubDio`が本番向けに生成し、Providerが初めて
-/// 参照された時点で遅延生成する。
+/// 参照された時点で遅延生成する。Provider dispose時に`Dio.close`でHTTP
+/// clientを解放し、socketの残留を防ぐ。
 List<Override> createProductionOverrides() => [
-  repositorySearchRepositoryProvider.overrideWith(
-    (ref) => GitHubRepositorySearchRepository(dio: createGitHubDio()),
-  ),
+  repositorySearchRepositoryProvider.overrideWith((ref) {
+    final dio = createGitHubDio();
+    ref.onDispose(dio.close);
+    return GitHubRepositorySearchRepository(dio: dio);
+  }),
 ];
 
 /// テスト・開発環境向けのProvider override一式を生成する。
