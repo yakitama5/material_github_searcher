@@ -45,4 +45,21 @@ void main() {
       expect(exception.message, 'search failed');
     });
   });
+
+  group('SearchHistoryPersistenceException', () {
+    test('AppException・Exceptionのサブタイプである', () {
+      const exception = SearchHistoryPersistenceException();
+
+      expect(exception, isA<AppException>());
+      expect(exception, isA<Exception>());
+    });
+
+    test('messageを保持する', () {
+      const exception = SearchHistoryPersistenceException(
+        message: 'persistence failed',
+      );
+
+      expect(exception.message, 'persistence failed');
+    });
+  });
 }

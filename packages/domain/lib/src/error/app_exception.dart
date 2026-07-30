@@ -47,3 +47,14 @@ final class RepositorySearchException extends AppException {
   /// Repository検索の失敗例外を生成する。
   const RepositorySearchException({super.message});
 }
+
+/// 検索履歴の永続化（load・save）の失敗を表す例外。
+///
+/// [RepositorySearchException]と同様、要因（Storage I/Oエラー等）ごとの分類は
+/// Infrastructure実装の詳細であり本Issueの対象外とする。Applicationが
+/// 「検索履歴の永続化由来の失敗」と区別できるよう、まずは汎用の契約として
+/// 1種類だけ用意する。
+final class SearchHistoryPersistenceException extends AppException {
+  /// 検索履歴の永続化失敗例外を生成する。
+  const SearchHistoryPersistenceException({super.message});
+}
