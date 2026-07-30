@@ -35,13 +35,20 @@ final class MockRepositorySearchFailure extends MockRepositorySearchResponse {
   ///
   /// [exception]に[RequestCancelledException]は指定できない。cancelは
   /// `CancellationController.cancel()`による実際のキャンセルでのみ再現する
-  /// 契約とし、失敗応答経由での見せかけのcancelを防ぐ。
-  const MockRepositorySearchFailure(this.exception, {super.gate})
-    : assert(
-        exception is! RequestCancelledException,
+  /// 契約とし、失敗応答経由での見せかけのcancelを防ぐ。`assert`はrelease
+  /// モード等で無効化され得るため、実行モードによらず検証するために
+  /// 通常のコンストラクタ本体で[ArgumentError]を投げる。
+  MockRepositorySearchFailure(this.exception, {super.gate}) {
+    if (exception is RequestCancelledException) {
+      throw ArgumentError.value(
+        exception,
+        'exception',
         'Use CancellationController.cancel() to simulate cancellation '
-        'instead of MockRepositorySearchFailure(RequestCancelledException()).',
+            'instead of '
+            'MockRepositorySearchFailure(RequestCancelledException()).',
       );
+    }
+  }
 
   /// `search()`が投げる例外。
   final AppException exception;

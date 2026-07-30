@@ -103,7 +103,7 @@ void main() {
       repository.setResponse(
         query: RepositorySearchQuery('flutter'),
         page: 1,
-        response: const MockRepositorySearchFailure(exception),
+        response: MockRepositorySearchFailure(exception),
       );
 
       await expectLater(search(), throwsA(same(exception)));

@@ -15,7 +15,7 @@ void main() {
 
     test('MockRepositorySearchFailureはexceptionを保持する', () {
       const exception = RepositorySearchException(message: 'failed');
-      const response = MockRepositorySearchFailure(exception);
+      final response = MockRepositorySearchFailure(exception);
 
       expect(response.exception, same(exception));
       expect(response.gate, isNull);
@@ -26,7 +26,7 @@ void main() {
       () {
         expect(
           () => MockRepositorySearchFailure(const RequestCancelledException()),
-          throwsA(isA<AssertionError>()),
+          throwsA(isA<ArgumentError>()),
         );
       },
     );
