@@ -18,9 +18,9 @@ abstract interface class CancellationToken {
   /// 既にキャンセル済みの場合も完了済みの [Future] を返すため、購読タイミングに
   /// よらずキャンセルを検出できる。逆に [CancellationController.cancel] が
   /// 呼ばれない限り完了しないため、`whenCancelled.then(...)` で登録した後始末
-  /// （通信のabort等）を確実に解放するには、処理完了時にも [CancellationController]
-  /// をcancelする必要がある。Provider経由の場合は `createCancellationController` が
-  /// `Ref.onDispose` でcancelを保証する。
+  /// （通信のabort等）はキャンセル時だけ実行される。正常完了時のリソース解放は
+  /// 通信実装側で別途行う。Provider経由の場合は `createCancellationController`
+  /// が `Ref.onDispose` でcancelを保証する。
   Future<void> get whenCancelled;
 
   /// 既にキャンセル済みなら [RequestCancelledException] を投げる。
