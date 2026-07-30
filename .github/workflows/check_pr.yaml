@@ -109,6 +109,12 @@ jobs:
         working-directory: packages/infrastructure/mock
         run: dart test
 
+      - name: Test infrastructure_shared_preferences package
+        working-directory: packages/infrastructure/shared_preferences
+        # shared_preferencesはFlutter SDKに依存するプラグインのため、
+        # 他のinfrastructureパッケージと異なりflutter testで実行する。
+        run: flutter test
+
       - name: Test designsystem package
         working-directory: packages/designsystem
         # Golden TestはOS間の描画差(アンチエイリアシング等)によりCI上で

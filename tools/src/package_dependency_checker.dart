@@ -23,11 +23,13 @@ const allowedPackageDependencies = <String, Set<String>>{
     'application',
     'infrastructure_github',
     'infrastructure_mock',
+    'infrastructure_shared_preferences',
     'domain',
     'foundation',
   },
   'infrastructure_mock': {'domain', 'foundation'},
   'infrastructure_github': {'domain'},
+  'infrastructure_shared_preferences': {'domain'},
   'domain': {'foundation'},
   'foundation': {},
 };

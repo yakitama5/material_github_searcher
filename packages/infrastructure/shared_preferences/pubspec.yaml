@@ -1,0 +1,20 @@
+name: infrastructure_shared_preferences
+description: SharedPreferences-backed repository implementations for local persistence.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: 3.12.2
+  flutter: 3.44.8
+
+dependencies:
+  domain:
+    path: ../../domain
+  shared_preferences: 2.5.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  shared_preferences_platform_interface: 2.4.2
+
+resolution: workspace
