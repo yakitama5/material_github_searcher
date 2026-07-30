@@ -51,14 +51,10 @@ final class SharedPreferencesSearchHistoryRepository
       // 空履歴として復旧する。
       return SearchHistory();
     }
-    // 保存順は最近順（先頭が最新）。recordSubmittedKeywordは呼び出すたびに
-    // 対象を先頭へ移動するため、末尾（最も古い）から順に適用すると
-    // trim・重複排除・最大件数のルールを保ったまま最近順を再現できる。
-    var history = SearchHistory();
-    for (final keyword in stored.reversed.cast<String>()) {
-      history = history.recordSubmittedKeyword(keyword);
-    }
-    return history;
+    // 保存順は最近順（先頭が最新）。recordAllは末尾（最も古い）から順に
+    // 適用することで、trim・重複排除・最大件数のルールを保ったまま
+    // 最近順を再現できる。
+    return SearchHistory().recordAll(stored.reversed.cast<String>());
   }
 
   @override

@@ -24,6 +24,17 @@ final class SearchHistoryController extends Notifier<SearchHistoryState> {
   /// で上書きしないための番兵。
   int _generation = 0;
 
+  /// メモリ上の履歴（[SearchHistoryState.history]）が永続化済み実体を反映
+  /// している、またはそれ以降の変更がメモリ側の意図を優先してよいと確定
+  /// していれば`true`。
+  ///
+  /// falseの間に[recordSubmittedKeyword]がメモリ上の履歴を基点にそのまま
+  /// save()すると、実体を空/不完全な履歴で上書きして失う（load未完了・
+  /// 未実行・失敗時の競合）。staleと判定され[SearchHistoryState]へ反映され
+  /// なかった読込結果でtrueにしてはならない（反映されなかった実体を
+  /// 「確認済み」と誤認する）。
+  bool _loaded = false;
+
   @override
   SearchHistoryState build() => SearchHistoryState.loading();
 
@@ -35,21 +46,18 @@ final class SearchHistoryController extends Notifier<SearchHistoryState> {
   /// へ遷移する。
   Future<void> load() async {
     final generation = ++_generation;
-    final repository = ref.read(searchHistoryRepositoryProvider);
     try {
-      final history = await repository.load();
+      final history = await _readFromDisk();
       if (_isStale(generation)) {
         return;
       }
+      _loaded = true;
       state = SearchHistoryState.ready(history);
     } on AppException catch (error) {
       if (_isStale(generation)) {
         return;
       }
-      state = SearchHistoryState.persistenceError(
-        history: state.history,
-        error: error,
-      );
+      _toPersistenceError(error);
     }
   }
 
@@ -60,6 +68,13 @@ final class SearchHistoryController extends Notifier<SearchHistoryState> {
   /// なる場合は履歴を変更しない。非空の場合はメモリを楽観更新してから
   /// 永続化する。永続化に失敗しても、この楽観更新した履歴はロールバック
   /// せず維持する。
+  ///
+  /// [_loaded]がfalseの場合（loadが未完了・未実行・失敗のいずれか）は、
+  /// 楽観更新した履歴をそのまま永続化しない。実体を確認できていない状態で
+  /// save()すると、メモリ上の空/不完全な履歴で実体を上書きして失うため、
+  /// 先にdiskを読み直し、その結果へ楽観更新分を積み直してから永続化する。
+  /// 再試行しても実体を確認できない場合は、メモリ上の楽観更新のみ維持し
+  /// 永続化は行わない。
   Future<void> recordSubmittedKeyword(String rawKeyword) async {
     final next = state.history.recordSubmittedKeyword(rawKeyword);
     if (identical(next, state.history)) {
@@ -67,7 +82,27 @@ final class SearchHistoryController extends Notifier<SearchHistoryState> {
     }
     final generation = ++_generation;
     state = SearchHistoryState.ready(next);
-    await _persist(next, generation);
+
+    if (_loaded) {
+      await _persist(next, generation);
+      return;
+    }
+
+    try {
+      final disk = await _readFromDisk();
+      if (_isStale(generation)) {
+        return;
+      }
+      _loaded = true;
+      final rebased = _rebase(disk, onto: state.history);
+      state = SearchHistoryState.ready(rebased);
+      await _persist(rebased, generation);
+    } on AppException catch (error) {
+      if (_isStale(generation)) {
+        return;
+      }
+      _toPersistenceError(error);
+    }
   }
 
   /// 全履歴を削除する。
@@ -75,9 +110,16 @@ final class SearchHistoryController extends Notifier<SearchHistoryState> {
   /// 個別のkeyword単位の削除APIは提供しない。[recordSubmittedKeyword]と同様
   /// メモリを楽観更新してから永続化し、失敗してもメモリ上は空の履歴のまま
   /// 維持する。
+  ///
+  /// 結果（空の履歴）は基点に依存しないため、[_loaded]の状態に関わらず
+  /// そのまま永続化してよい。呼び出し後は「メモリ＝空」がそのまま実体の
+  /// 意図となるため、[_loaded]をtrueにして以降の[recordSubmittedKeyword]が
+  /// disk再読込による積み直しを行わないようにする（積み直すと、削除した
+  /// はずの実体が復元されてしまう）。
   Future<void> clearAll() async {
     final next = state.history.clearAll();
     final generation = ++_generation;
+    _loaded = true;
     state = SearchHistoryState.ready(next);
     await _persist(next, generation);
   }
@@ -90,11 +132,37 @@ final class SearchHistoryController extends Notifier<SearchHistoryState> {
       if (_isStale(generation)) {
         return;
       }
-      state = SearchHistoryState.persistenceError(
-        history: history,
-        error: error,
-      );
+      _toPersistenceError(error);
     }
+  }
+
+  /// [SearchHistoryRepository.load]を呼ぶ。
+  ///
+  /// [_generation]・[_loaded]には触れない。呼び出し元がgenerationの検証・
+  /// [_loaded]の更新・Stateの反映を責務として持つ（staleと判定された読込の
+  /// 結果を[_loaded]へ反映してしまうと、反映されなかった実体を「確認済み」
+  /// と誤認する）。
+  Future<SearchHistory> _readFromDisk() {
+    final repository = ref.read(searchHistoryRepositoryProvider);
+    return repository.load();
+  }
+
+  /// [onto]（メモリ上の履歴）の各entryを最も古いものから順に[disk]（実体）へ
+  /// 再適用し、実体を基点とした履歴を返す。
+  ///
+  /// [onto]は最近順（先頭が最新）で並ぶため、逆順に適用することで元の相対
+  /// 順序を保ったまま実体の上に積み直せる。
+  SearchHistory _rebase(SearchHistory disk, {required SearchHistory onto}) =>
+      disk.recordAll(onto.entries.reversed.map((entry) => entry.keyword));
+
+  /// [state]を[error]を伴う[SearchHistoryStatus.persistenceError]へ遷移する。
+  ///
+  /// 履歴は現在の[SearchHistoryState.history]をそのまま維持する。
+  void _toPersistenceError(AppException error) {
+    state = SearchHistoryState.persistenceError(
+      history: state.history,
+      error: error,
+    );
   }
 
   /// [generation]が最新の呼び出しでなければ`true`。
