@@ -8,3 +8,6 @@ export 'src/repository/search/repository_search_page.dart';
 export 'src/repository/search/repository_search_query.dart';
 export 'src/repository/search/repository_search_repository.dart';
 export 'src/repository/search/repository_summary.dart';
+export 'src/search_history/search_history.dart';
+export 'src/search_history/search_history_entry.dart';
+export 'src/search_history/search_history_repository.dart';
