@@ -33,6 +33,9 @@ final class FakeSearchHistoryRepository implements SearchHistoryRepository {
   /// 非`null`の場合、[save]はこの例外をthrowする。
   AppException? saveError;
 
+  /// [save]が呼ばれた回数。Pull to Refreshが履歴へ記録しないことの検証に使う。
+  int saveCallCount = 0;
+
   @override
   Future<SearchHistory> load() async {
     final error = loadError;
@@ -44,6 +47,7 @@ final class FakeSearchHistoryRepository implements SearchHistoryRepository {
 
   @override
   Future<void> save(SearchHistory history) async {
+    saveCallCount++;
     final error = saveError;
     if (error != null) {
       throw error;

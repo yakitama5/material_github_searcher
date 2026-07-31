@@ -20,10 +20,26 @@ sealed class SnackBarManager {
       _showSnackBar(message, _SnackBarType.info);
 
   /// エラー通知用のSnackbarを表示する。
-  static void showErrorSnackBar(String message) =>
-      _showSnackBar(message, _SnackBarType.error);
+  ///
+  /// [actionLabel]・[onAction]を両方指定すると、非破壊的な再試行操作を
+  /// Snackbarのactionとして表示する（例: Pull to Refresh失敗時のRetry）。
+  static void showErrorSnackBar(
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) => _showSnackBar(
+    message,
+    _SnackBarType.error,
+    actionLabel: actionLabel,
+    onAction: onAction,
+  );
 
-  static void _showSnackBar(String message, _SnackBarType type) {
+  static void _showSnackBar(
+    String message,
+    _SnackBarType type, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     final state = rootScaffoldMessengerKey.currentState;
     final context = rootScaffoldMessengerKey.currentContext;
     if (state == null || context == null) {
@@ -31,6 +47,16 @@ sealed class SnackBarManager {
     }
 
     final cs = Theme.of(context).colorScheme;
+    final action = actionLabel != null && onAction != null
+        ? SnackBarAction(
+            label: actionLabel,
+            textColor: switch (type) {
+              _SnackBarType.info => null,
+              _SnackBarType.error => cs.onError,
+            },
+            onPressed: onAction,
+          )
+        : null;
 
     state
       ..hideCurrentSnackBar()
@@ -41,6 +67,7 @@ sealed class SnackBarManager {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
+          action: action,
           showCloseIcon: true,
         ),
         _SnackBarType.error => SnackBar(
@@ -50,6 +77,7 @@ sealed class SnackBarManager {
             borderRadius: BorderRadius.circular(8),
           ),
           backgroundColor: cs.error,
+          action: action,
           closeIconColor: cs.onError,
           showCloseIcon: true,
         ),

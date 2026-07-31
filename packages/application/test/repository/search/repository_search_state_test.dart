@@ -157,5 +157,122 @@ void main() {
       expect(appendFailed.totalCount, loadingMore.totalCount);
       expect(appendFailed.appendError, same(exception));
     });
+
+    test('toRefreshingはitems・page・hasMore・totalCountを維持し、'
+        'statusをrefreshingへ、appendError・refreshErrorをnullへする', () {
+      final success = RepositorySearchState.success(
+        query: RepositorySearchQuery('flutter'),
+        result: _page(),
+        page: 1,
+      ).appendFailed(const RepositorySearchException(message: 'append failed'));
+
+      final refreshing = success.toRefreshing();
+
+      expect(refreshing.status, RepositorySearchStatus.refreshing);
+      expect(refreshing.query, success.query);
+      expect(refreshing.items, success.items);
+      expect(refreshing.page, success.page);
+      expect(refreshing.hasMore, success.hasMore);
+      expect(refreshing.totalCount, success.totalCount);
+      expect(refreshing.appendError, isNull);
+      expect(refreshing.refreshError, isNull);
+    });
+
+    test('refreshFailedはitems・page・hasMore・totalCountを維持し、'
+        'statusをsuccessへ、refreshErrorを設定する', () {
+      final refreshing = RepositorySearchState.success(
+        query: RepositorySearchQuery('flutter'),
+        result: _page(),
+        page: 1,
+      ).toRefreshing();
+      const exception = RepositorySearchException(message: 'refresh failed');
+
+      final refreshFailed = refreshing.refreshFailed(exception);
+
+      expect(refreshFailed.status, RepositorySearchStatus.success);
+      expect(refreshFailed.items, refreshing.items);
+      expect(refreshFailed.page, refreshing.page);
+      expect(refreshFailed.hasMore, refreshing.hasMore);
+      expect(refreshFailed.totalCount, refreshing.totalCount);
+      expect(refreshFailed.refreshError, same(exception));
+    });
+
+    test('cancelInFlightはloadingMore・refreshingどちらもsuccessへ戻す', () {
+      final success = RepositorySearchState.success(
+        query: RepositorySearchQuery('flutter'),
+        result: _page(),
+        page: 1,
+      );
+
+      final fromLoadingMore = success.toLoadingMore().cancelInFlight();
+      expect(fromLoadingMore.status, RepositorySearchStatus.success);
+      expect(fromLoadingMore.items, success.items);
+
+      final fromRefreshing = success.toRefreshing().cancelInFlight();
+      expect(fromRefreshing.status, RepositorySearchStatus.success);
+      expect(fromRefreshing.items, success.items);
+
+      // loadingMore・refreshingでなければ何もしない。
+      expect(success.cancelInFlight(), same(success));
+    });
+
+    test(
+      'refreshError設定後の無関係な遷移（toLoadingMore・appended・appendFailed）は'
+      'refreshErrorをnullへ戻す',
+      () {
+        // refreshErrorは`ref.listen`がSnackbar表示の一過性トリガーとして
+        // `next.refreshError != null`だけを見る前提のため、無関係な後続遷移で
+        // 持ち越すと同じ通知が誤って再発火する（Issue #82実装時の回帰）。
+        final withRefreshError =
+            RepositorySearchState.success(
+              query: RepositorySearchQuery('flutter'),
+              result: _page(),
+              page: 1,
+            ).toRefreshing().refreshFailed(
+              const RepositorySearchException(message: 'refresh failed'),
+            );
+        expect(withRefreshError.refreshError, isNotNull);
+
+        expect(withRefreshError.toLoadingMore().refreshError, isNull);
+        expect(
+          withRefreshError
+              .toLoadingMore()
+              .appended(
+                items: withRefreshError.items,
+                page: 2,
+                hasMore: false,
+                totalCount: withRefreshError.totalCount,
+              )
+              .refreshError,
+          isNull,
+        );
+        expect(
+          withRefreshError
+              .toLoadingMore()
+              .appendFailed(
+                const RepositorySearchException(message: 'append failed'),
+              )
+              .refreshError,
+          isNull,
+        );
+      },
+    );
+
+    test('refreshErrorのみが異なるStateは等価でない', () {
+      final withoutRefreshError = RepositorySearchState.success(
+        query: RepositorySearchQuery('flutter'),
+        result: _page(),
+        page: 1,
+      );
+      final withRefreshError = withoutRefreshError.toRefreshing().refreshFailed(
+        const RepositorySearchException(message: 'failed'),
+      );
+
+      expect(withoutRefreshError, isNot(equals(withRefreshError)));
+      expect(
+        withoutRefreshError.hashCode,
+        isNot(equals(withRefreshError.hashCode)),
+      );
+    });
   });
 }

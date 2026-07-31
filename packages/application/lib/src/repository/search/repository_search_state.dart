@@ -3,12 +3,12 @@ import 'package:meta/meta.dart';
 
 /// Repository検索一覧の状態遷移を表す区分。
 ///
-/// [refreshing]は後続Issue（Pull to Refresh#82）が同じStateを拡張するための
-/// 予約であり、本Issueではこの状態へ遷移する通信を実装しない。0件成功は
-/// [success]かつ`items`が空の状態で表し、専用の区分は設けない。追加ページ
-/// 取得の失敗は[success]のまま[RepositorySearchState.appendError]で表すため、
-/// 専用の区分は設けない（`success`→`loadingMore`→`success`
-/// (+`appendError`)という遷移になる）。
+/// 0件成功は[success]かつ`items`が空の状態で表し、専用の区分は設けない。
+/// 追加ページ取得の失敗は[success]のまま[RepositorySearchState.appendError]で
+/// 表すため、専用の区分は設けない（`success`→`loadingMore`→`success`
+/// (+`appendError`)という遷移になる）。Pull to Refreshの失敗も同様に[success]
+/// のまま[RepositorySearchState.refreshError]で表す（`success`→`refreshing`→
+/// `success`(+`refreshError`)という遷移になる）。
 enum RepositorySearchStatus {
   /// まだ検索が実行されていない初期状態。
   initial,
@@ -25,7 +25,7 @@ enum RepositorySearchStatus {
   /// 追加ページを取得中。
   loadingMore,
 
-  /// Pull to Refreshによる再取得中（#82で実装。本Issueではこの状態へ遷移しない）。
+  /// Pull to Refreshによる再取得中。
   refreshing,
 }
 
@@ -49,7 +49,8 @@ final class RepositorySearchState {
       hasMore = false,
       totalCount = null,
       error = null,
-      appendError = null;
+      appendError = null,
+      refreshError = null;
 
   /// [query]の初回ページを取得中の状態を生成する。
   ///
@@ -62,7 +63,8 @@ final class RepositorySearchState {
       hasMore = false,
       totalCount = null,
       error = null,
-      appendError = null;
+      appendError = null,
+      refreshError = null;
 
   /// [query]・[result]から取得成功の状態を生成する。
   ///
@@ -77,7 +79,8 @@ final class RepositorySearchState {
        hasMore = result.hasMore,
        totalCount = result.totalCount,
        error = null,
-       appendError = null;
+       appendError = null,
+       refreshError = null;
 
   /// [query]の初回取得に失敗した状態を生成する。
   const RepositorySearchState.failure({
@@ -88,7 +91,8 @@ final class RepositorySearchState {
        page = 0,
        hasMore = false,
        totalCount = null,
-       appendError = null;
+       appendError = null,
+       refreshError = null;
 
   const RepositorySearchState._({
     required this.query,
@@ -99,6 +103,7 @@ final class RepositorySearchState {
     required this.totalCount,
     required this.error,
     required this.appendError,
+    required this.refreshError,
   });
 
   /// 送信済みの検索query。未検索の場合は`null`。
@@ -128,11 +133,25 @@ final class RepositorySearchState {
   /// 次の追加取得を開始する（[toLoadingMore]）と`null`へ戻る。
   final AppException? appendError;
 
+  /// Pull to Refreshの失敗内容。失敗していない、または未確定の場合は`null`。
+  ///
+  /// [status]が[RepositorySearchStatus.success]のときのみ非`null`になりうる。
+  /// 一覧を維持したまま通知（Snackbar等）だけで表す一過性の値であり、
+  /// [refreshFailed]直後の1回の状態遷移だけで非`null`になる。それ以外の全ての
+  /// 遷移（[toLoadingMore]・[toRefreshing]・[cancelInFlight]・[appended]・
+  /// [appendFailed]）で`null`へ戻すため、`ref.listen`側は`next.refreshError`の
+  /// 非`null`だけを見れば、無関係な後続遷移で通知が誤って再発火しない。
+  final AppException? refreshError;
+
   /// 直近のitems・page状態を保ったまま、追加ページ取得中の状態へ遷移する。
   ///
   /// 直前の[appendError]は次の試行を開始した時点で表示対象から外すため
-  /// `null`へ戻す。[status]が[RepositorySearchStatus.success]でない状態から
-  /// 呼び出さないことは呼び出し側（Controller）が保証する。
+  /// `null`へ戻す。[refreshError]はSnackbar等での一過性通知用の値であり、
+  /// [refreshFailed]直後の1回の状態遷移でだけ非`null`になるべきため、無関係な
+  /// 本遷移でも持ち越さず`null`へ戻す（`ref.listen`側が`next.refreshError`の
+  /// 非`null`だけを見て通知しても、無関係な後続遷移で誤発火しないようにする
+  /// ため）。[status]が[RepositorySearchStatus.success]でない状態から呼び出さ
+  /// ないことは呼び出し側（Controller）が保証する。
   RepositorySearchState toLoadingMore() => RepositorySearchState._(
     query: query,
     status: RepositorySearchStatus.loadingMore,
@@ -142,17 +161,39 @@ final class RepositorySearchState {
     totalCount: totalCount,
     error: error,
     appendError: null,
+    refreshError: null,
   );
 
-  /// 進行中の追加ページ取得がcancelされたときに、[toLoadingMore]直前の状態へ
-  /// 戻す。
+  /// 直近のitems・page状態を保ったまま、Pull to Refresh中の状態へ遷移する。
   ///
-  /// [status]が[RepositorySearchStatus.loadingMore]でない場合は`this`を
-  /// そのまま返す（cancel時に追加取得中でなければ何もしない）。[toLoadingMore]
-  /// はitems・page・hasMore・totalCountを変更せずに`status`だけを切り替えて
-  /// いるため、本メソッドはその逆操作としてロスなく`success`へ戻せる。
-  RepositorySearchState cancelLoadingMore() {
-    if (status != RepositorySearchStatus.loadingMore) {
+  /// 直前の[appendError]・[refreshError]は次の試行を開始した時点で表示対象
+  /// から外すため`null`へ戻す。[status]が[RepositorySearchStatus.success]・
+  /// [RepositorySearchStatus.loadingMore]・既に
+  /// [RepositorySearchStatus.refreshing]以外から呼び出さないことは呼び出し側
+  /// （Controller）が保証する。
+  RepositorySearchState toRefreshing() => RepositorySearchState._(
+    query: query,
+    status: RepositorySearchStatus.refreshing,
+    items: items,
+    page: page,
+    hasMore: hasMore,
+    totalCount: totalCount,
+    error: error,
+    appendError: null,
+    refreshError: null,
+  );
+
+  /// 進行中の追加ページ取得・Pull to Refreshがcancelされたときに、遷移前の
+  /// [RepositorySearchStatus.success]へ戻す。
+  ///
+  /// [status]が[RepositorySearchStatus.loadingMore]・
+  /// [RepositorySearchStatus.refreshing]のいずれでもない場合は`this`をそのまま
+  /// 返す（cancel時にどちらでもなければ何もしない）。[toLoadingMore]・
+  /// [toRefreshing]はitems・page・hasMore・totalCountを変更せずに`status`だけを
+  /// 切り替えているため、本メソッドはその逆操作としてロスなく`success`へ戻せる。
+  RepositorySearchState cancelInFlight() {
+    if (status != RepositorySearchStatus.loadingMore &&
+        status != RepositorySearchStatus.refreshing) {
       return this;
     }
     return RepositorySearchState._(
@@ -164,6 +205,7 @@ final class RepositorySearchState {
       totalCount: totalCount,
       error: error,
       appendError: null,
+      refreshError: null,
     );
   }
 
@@ -184,6 +226,7 @@ final class RepositorySearchState {
     totalCount: totalCount,
     error: error,
     appendError: null,
+    refreshError: null,
   );
 
   /// 追加ページ取得の失敗を反映した状態を生成する。
@@ -199,6 +242,23 @@ final class RepositorySearchState {
         totalCount: totalCount,
         error: error,
         appendError: appendError,
+        refreshError: null,
+      );
+
+  /// Pull to Refreshの失敗を反映した状態を生成する。
+  ///
+  /// items・page・hasMore・totalCountは変更せず、直前の一覧を維持する。
+  RepositorySearchState refreshFailed(AppException refreshError) =>
+      RepositorySearchState._(
+        query: query,
+        status: RepositorySearchStatus.success,
+        items: items,
+        page: page,
+        hasMore: hasMore,
+        totalCount: totalCount,
+        error: error,
+        appendError: appendError,
+        refreshError: refreshError,
       );
 
   @override
@@ -216,6 +276,7 @@ final class RepositorySearchState {
         totalCount != other.totalCount ||
         error != other.error ||
         appendError != other.appendError ||
+        refreshError != other.refreshError ||
         items.length != other.items.length) {
       return false;
     }
@@ -237,5 +298,6 @@ final class RepositorySearchState {
     totalCount,
     error,
     appendError,
+    refreshError,
   );
 }

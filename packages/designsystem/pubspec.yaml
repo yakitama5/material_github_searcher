@@ -16,6 +16,7 @@ dependencies:
     path: ../domain
   flutter:
     sdk: flutter
+  material3_indicators: 2026.7.12+2
 
 dev_dependencies:
   alchemist: 0.14.0

@@ -116,6 +116,17 @@ Future<void> _scrollToBottom(WidgetTester tester) async {
   await tester.drag(find.byType(CustomScrollView), const Offset(0, -5000));
 }
 
+/// 上端で下方向へfling操作し、Pull to Refreshのgestureを発生させる。
+///
+/// `RefreshIndicator`（`RefreshIndicatorTriggerMode.onEdge`が既定）は
+/// scrollが先頭（`extentBefore == 0`）にあるときのdragだけを認識するため、
+/// 呼び出し前にscroll位置が先頭にある前提とする。
+Future<void> _pullToRefresh(WidgetTester tester) async {
+  await tester.fling(find.byType(CustomScrollView), const Offset(0, 300), 1000);
+  await tester.pump();
+  await tester.pump(const Duration(seconds: 1));
+}
+
 void main() {
   testWidgets('未検索時は利用案内を表示する', (tester) async {
     await _pumpSearchScreen(
@@ -582,6 +593,177 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.pageCalls, [(query, 1)]);
+    });
+  });
+
+  group('Pull to Refresh', () {
+    testWidgets('成功でpage1の新しい結果へ置換する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+      expect(find.text('flutter/flutter'), findsOneWidget);
+
+      repository.setSuccess(
+        query: query,
+        page: _singlePage(_nullLanguageRepo),
+      );
+      await _pullToRefresh(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('flutter/flutter'), findsNothing);
+      expect(find.text('octocat/no-language-repo'), findsOneWidget);
+      expect(repository.pageCalls.where((c) => c.$2 == 1).length, 2);
+    });
+
+    testWidgets('0件成功はEmpty表示へ置換する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      repository.setSuccess(
+        query: query,
+        page: RepositorySearchPage(
+          items: const [],
+          totalCount: 0,
+          nextPage: null,
+          hasMore: false,
+        ),
+      );
+      await _pullToRefresh(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('flutter/flutter'), findsNothing);
+      expect(
+        find.text(AppLocale.ja.translations.repositorySearch.empty),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('失敗時は既存itemsを維持しSnackbarでRetryを提供する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      repository.setFailure(
+        query: query,
+        exception: const RepositorySearchException(message: 'boom'),
+      );
+      await _pullToRefresh(tester);
+      await tester.pumpAndSettle();
+
+      // 既存の一覧は維持し、全画面Error表示へは切り替えない。
+      expect(find.text('flutter/flutter'), findsOneWidget);
+      expect(
+        find.text(AppLocale.ja.translations.repositorySearch.errorGeneric),
+        findsOneWidget,
+      );
+      final retryLabel = AppLocale.ja.translations.repositorySearch.retry;
+      expect(find.text(retryLabel), findsOneWidget);
+
+      repository.setSuccess(
+        query: query,
+        page: _singlePage(_nullLanguageRepo),
+      );
+      await tester.tap(find.text(retryLabel));
+      await tester.pumpAndSettle();
+
+      expect(find.text('octocat/no-language-repo'), findsOneWidget);
+    });
+
+    testWidgets('未検索・初回error中はpull gestureを無視する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      await _pumpSearchScreen(tester, repository: repository);
+
+      // 未検索
+      await _pullToRefresh(tester);
+      await tester.pumpAndSettle();
+      expect(repository.pageCalls, isEmpty);
+
+      // 初回error
+      final query = RepositorySearchQuery('flutter');
+      repository.setFailure(
+        query: query,
+        exception: const RepositorySearchException(message: 'boom'),
+      );
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+      expect(repository.pageCalls, [(query, 1)]);
+
+      await _pullToRefresh(tester);
+      await tester.pumpAndSettle();
+      expect(repository.pageCalls, [(query, 1)]);
+    });
+
+    testWidgets('refreshは検索履歴へ記録しない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      final historyRepository = FakeSearchHistoryRepository();
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        historyRepository: historyRepository,
+      );
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+      final saveCallCountAfterSubmit = historyRepository.saveCallCount;
+
+      repository.setSuccess(
+        query: query,
+        page: _singlePage(_nullLanguageRepo),
+      );
+      await _pullToRefresh(tester);
+      await tester.pumpAndSettle();
+
+      expect(historyRepository.saveCallCount, saveCallCountAfterSubmit);
+    });
+
+    testWidgets('空一覧でもpull gestureで再取得できる', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('none');
+      repository.setSuccess(
+        query: query,
+        page: RepositorySearchPage(
+          items: const [],
+          totalCount: 0,
+          nextPage: null,
+          hasMore: false,
+        ),
+      );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'none');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(AppLocale.ja.translations.repositorySearch.empty),
+        findsOneWidget,
+      );
+
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      await _pullToRefresh(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('flutter/flutter'), findsOneWidget);
+      expect(repository.pageCalls.where((c) => c.$2 == 1).length, 2);
     });
   });
 
