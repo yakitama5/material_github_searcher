@@ -727,6 +727,42 @@ void main() {
       expect(state().status, RepositorySearchStatus.success);
       expect(state().items, before.items);
     });
+
+    test('refreshing中の再度のrefreshは前回requestをcancelし新しい結果へ置換する', () async {
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _pageWithItems(),
+      );
+      await controller().submit('flutter');
+
+      final gate = Completer<void>();
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _emptyPage(),
+        gate: gate,
+      );
+      final firstRefresh = controller().refresh();
+      expect(state().status, RepositorySearchStatus.refreshing);
+
+      fake.setSuccess(
+        query: RepositorySearchQuery('flutter'),
+        result: _secondPageWithOverlap(),
+      );
+      final secondRefresh = controller().refresh();
+
+      gate.complete();
+      await Future.wait([firstRefresh, secondRefresh]);
+
+      final current = state();
+      expect(current.status, RepositorySearchStatus.success);
+      expect(current.items, _secondPageWithOverlap().items);
+      expect(
+        fake.calls
+            .where((c) => c.query == RepositorySearchQuery('flutter'))
+            .length,
+        3,
+      );
+    });
   });
 
   group('cancel・supersession', () {
