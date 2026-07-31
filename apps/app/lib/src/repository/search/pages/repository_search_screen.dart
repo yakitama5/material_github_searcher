@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../i18n/strings.g.dart';
-import '../widgets/repository_list_item.dart';
+import '../widgets/repository_list_item_open_container.dart';
 import '../widgets/repository_list_skeleton.dart';
 import '../widgets/repository_search_bar.dart';
 import '../widgets/repository_search_empty.dart';
@@ -326,7 +326,7 @@ class _RepositorySearchBody extends StatelessWidget {
     return SliverList.builder(
       itemCount: state.items.length + (trailingWidget == null ? 0 : 1),
       itemBuilder: (context, index) => index < state.items.length
-          ? RepositoryListItem(summary: state.items[index])
+          ? RepositoryListItemOpenContainer(summary: state.items[index])
           : trailingWidget!,
     );
   }

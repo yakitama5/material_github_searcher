@@ -23,6 +23,12 @@ const repositoryDetailWatcherRetryButtonKey = Key(
 /// `CircularProgressIndicator`のような全画面Loading・全画面Errorへは切り替えず、
 /// Watcher行の状態遷移だけで表現する。route parameterや画面固有のViewModelは
 /// 持たず、[repositoryDetailProvider]をSingle Source of Truthとしてwatchする。
+///
+/// `OpenContainer`（`repository_list_item_open_container.dart`）内部の
+/// Routeとして開くため、go_router管理外のNavigatorへ積まれる。戻る操作の
+/// 手段を持たないとContainer Transformの逆再生を起動できないため、
+/// タイトルを持たない最小限の`AppBar`だけを追加し、既定の
+/// `automaticallyImplyLeading`が出す戻る矢印に`Navigator.maybePop`を委ねる。
 class RepositoryDetailPage extends ConsumerWidget {
   /// [summary]から即時表示するRepository Detail画面を生成する。
   const RepositoryDetailPage({required this.summary, super.key});
@@ -38,6 +44,7 @@ class RepositoryDetailPage extends ConsumerWidget {
     final languageLabel = summary.language ?? i18n.languageUnset;
 
     return Scaffold(
+      appBar: AppBar(backgroundColor: colorScheme.surface),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
