@@ -11,6 +11,7 @@ import 'package:material_github_searcher/src/repository/search/pages/repository_
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_item.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_skeleton.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_bar.dart';
+import 'package:material_github_searcher/src/repository/search/widgets/repository_search_empty.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/search_history_suggestions.dart';
 
 import '../../../support/fake_search_history_repository.dart';
@@ -127,6 +128,18 @@ Future<void> _pullToRefresh(WidgetTester tester) async {
   await tester.pump(const Duration(seconds: 1));
 }
 
+/// 非同期の検索結果反映を待つ。
+///
+/// [RepositorySearchEmpty]はReduce Motion無効時にLottieアニメーションを
+/// 無限repeatするため、Empty表示に到達しうる操作の後で`pumpAndSettle`を
+/// 使うとタイムアウトする。固定回数のpumpで代替する。
+Future<void> _settleWithoutLoopingAnimation(WidgetTester tester) async {
+  await tester.pump();
+  // `_pullToRefresh`と同じ1秒のバッファで、低速なCI環境でもLottie
+  // compositionの非同期読み込みや状態反映が確実に完了してから検証する。
+  await tester.pump(const Duration(seconds: 1));
+}
+
 void main() {
   testWidgets('未検索時は利用案内を表示する', (tester) async {
     await _pumpSearchScreen(
@@ -234,10 +247,11 @@ void main() {
 
     await tester.enterText(find.byKey(_searchFieldKey), 'no-such-repo');
     await tester.tap(find.byKey(_submitButtonKey));
-    await tester.pumpAndSettle();
+    await _settleWithoutLoopingAnimation(tester);
 
+    expect(find.byType(RepositorySearchEmpty), findsOneWidget);
     expect(
-      find.text(AppLocale.ja.translations.repositorySearch.empty),
+      find.text(AppLocale.ja.translations.repositorySearch.emptyTitle),
       findsOneWidget,
     );
   });
@@ -392,6 +406,38 @@ void main() {
     });
   }
 
+  for (final locale in [AppLocale.ja, AppLocale.en]) {
+    testWidgets('$localeでは0件成功時にEmptyの見出し・補助文をローカライズして表示する', (
+      tester,
+    ) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('no-such-repo');
+      repository.setSuccess(
+        query: query,
+        page: RepositorySearchPage(
+          items: const [],
+          totalCount: 0,
+          nextPage: null,
+          hasMore: false,
+        ),
+      );
+      await _pumpSearchScreen(tester, repository: repository, locale: locale);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'no-such-repo');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await _settleWithoutLoopingAnimation(tester);
+
+      expect(
+        find.text(locale.translations.repositorySearch.emptyTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.text(locale.translations.repositorySearch.emptyHint),
+        findsOneWidget,
+      );
+    });
+  }
+
   for (final width in [402.0, 744.0, 1024.0]) {
     testWidgets('幅$widthでも例外を投げず表示する', (tester) async {
       final repository = FakeRepositorySearchRepository();
@@ -405,6 +451,30 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('flutter/flutter'), findsOneWidget);
+    });
+  }
+
+  for (final width in [402.0, 744.0, 1024.0]) {
+    testWidgets('幅$widthのEmpty表示でも例外を投げず表示する', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('no-such-repo');
+      repository.setSuccess(
+        query: query,
+        page: RepositorySearchPage(
+          items: const [],
+          totalCount: 0,
+          nextPage: null,
+          hasMore: false,
+        ),
+      );
+      await _pumpSearchScreen(tester, repository: repository, width: width);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'no-such-repo');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await _settleWithoutLoopingAnimation(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(RepositorySearchEmpty), findsOneWidget);
     });
   }
 
@@ -640,11 +710,12 @@ void main() {
         ),
       );
       await _pullToRefresh(tester);
-      await tester.pumpAndSettle();
+      await _settleWithoutLoopingAnimation(tester);
 
       expect(find.text('flutter/flutter'), findsNothing);
+      expect(find.byType(RepositorySearchEmpty), findsOneWidget);
       expect(
-        find.text(AppLocale.ja.translations.repositorySearch.empty),
+        find.text(AppLocale.ja.translations.repositorySearch.emptyTitle),
         findsOneWidget,
       );
     });
@@ -752,9 +823,10 @@ void main() {
 
       await tester.enterText(find.byKey(_searchFieldKey), 'none');
       await tester.tap(find.byKey(_submitButtonKey));
-      await tester.pumpAndSettle();
+      await _settleWithoutLoopingAnimation(tester);
+      expect(find.byType(RepositorySearchEmpty), findsOneWidget);
       expect(
-        find.text(AppLocale.ja.translations.repositorySearch.empty),
+        find.text(AppLocale.ja.translations.repositorySearch.emptyTitle),
         findsOneWidget,
       );
 
@@ -764,6 +836,42 @@ void main() {
 
       expect(find.text('flutter/flutter'), findsOneWidget);
       expect(repository.pageCalls.where((c) => c.$2 == 1).length, 2);
+    });
+
+    testWidgets('Empty表示中のrefresh失敗はEmptyを維持しSnackbarでRetryを提供する', (
+      tester,
+    ) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('none');
+      repository.setSuccess(
+        query: query,
+        page: RepositorySearchPage(
+          items: const [],
+          totalCount: 0,
+          nextPage: null,
+          hasMore: false,
+        ),
+      );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'none');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await _settleWithoutLoopingAnimation(tester);
+      expect(find.byType(RepositorySearchEmpty), findsOneWidget);
+
+      repository.setFailure(
+        query: query,
+        exception: const RepositorySearchException(message: 'boom'),
+      );
+      await _pullToRefresh(tester);
+      await _settleWithoutLoopingAnimation(tester);
+
+      // Emptyのままで全画面Error表示へは切り替えない。
+      expect(find.byType(RepositorySearchEmpty), findsOneWidget);
+      expect(
+        find.text(AppLocale.ja.translations.repositorySearch.errorGeneric),
+        findsOneWidget,
+      );
     });
   });
 

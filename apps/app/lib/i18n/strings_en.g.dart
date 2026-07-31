@@ -66,7 +66,8 @@ class _Translations$repositorySearch$en extends Translations$repositorySearch$ja
 	@override String get searchFieldHint => 'Enter a repository name or keyword';
 	@override String get searchButtonTooltip => 'Search';
 	@override String get guidance => 'Enter a keyword, then submit from the keyboard or the search button.';
-	@override String get empty => 'No repositories matched your search.';
+	@override String get emptyTitle => 'No repositories matched your search.';
+	@override String get emptyHint => 'Try a different keyword and search again.';
 	@override String get errorGeneric => 'Something went wrong. Please try again later.';
 	@override String get errorRateLimited => 'GitHub API rate limit reached. Please try again later.';
 	@override String get retry => 'Retry';
@@ -110,7 +111,8 @@ extension on TranslationsEn {
 			'repositorySearch.searchFieldHint' => 'Enter a repository name or keyword',
 			'repositorySearch.searchButtonTooltip' => 'Search',
 			'repositorySearch.guidance' => 'Enter a keyword, then submit from the keyboard or the search button.',
-			'repositorySearch.empty' => 'No repositories matched your search.',
+			'repositorySearch.emptyTitle' => 'No repositories matched your search.',
+			'repositorySearch.emptyHint' => 'Try a different keyword and search again.',
 			'repositorySearch.errorGeneric' => 'Something went wrong. Please try again later.',
 			'repositorySearch.errorRateLimited' => 'GitHub API rate limit reached. Please try again later.',
 			'repositorySearch.retry' => 'Retry',

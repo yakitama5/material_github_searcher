@@ -2,7 +2,8 @@ searchFieldLabel: Search repositories
 searchFieldHint: Enter a repository name or keyword
 searchButtonTooltip: Search
 guidance: Enter a keyword, then submit from the keyboard or the search button.
-empty: No repositories matched your search.
+emptyTitle: No repositories matched your search.
+emptyHint: Try a different keyword and search again.
 errorGeneric: Something went wrong. Please try again later.
 errorRateLimited: GitHub API rate limit reached. Please try again later.
 retry: Retry

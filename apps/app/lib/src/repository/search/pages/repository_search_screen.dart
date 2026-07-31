@@ -10,6 +10,7 @@ import '../../../../i18n/strings.g.dart';
 import '../widgets/repository_list_item.dart';
 import '../widgets/repository_list_skeleton.dart';
 import '../widgets/repository_search_bar.dart';
+import '../widgets/repository_search_empty.dart';
 import '../widgets/repository_search_message_view.dart';
 import '../widgets/search_history_suggestions.dart';
 
@@ -305,15 +306,10 @@ class _RepositorySearchBody extends StatelessWidget {
   }
 
   Widget _buildResults(BuildContext context) {
-    final i18n = context.i18n.repositorySearch;
-
     if (state.items.isEmpty) {
-      return SliverFillRemaining(
+      return const SliverFillRemaining(
         hasScrollBody: false,
-        child: RepositorySearchMessageView(
-          icon: Icons.inbox_outlined,
-          message: i18n.empty,
-        ),
+        child: RepositorySearchEmpty(),
       );
     }
 

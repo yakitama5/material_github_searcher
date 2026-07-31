@@ -82,7 +82,10 @@ class Translations$repositorySearch$ja {
 	String get guidance => 'キーワードを入力し、キーボードの検索または検索ボタンで検索してください';
 
 	/// ja: '条件に一致するリポジトリが見つかりませんでした'
-	String get empty => '条件に一致するリポジトリが見つかりませんでした';
+	String get emptyTitle => '条件に一致するリポジトリが見つかりませんでした';
+
+	/// ja: '別のキーワードで再度検索してください'
+	String get emptyHint => '別のキーワードで再度検索してください';
 
 	/// ja: '通信エラーが発生しました。しばらくしてから再度お試しください'
 	String get errorGeneric => '通信エラーが発生しました。しばらくしてから再度お試しください';
@@ -158,7 +161,8 @@ extension on Translations {
 			'repositorySearch.searchFieldHint' => 'リポジトリ名やキーワードを入力',
 			'repositorySearch.searchButtonTooltip' => '検索する',
 			'repositorySearch.guidance' => 'キーワードを入力し、キーボードの検索または検索ボタンで検索してください',
-			'repositorySearch.empty' => '条件に一致するリポジトリが見つかりませんでした',
+			'repositorySearch.emptyTitle' => '条件に一致するリポジトリが見つかりませんでした',
+			'repositorySearch.emptyHint' => '別のキーワードで再度検索してください',
 			'repositorySearch.errorGeneric' => '通信エラーが発生しました。しばらくしてから再度お試しください',
 			'repositorySearch.errorRateLimited' => 'GitHub APIの利用回数上限に達しました。しばらくしてから再度お試しください',
 			'repositorySearch.retry' => '再試行',
