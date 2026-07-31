@@ -41,6 +41,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
 	// Translations
 	late final Translations$common$ja common = Translations$common$ja.internal(_root);
+	late final Translations$repositoryDetail$ja repositoryDetail = Translations$repositoryDetail$ja.internal(_root);
 	late final Translations$repositorySearch$ja repositorySearch = Translations$repositorySearch$ja.internal(_root);
 }
 
@@ -59,6 +60,54 @@ class Translations$common$ja {
 	String get incrementTooltip => '追加';
 
 	late final Translations$common$navigation$ja navigation = Translations$common$navigation$ja.internal(_root);
+}
+
+// Path: repositoryDetail
+class Translations$repositoryDetail$ja {
+	Translations$repositoryDetail$ja.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// ja: '言語'
+	String get languageLabel => '言語';
+
+	/// ja: '未設定'
+	String get languageUnset => '未設定';
+
+	/// ja: 'スター数'
+	String get starsLabel => 'スター数';
+
+	/// ja: '${count: decimalPattern}'
+	String starsValue({required num count}) => '${NumberFormat.decimalPattern('ja').format(count)}';
+
+	/// ja: 'フォーク数'
+	String get forksLabel => 'フォーク数';
+
+	/// ja: '${count: decimalPattern}'
+	String forksValue({required num count}) => '${NumberFormat.decimalPattern('ja').format(count)}';
+
+	/// ja: 'Issue数'
+	String get issuesLabel => 'Issue数';
+
+	/// ja: '${count: decimalPattern}'
+	String issuesValue({required num count}) => '${NumberFormat.decimalPattern('ja').format(count)}';
+
+	/// ja: 'Watcher数'
+	String get watchersLabel => 'Watcher数';
+
+	/// ja: '${count: decimalPattern}'
+	String watchersValue({required num count}) => '${NumberFormat.decimalPattern('ja').format(count)}';
+
+	/// ja: 'Watcher数の取得に失敗しました'
+	String get watcherError => 'Watcher数の取得に失敗しました';
+
+	/// ja: '再試行'
+	String get retry => '再試行';
+
+	/// ja: 'Watcher数を再取得'
+	String get retryTooltip => 'Watcher数を再取得';
 }
 
 // Path: repositorySearch
@@ -157,6 +206,19 @@ extension on Translations {
 			'common.incrementTooltip' => '追加',
 			'common.navigation.search' => '検索',
 			'common.navigation.settings' => '設定',
+			'repositoryDetail.languageLabel' => '言語',
+			'repositoryDetail.languageUnset' => '未設定',
+			'repositoryDetail.starsLabel' => 'スター数',
+			'repositoryDetail.starsValue' => ({required num count}) => '${NumberFormat.decimalPattern('ja').format(count)}',
+			'repositoryDetail.forksLabel' => 'フォーク数',
+			'repositoryDetail.forksValue' => ({required num count}) => '${NumberFormat.decimalPattern('ja').format(count)}',
+			'repositoryDetail.issuesLabel' => 'Issue数',
+			'repositoryDetail.issuesValue' => ({required num count}) => '${NumberFormat.decimalPattern('ja').format(count)}',
+			'repositoryDetail.watchersLabel' => 'Watcher数',
+			'repositoryDetail.watchersValue' => ({required num count}) => '${NumberFormat.decimalPattern('ja').format(count)}',
+			'repositoryDetail.watcherError' => 'Watcher数の取得に失敗しました',
+			'repositoryDetail.retry' => '再試行',
+			'repositoryDetail.retryTooltip' => 'Watcher数を再取得',
 			'repositorySearch.searchFieldLabel' => 'リポジトリ検索',
 			'repositorySearch.searchFieldHint' => 'リポジトリ名やキーワードを入力',
 			'repositorySearch.searchButtonTooltip' => '検索する',

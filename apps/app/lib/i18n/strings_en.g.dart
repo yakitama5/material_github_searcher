@@ -40,6 +40,7 @@ class TranslationsEn extends Translations with BaseTranslations<AppLocale, Trans
 
 	// Translations
 	@override late final _Translations$common$en common = _Translations$common$en._(_root);
+	@override late final _Translations$repositoryDetail$en repositoryDetail = _Translations$repositoryDetail$en._(_root);
 	@override late final _Translations$repositorySearch$en repositorySearch = _Translations$repositorySearch$en._(_root);
 }
 
@@ -53,6 +54,28 @@ class _Translations$common$en extends Translations$common$ja {
 	@override String get pushCountLabel => 'You have pushed the button this many times';
 	@override String get incrementTooltip => 'Increment';
 	@override late final _Translations$common$navigation$en navigation = _Translations$common$navigation$en._(_root);
+}
+
+// Path: repositoryDetail
+class _Translations$repositoryDetail$en extends Translations$repositoryDetail$ja {
+	_Translations$repositoryDetail$en._(TranslationsEn root) : this._root = root, super.internal(root);
+
+	final TranslationsEn _root; // ignore: unused_field
+
+	// Translations
+	@override String get languageLabel => 'Language';
+	@override String get languageUnset => 'Not set';
+	@override String get starsLabel => 'Stars';
+	@override String starsValue({required num count}) => '${NumberFormat.decimalPattern('en').format(count)}';
+	@override String get forksLabel => 'Forks';
+	@override String forksValue({required num count}) => '${NumberFormat.decimalPattern('en').format(count)}';
+	@override String get issuesLabel => 'Issues';
+	@override String issuesValue({required num count}) => '${NumberFormat.decimalPattern('en').format(count)}';
+	@override String get watchersLabel => 'Watchers';
+	@override String watchersValue({required num count}) => '${NumberFormat.decimalPattern('en').format(count)}';
+	@override String get watcherError => 'Failed to load watcher count';
+	@override String get retry => 'Retry';
+	@override String get retryTooltip => 'Retry fetching the watcher count';
 }
 
 // Path: repositorySearch
@@ -107,6 +130,19 @@ extension on TranslationsEn {
 			'common.incrementTooltip' => 'Increment',
 			'common.navigation.search' => 'Search',
 			'common.navigation.settings' => 'Settings',
+			'repositoryDetail.languageLabel' => 'Language',
+			'repositoryDetail.languageUnset' => 'Not set',
+			'repositoryDetail.starsLabel' => 'Stars',
+			'repositoryDetail.starsValue' => ({required num count}) => '${NumberFormat.decimalPattern('en').format(count)}',
+			'repositoryDetail.forksLabel' => 'Forks',
+			'repositoryDetail.forksValue' => ({required num count}) => '${NumberFormat.decimalPattern('en').format(count)}',
+			'repositoryDetail.issuesLabel' => 'Issues',
+			'repositoryDetail.issuesValue' => ({required num count}) => '${NumberFormat.decimalPattern('en').format(count)}',
+			'repositoryDetail.watchersLabel' => 'Watchers',
+			'repositoryDetail.watchersValue' => ({required num count}) => '${NumberFormat.decimalPattern('en').format(count)}',
+			'repositoryDetail.watcherError' => 'Failed to load watcher count',
+			'repositoryDetail.retry' => 'Retry',
+			'repositoryDetail.retryTooltip' => 'Retry fetching the watcher count',
 			'repositorySearch.searchFieldLabel' => 'Search repositories',
 			'repositorySearch.searchFieldHint' => 'Enter a repository name or keyword',
 			'repositorySearch.searchButtonTooltip' => 'Search',

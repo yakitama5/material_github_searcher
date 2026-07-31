@@ -1,0 +1,13 @@
+languageLabel: 言語
+languageUnset: 未設定
+starsLabel: スター数
+starsValue: "${count: decimalPattern}"
+forksLabel: フォーク数
+forksValue: "${count: decimalPattern}"
+issuesLabel: Issue数
+issuesValue: "${count: decimalPattern}"
+watchersLabel: Watcher数
+watchersValue: "${count: decimalPattern}"
+watcherError: Watcher数の取得に失敗しました
+retry: 再試行
+retryTooltip: Watcher数を再取得
