@@ -62,6 +62,7 @@ void main() {
       final copied = base.copyWith();
 
       expect(copied, equals(base));
+      expect(identical(copied, base), isFalse);
     });
 
     test('AppUiStyleは3種類の候補を持つ', () {
