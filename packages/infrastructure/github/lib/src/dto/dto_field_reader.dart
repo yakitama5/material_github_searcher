@@ -7,7 +7,7 @@ T requireField<T>(Map<String, dynamic> json, String key) {
   final value = json[key];
   if (value is! T) {
     throw FormatException(
-      'GitHub search response is missing or has an invalid "$key" field '
+      'GitHub API response is missing or has an invalid "$key" field '
       '(expected $T, got ${value.runtimeType})',
     );
   }

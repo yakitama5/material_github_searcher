@@ -11,6 +11,10 @@ void main() {
       name: 'flutter',
     );
     const sdkIdentity = RepositoryIdentity(owner: 'dart-lang', name: 'sdk');
+    const flutterSupplement42 = RepositoryDetailSupplement(
+      identity: flutterIdentity,
+      subscribersCount: 42,
+    );
 
     late MockRepositoryDetailRepository repository;
 
@@ -29,25 +33,17 @@ void main() {
     }
 
     test('設定したidentityに一致する成功応答を返す', () async {
-      const supplement = RepositoryDetailSupplement(
-        identity: flutterIdentity,
-        subscribersCount: 42,
-      );
       repository.setResponse(
         identity: flutterIdentity,
-        response: const MockRepositoryDetailSuccess(supplement),
+        response: const MockRepositoryDetailSuccess(flutterSupplement42),
       );
 
       final result = await fetch();
 
-      expect(result, same(supplement));
+      expect(result, same(flutterSupplement42));
     });
 
     test('identityが異なれば別の応答を返す', () async {
-      const flutterSupplement = RepositoryDetailSupplement(
-        identity: flutterIdentity,
-        subscribersCount: 42,
-      );
       const sdkSupplement = RepositoryDetailSupplement(
         identity: sdkIdentity,
         subscribersCount: 10,
@@ -55,14 +51,14 @@ void main() {
       repository
         ..setResponse(
           identity: flutterIdentity,
-          response: const MockRepositoryDetailSuccess(flutterSupplement),
+          response: const MockRepositoryDetailSuccess(flutterSupplement42),
         )
         ..setResponse(
           identity: sdkIdentity,
           response: const MockRepositoryDetailSuccess(sdkSupplement),
         );
 
-      expect(await fetch(), same(flutterSupplement));
+      expect(await fetch(), same(flutterSupplement42));
       expect(await fetch(identity: sdkIdentity), same(sdkSupplement));
     });
 
@@ -112,13 +108,7 @@ void main() {
       final gate = Completer<void>();
       repository.setResponse(
         identity: flutterIdentity,
-        response: MockRepositoryDetailSuccess(
-          const RepositoryDetailSupplement(
-            identity: flutterIdentity,
-            subscribersCount: 42,
-          ),
-          gate: gate,
-        ),
+        response: MockRepositoryDetailSuccess(flutterSupplement42, gate: gate),
       );
 
       var completed = false;
@@ -160,13 +150,7 @@ void main() {
       final controller = CancellationController();
       repository.setResponse(
         identity: flutterIdentity,
-        response: MockRepositoryDetailSuccess(
-          const RepositoryDetailSupplement(
-            identity: flutterIdentity,
-            subscribersCount: 42,
-          ),
-          gate: gate,
-        ),
+        response: MockRepositoryDetailSuccess(flutterSupplement42, gate: gate),
       );
 
       final future = fetch(cancellationToken: controller.token);
@@ -181,12 +165,7 @@ void main() {
       final controller = CancellationController()..cancel();
       repository.setResponse(
         identity: flutterIdentity,
-        response: const MockRepositoryDetailSuccess(
-          RepositoryDetailSupplement(
-            identity: flutterIdentity,
-            subscribersCount: 42,
-          ),
-        ),
+        response: const MockRepositoryDetailSuccess(flutterSupplement42),
       );
 
       await expectLater(
@@ -199,12 +178,7 @@ void main() {
       final controller = CancellationController()..cancel();
       repository.setResponse(
         identity: flutterIdentity,
-        response: const MockRepositoryDetailSuccess(
-          RepositoryDetailSupplement(
-            identity: flutterIdentity,
-            subscribersCount: 42,
-          ),
-        ),
+        response: const MockRepositoryDetailSuccess(flutterSupplement42),
       );
 
       await expectLater(
@@ -219,12 +193,7 @@ void main() {
       repository
         ..setResponse(
           identity: flutterIdentity,
-          response: const MockRepositoryDetailSuccess(
-            RepositoryDetailSupplement(
-              identity: flutterIdentity,
-              subscribersCount: 42,
-            ),
-          ),
+          response: const MockRepositoryDetailSuccess(flutterSupplement42),
         )
         ..setResponse(
           identity: sdkIdentity,
@@ -246,12 +215,7 @@ void main() {
     test('callsは呼出後の外部変更から保護されている', () async {
       repository.setResponse(
         identity: flutterIdentity,
-        response: const MockRepositoryDetailSuccess(
-          RepositoryDetailSupplement(
-            identity: flutterIdentity,
-            subscribersCount: 42,
-          ),
-        ),
+        response: const MockRepositoryDetailSuccess(flutterSupplement42),
       );
 
       await fetch();
