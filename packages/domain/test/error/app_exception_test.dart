@@ -77,4 +77,21 @@ void main() {
       expect(exception.message, 'persistence failed');
     });
   });
+
+  group('ThemeSettingsPersistenceException', () {
+    test('AppException・Exceptionのサブタイプである', () {
+      const exception = ThemeSettingsPersistenceException();
+
+      expect(exception, isA<AppException>());
+      expect(exception, isA<Exception>());
+    });
+
+    test('messageを保持する', () {
+      const exception = ThemeSettingsPersistenceException(
+        message: 'persistence failed',
+      );
+
+      expect(exception.message, 'persistence failed');
+    });
+  });
 }
