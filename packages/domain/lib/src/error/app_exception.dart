@@ -48,6 +48,17 @@ final class RepositorySearchException extends AppException {
   const RepositorySearchException({super.message});
 }
 
+/// Repository Detail取得の失敗を表す例外。
+///
+/// [RepositorySearchException]と同様、要因（Rate Limit・404・その他HTTP・
+/// decode等）ごとの分類はInfrastructure実装の詳細であり本Issueの対象外と
+/// する。Applicationが「Repository Detail取得由来の失敗」と区別できるよう、
+/// まずは汎用の契約として1種類だけ用意する。
+final class RepositoryDetailException extends AppException {
+  /// Repository Detail取得の失敗例外を生成する。
+  const RepositoryDetailException({super.message});
+}
+
 /// 検索履歴の永続化（load・save）の失敗を表す例外。
 ///
 /// [RepositorySearchException]と同様、要因（Storage I/Oエラー等）ごとの分類は
