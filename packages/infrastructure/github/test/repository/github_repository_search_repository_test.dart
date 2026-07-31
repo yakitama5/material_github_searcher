@@ -143,6 +143,19 @@ void main() {
       );
     });
 
+    test('空ボディの200レスポンスはRepositorySearchExceptionへ変換される', () async {
+      adapter.handler = (options, stream, cancelFuture) =>
+          ResponseBody.fromString(
+            '',
+            200,
+            headers: {
+              'content-type': ['application/json'],
+            },
+          );
+
+      await expectLater(search(), throwsA(isA<RepositorySearchException>()));
+    });
+
     test('必須フィールド欠落はRepositorySearchExceptionへ変換される', () async {
       adapter.handler = (options, stream, cancelFuture) => _jsonResponse({
         'items': <Map<String, dynamic>>[],

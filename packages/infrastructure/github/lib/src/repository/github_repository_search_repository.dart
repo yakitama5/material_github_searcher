@@ -53,7 +53,18 @@ final class GitHubRepositorySearchRepository
         },
         cancelToken: cancelToken,
       );
-      final dto = GithubSearchResponseDto.fromJson(response.data!);
+      final data = response.data;
+      if (data == null) {
+        // dioはJSON応答（responseType: ResponseType.json）の空ボディを
+        // nullへ変換するため、response.data!のnull assertionはこの場合
+        // TypeErrorを投げてしまい、on FormatExceptionで捕捉できず
+        // UnknownExceptionになってしまう。FormatExceptionへ変換し直す
+        // ことで、既存のハンドラでRepositorySearchExceptionへ揃える。
+        throw const FormatException(
+          'GitHub search response body is empty',
+        );
+      }
+      final dto = GithubSearchResponseDto.fromJson(data);
       return _toDomainPage(dto: dto, page: page, perPage: perPage);
     } on DioException catch (error, stackTrace) {
       Error.throwWithStackTrace(
