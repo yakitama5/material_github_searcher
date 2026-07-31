@@ -1,0 +1,13 @@
+languageLabel: Language
+languageUnset: Not set
+starsLabel: Stars
+starsValue: "${count: decimalPattern}"
+forksLabel: Forks
+forksValue: "${count: decimalPattern}"
+issuesLabel: Issues
+issuesValue: "${count: decimalPattern}"
+watchersLabel: Watchers
+watchersValue: "${count: decimalPattern}"
+watcherError: Failed to load watcher count
+retry: Retry
+retryTooltip: Retry fetching the watcher count
