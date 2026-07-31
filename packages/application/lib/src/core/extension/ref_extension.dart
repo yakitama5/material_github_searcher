@@ -24,10 +24,12 @@ extension CacheForExtension on Ref {
     final link = keepAlive();
     Timer? timer;
 
-    onCancel(() {
+    void startTimer() {
       timer?.cancel();
       timer = Timer(duration, link.close);
-    });
+    }
+
+    onCancel(startTimer);
     onResume(() {
       timer?.cancel();
       timer = null;
@@ -36,6 +38,15 @@ extension CacheForExtension on Ref {
       timer?.cancel();
       timer = null;
     });
+
+    // buildが非同期処理をawaitしている間に全listenerが外れていた場合、
+    // onCancelはbuildの途中で既に発火済みのため、ここで登録しても再度は
+    // 呼ばれない（[Ref.isPaused]のdoc contract）。cacheFor呼び出し時点で
+    // 既にpaused（=listenerがいない）なら、ここで直接timerを開始しないと
+    // keepAliveが解除されず無期限に保持され続けてしまう。
+    if (isPaused) {
+      startTimer();
+    }
   }
 }
 

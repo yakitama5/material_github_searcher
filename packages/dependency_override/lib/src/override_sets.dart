@@ -11,6 +11,9 @@ import 'package:riverpod/misc.dart';
 /// 参照された時点で遅延生成する。Provider dispose時に`Dio.close`でHTTP
 /// clientを解放し、socketの残留を防ぐ。
 ///
+/// Repository Detailも同様に[GitHubRepositoryDetailRepository]へ結線し、
+/// 検索とは別の`Dio`インスタンスをProviderごとに遅延生成・dispose時にcloseする。
+///
 /// 検索履歴は[SharedPreferencesSearchHistoryRepository]へ結線する。
 /// `SharedPreferencesAsync`はkey単位で直接読み書きするだけで、アプリ起動時に
 /// 全件を読み込むキャッシュや`main.dart`側のグローバル状態を必要としない
@@ -25,6 +28,11 @@ List<Override> createProductionOverrides() => [
     ref.onDispose(dio.close);
     return GitHubRepositorySearchRepository(dio: dio);
   }),
+  repositoryDetailRepositoryProvider.overrideWith((ref) {
+    final dio = createGitHubDio();
+    ref.onDispose(dio.close);
+    return GitHubRepositoryDetailRepository(dio: dio);
+  }),
   searchHistoryRepositoryProvider.overrideWith(
     (ref) => const SharedPreferencesSearchHistoryRepository(
       preferencesFactory: createSharedPreferencesAsync,
@@ -36,11 +44,15 @@ List<Override> createProductionOverrides() => [
 ///
 /// Repository検索は決定的な[MockRepositorySearchRepository]へ結線し、実APIへ
 /// 接続せず同じシナリオ（成功・空・失敗・遅延・cancel）を再現できるように
-/// する。検索履歴も同様に、実ストレージへ書き込まない
+/// する。Repository Detailも同様に[MockRepositoryDetailRepository]へ結線する。
+/// 検索履歴も同様に、実ストレージへ書き込まない
 /// [MockSearchHistoryRepository]へ結線する。
 List<Override> createMockOverrides() => [
   repositorySearchRepositoryProvider.overrideWith(
     (ref) => MockRepositorySearchRepository(),
+  ),
+  repositoryDetailRepositoryProvider.overrideWith(
+    (ref) => MockRepositoryDetailRepository(),
   ),
   searchHistoryRepositoryProvider.overrideWith(
     (ref) => MockSearchHistoryRepository(),
