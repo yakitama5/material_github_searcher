@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:application/application.dart';
 import 'package:domain/domain.dart';
 import 'package:fake_async/fake_async.dart';
@@ -89,6 +91,44 @@ void main() {
         container.dispose();
       });
     });
+
+    test(
+      'buildが非同期処理をawait中に全listenerが外れてもtimeout経過後にdisposeされる',
+      () {
+        fakeAsync((async) {
+          var disposeCount = 0;
+          final gate = Completer<void>();
+          final provider = FutureProvider.autoDispose<int>((ref) async {
+            await gate.future;
+            ref
+              ..cacheFor(cacheDuration)
+              ..onDispose(() => disposeCount++);
+            return 42;
+          });
+          final container = ProviderContainer();
+          addTearDown(container.dispose);
+
+          final sub = container.listen(provider, (_, _) {});
+          async.flushMicrotasks();
+
+          // build（gate待ち）の途中で最後のlistenerが外れるのと同時に
+          // gateを解決させる。[Ref.isPaused]のdoc契約により、この後の
+          // cacheFor呼出しで登録するonCancelは「今listenerが0になった」
+          // イベントを取りこぼす（build途中の非同期ギャップで既に
+          // 発火済みのため）。cacheForがisPausedを見て直接timerを
+          // 開始しないと、無期限にkeepAliveされたままになる。
+          sub.close();
+          gate.complete();
+          async
+            ..flushMicrotasks()
+            ..elapse(Duration.zero)
+            ..elapse(cacheDuration + const Duration(seconds: 1))
+            ..flushTimers();
+
+          expect(disposeCount, 1);
+        });
+      },
+    );
   });
 
   group('CancellationRefExtension.createCancellationController', () {
