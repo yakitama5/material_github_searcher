@@ -12,3 +12,5 @@ export 'src/repository/search/repository_search_state.dart';
 export 'src/search_history/search_history_controller.dart';
 export 'src/search_history/search_history_repository_provider.dart';
 export 'src/search_history/search_history_state.dart';
+export 'src/theme_settings/theme_settings_provider.dart';
+export 'src/theme_settings/theme_settings_repository_provider.dart';

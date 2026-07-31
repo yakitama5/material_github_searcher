@@ -69,3 +69,14 @@ final class SearchHistoryPersistenceException extends AppException {
   /// 検索履歴の永続化失敗例外を生成する。
   const SearchHistoryPersistenceException({super.message});
 }
+
+/// テーマ設定の永続化（load・save）の失敗を表す例外。
+///
+/// [SearchHistoryPersistenceException]と同様、要因（Storage I/Oエラー等）
+/// ごとの分類はInfrastructure実装の詳細であり本Issueの対象外とする。
+/// Applicationが「テーマ設定の永続化由来の失敗」と区別できるよう、
+/// まずは汎用の契約として1種類だけ用意する。
+final class ThemeSettingsPersistenceException extends AppException {
+  /// テーマ設定の永続化失敗例外を生成する。
+  const ThemeSettingsPersistenceException({super.message});
+}
