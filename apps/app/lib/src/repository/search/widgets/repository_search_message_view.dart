@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// 未検索案内・0件・初回エラー等、一覧の代わりに中央表示するアイコン付き
+/// 未検索案内・初回エラー等、一覧の代わりに中央表示するアイコン付き
 /// メッセージ。
 ///
 /// [retryLabel]・[onRetry]の両方が指定された場合のみretryボタンを表示する。
-/// 0件時のEmpty表現はLottie等の演出を持たない差し替え可能なplaceholderとして
-/// 本Widgetを流用する（Lottie対応は後続Issue）。
+/// 0件時のEmpty表現は`RepositorySearchEmpty`（Lottieを使った専用Widget）を
+/// 使うため、本Widgetは未検索案内・初回エラー表示にのみ使う。
 class RepositorySearchMessageView extends StatelessWidget {
   /// [icon]・[message]を中央表示するメッセージ画面を生成する。
   const RepositorySearchMessageView({
