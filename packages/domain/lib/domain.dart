@@ -3,6 +3,8 @@ library;
 
 export 'src/async/cancellation_token.dart';
 export 'src/error/app_exception.dart';
+export 'src/repository/detail/repository_detail_repository.dart';
+export 'src/repository/detail/repository_detail_supplement.dart';
 export 'src/repository/search/repository_identity.dart';
 export 'src/repository/search/repository_search_page.dart';
 export 'src/repository/search/repository_search_query.dart';

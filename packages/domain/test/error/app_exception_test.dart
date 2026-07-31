@@ -46,6 +46,21 @@ void main() {
     });
   });
 
+  group('RepositoryDetailException', () {
+    test('AppException・Exceptionのサブタイプである', () {
+      const exception = RepositoryDetailException();
+
+      expect(exception, isA<AppException>());
+      expect(exception, isA<Exception>());
+    });
+
+    test('messageを保持する', () {
+      const exception = RepositoryDetailException(message: 'detail failed');
+
+      expect(exception.message, 'detail failed');
+    });
+  });
+
   group('SearchHistoryPersistenceException', () {
     test('AppException・Exceptionのサブタイプである', () {
       const exception = SearchHistoryPersistenceException();
