@@ -14,6 +14,15 @@ final class FakeRepositoryDetailRepository
   /// これまでの`fetch`呼出履歴（呼び出された順）。
   final calls = <RepositoryIdentity>[];
 
+  /// `gate`未完了のまま[CancellationToken]がcancelされて終了した呼出しの
+  /// identity（発生順）。
+  ///
+  /// Widget Testからback操作（OpenContainer close）が実際に
+  /// `repositoryDetailProvider`のautoDispose経由で通信をcancelさせたことを
+  /// 直接観測するために使う。`calls`はcancel有無に関わらずfetch開始時点で
+  /// 記録されるため、cancelが実際に伝播したかどうかの判定には使えない。
+  final cancelledIdentities = <RepositoryIdentity>[];
+
   /// [identity]に対する成功応答を設定する。
   ///
   /// [gate]を渡すと、[gate]の[Completer.complete]呼び出しまで応答を保留する。
@@ -52,6 +61,9 @@ final class FakeRepositoryDetailRepository
     final gate = response.gate;
     if (gate != null) {
       await Future.any([gate.future, cancellationToken.whenCancelled]);
+    }
+    if (cancellationToken.isCancelled) {
+      cancelledIdentities.add(identity);
     }
     cancellationToken.throwIfCancelled();
 

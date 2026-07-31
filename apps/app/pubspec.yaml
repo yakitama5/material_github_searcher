@@ -8,6 +8,7 @@ environment:
   flutter: 3.44.8
 
 dependencies:
+  animations: 2.2.0
   application:
     path: ../../packages/application
   cupertino_icons: 1.0.9
