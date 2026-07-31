@@ -129,6 +129,7 @@ final class ThemeSettingsNotifier extends AsyncNotifier<ThemeSettings> {
 は`Error`ではないため無効化しないと、load失敗時に「安定したAsyncError」に
 ならず自動retryで再試行し続けてしまう（`#85`で実際に踏んだ不具合と同型）。
 
+```dart
   Future<void> updateUiStyle(AppUiStyle uiStyle) =>
       _update((current) => current.copyWith(uiStyle: uiStyle));
 
