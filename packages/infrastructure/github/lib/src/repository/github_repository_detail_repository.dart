@@ -44,7 +44,18 @@ final class GitHubRepositoryDetailRepository
         path,
         cancelToken: cancelToken,
       );
-      final dto = GithubRepositoryDetailDto.fromJson(response.data!);
+      final data = response.data;
+      if (data == null) {
+        // dioはJSON応答（responseType: ResponseType.json）の空ボディを
+        // nullへ変換するため、response.data!のnull assertionはこの場合
+        // TypeErrorを投げてしまい、on FormatExceptionで捕捉できず
+        // UnknownExceptionになってしまう。FormatExceptionへ変換し直す
+        // ことで、既存のハンドラでRepositoryDetailExceptionへ揃える。
+        throw const FormatException(
+          'GitHub repository detail response body is empty',
+        );
+      }
+      final dto = GithubRepositoryDetailDto.fromJson(data);
       return dto.toDomain(identity);
     } on DioException catch (error, stackTrace) {
       Error.throwWithStackTrace(

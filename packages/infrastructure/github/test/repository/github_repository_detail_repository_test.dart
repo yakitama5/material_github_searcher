@@ -145,6 +145,19 @@ void main() {
       await expectLater(fetch(), throwsA(isA<RepositoryDetailException>()));
     });
 
+    test('空ボディの200レスポンスはRepositoryDetailExceptionへ変換される', () async {
+      adapter.handler = (options, stream, cancelFuture) =>
+          ResponseBody.fromString(
+            '',
+            200,
+            headers: {
+              'content-type': ['application/json'],
+            },
+          );
+
+      await expectLater(fetch(), throwsA(isA<RepositoryDetailException>()));
+    });
+
     test('subscribers_count欠落はRepositoryDetailExceptionへ変換される', () async {
       adapter.handler = (options, stream, cancelFuture) =>
           _jsonResponse(<String, dynamic>{}, 200);
