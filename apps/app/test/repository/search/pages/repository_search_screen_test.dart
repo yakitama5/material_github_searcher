@@ -872,6 +872,14 @@ void main() {
         find.text(AppLocale.ja.translations.repositorySearch.errorGeneric),
         findsOneWidget,
       );
+      final retryLabel = AppLocale.ja.translations.repositorySearch.retry;
+      expect(find.text(retryLabel), findsOneWidget);
+
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      await tester.tap(find.text(retryLabel));
+      await tester.pumpAndSettle();
+
+      expect(find.text('flutter/flutter'), findsOneWidget);
     });
   });
 
