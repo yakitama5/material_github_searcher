@@ -93,43 +93,18 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
     final query = current.query!;
     final nextPage = current.page + 1;
 
-    _pendingController?.cancel();
-    final controller = CancellationController();
-    _pendingController = controller;
-    final generation = ++_generation;
-
-    state = current.toLoadingMore();
-
-    final repository = ref.read(repositorySearchRepositoryProvider);
-    try {
-      final result = await repository.search(
-        query: query,
-        page: nextPage,
-        perPage: _perPage,
-        cancellationToken: controller.token,
-      );
-      if (_isStale(generation, controller)) {
-        return;
-      }
-      _pendingController = null;
-      state = state.appended(
+    await _runCancellableRequest(
+      query: query,
+      page: nextPage,
+      toPending: current.toLoadingMore,
+      onSuccess: (result) => state.appended(
         items: _mergeDeduplicated(current.items, result.items),
         page: nextPage,
         hasMore: result.hasMore,
         totalCount: result.totalCount,
-      );
-    } on RequestCancelledException {
-      // cancelは追加取得のappendErrorとしても表示させない。submitによる
-      // supersessionでは_pendingControllerが既に更新済みのため、ここでは
-      // クリアしない。
-      return;
-    } on AppException catch (error) {
-      if (_isStale(generation, controller)) {
-        return;
-      }
-      _pendingController = null;
-      state = state.appendFailed(error);
-    }
+      ),
+      onFailure: (error) => state.appendFailed(error),
+    );
   }
 
   /// 直近に成功した検索結果を維持したまま、page1をPull to Refreshで再取得する。
@@ -155,42 +130,17 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
   }
 
   Future<void> _refresh(RepositorySearchQuery query) async {
-    _pendingController?.cancel();
-    final controller = CancellationController();
-    _pendingController = controller;
-    final generation = ++_generation;
-
-    state = state.toRefreshing();
-
-    final repository = ref.read(repositorySearchRepositoryProvider);
-    try {
-      final result = await repository.search(
-        query: query,
-        page: _firstPage,
-        perPage: _perPage,
-        cancellationToken: controller.token,
-      );
-      if (_isStale(generation, controller)) {
-        return;
-      }
-      _pendingController = null;
-      state = RepositorySearchState.success(
+    await _runCancellableRequest(
+      query: query,
+      page: _firstPage,
+      toPending: state.toRefreshing,
+      onSuccess: (result) => RepositorySearchState.success(
         query: query,
         result: result,
         page: _firstPage,
-      );
-    } on RequestCancelledException {
-      // cancelは通知用error Stateへ遷移させない。cancel契機
-      // （cancelPendingRequest/supersession）で_pendingControllerは既に
-      // null化・更新済みのため、ここではクリアしない。
-      return;
-    } on AppException catch (error) {
-      if (_isStale(generation, controller)) {
-        return;
-      }
-      _pendingController = null;
-      state = state.refreshFailed(error);
-    }
+      ),
+      onFailure: (error) => state.refreshFailed(error),
+    );
   }
 
   /// [existing]と[incoming]をRepository identityで重複排除してマージする。
@@ -212,19 +162,51 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
   }
 
   Future<void> _search(RepositorySearchQuery query) async {
+    await _runCancellableRequest(
+      query: query,
+      page: _firstPage,
+      toPending: () => RepositorySearchState.loading(query),
+      onSuccess: (result) => RepositorySearchState.success(
+        query: query,
+        result: result,
+        page: _firstPage,
+      ),
+      onFailure: (error) =>
+          RepositorySearchState.failure(query: query, error: error),
+    );
+  }
+
+  /// [query]の[page]をcancel・世代管理付きで取得し、結果を[state]へ反映する。
+  ///
+  /// `submit`・`retry`・`loadNextPage`・`refresh`共通の通信フロー
+  /// （旧requestのcancel→世代を進める→[toPending]で保留中Stateへ遷移→取得→
+  /// 成功/失敗のState構築）を1か所へ集約する。呼び出し前のガード
+  /// （trim・ステータス判定等）は各呼び出し元の責務とし、本メソッドは持たない。
+  ///
+  /// [toPending]は`state = toPending()`実行前に旧requestをcancel・世代を
+  /// 進め終えた後に呼ぶため、awaitより前に発生した同時呼出しも取りこぼさず
+  /// 保留中Stateへ同期的に遷移させたい[loadNextPage]・[_refresh]の要件を満たす。
+  Future<void> _runCancellableRequest({
+    required RepositorySearchQuery query,
+    required int page,
+    required RepositorySearchState Function() toPending,
+    required RepositorySearchState Function(RepositorySearchPage result)
+    onSuccess,
+    required RepositorySearchState Function(AppException error) onFailure,
+  }) async {
     // queryごとに進行中requestは1つだけ許可する。旧requestをcancelし、世代を進める。
     _pendingController?.cancel();
     final controller = CancellationController();
     _pendingController = controller;
     final generation = ++_generation;
 
-    state = RepositorySearchState.loading(query);
+    state = toPending();
 
     final repository = ref.read(repositorySearchRepositoryProvider);
     try {
       final result = await repository.search(
         query: query,
-        page: _firstPage,
+        page: page,
         perPage: _perPage,
         cancellationToken: controller.token,
       );
@@ -237,11 +219,7 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
       }
       // ガード通過時点で自世代のcontrollerだと確定するため解放してよい。
       _pendingController = null;
-      state = RepositorySearchState.success(
-        query: query,
-        result: result,
-        page: _firstPage,
-      );
+      state = onSuccess(result);
     } on RequestCancelledException {
       // cancelは通知用error Stateへ遷移させない。cancel契機
       // （cancelPendingRequest/supersession）で_pendingControllerは既に
@@ -253,7 +231,7 @@ final class RepositorySearchController extends Notifier<RepositorySearchState> {
         return;
       }
       _pendingController = null;
-      state = RepositorySearchState.failure(query: query, error: error);
+      state = onFailure(error);
     }
   }
 
