@@ -20,7 +20,6 @@
 - エージェント活用開発フロー: `docs/agent-driven-development.md`
 - テスト戦略: `docs/testing.md`
 - デザイン方針: `docs/design.md`
-- プロジェクトのメモリ情報（Serena）: `.serena/memories/`
 
 ## 複数エージェントによる並列開発（git worktree runner）
 
