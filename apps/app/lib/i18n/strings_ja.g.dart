@@ -215,6 +215,39 @@ class Translations$settings$ja {
 	/// ja: 'ダーク'
 	String get themeModeDark => 'ダーク';
 
+	/// ja: 'テーマカラー'
+	String get themeColorTitle => 'テーマカラー';
+
+	/// ja: 'アプリ'
+	String get themeColorApp => 'アプリ';
+
+	/// ja: 'ダイナミック'
+	String get themeColorDynamic => 'ダイナミック';
+
+	/// ja: '青'
+	String get themeColorBlue => '青';
+
+	/// ja: '紫'
+	String get themeColorPurple => '紫';
+
+	/// ja: 'ピンク'
+	String get themeColorPink => 'ピンク';
+
+	/// ja: '赤'
+	String get themeColorRed => '赤';
+
+	/// ja: 'オレンジ'
+	String get themeColorOrange => 'オレンジ';
+
+	/// ja: '黄'
+	String get themeColorYellow => '黄';
+
+	/// ja: '緑'
+	String get themeColorGreen => '緑';
+
+	/// ja: '現在のテーマではDynamic Colorを利用できないため、アプリの色を表示します。選択はダイナミックとして保存されます。'
+	String get themeColorDynamicFallback => '現在のテーマではDynamic Colorを利用できないため、アプリの色を表示します。選択はダイナミックとして保存されます。';
+
 	/// ja: '設定の保存に失敗しました'
 	String get saveError => '設定の保存に失敗しました';
 
@@ -291,6 +324,17 @@ extension on Translations {
 			'settings.themeModeSystem' => 'システム',
 			'settings.themeModeLight' => 'ライト',
 			'settings.themeModeDark' => 'ダーク',
+			'settings.themeColorTitle' => 'テーマカラー',
+			'settings.themeColorApp' => 'アプリ',
+			'settings.themeColorDynamic' => 'ダイナミック',
+			'settings.themeColorBlue' => '青',
+			'settings.themeColorPurple' => '紫',
+			'settings.themeColorPink' => 'ピンク',
+			'settings.themeColorRed' => '赤',
+			'settings.themeColorOrange' => 'オレンジ',
+			'settings.themeColorYellow' => '黄',
+			'settings.themeColorGreen' => '緑',
+			'settings.themeColorDynamicFallback' => '現在のテーマではDynamic Colorを利用できないため、アプリの色を表示します。選択はダイナミックとして保存されます。',
 			'settings.saveError' => '設定の保存に失敗しました',
 			'settings.licensesTitle' => 'ライセンス',
 			_ => null,

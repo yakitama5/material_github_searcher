@@ -7,6 +7,7 @@ import 'package:material_github_searcher/src/router/app_routes.dart';
 import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/router/router_keys.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_screen.dart';
+import 'package:material_github_searcher/src/settings/pages/settings_theme_color_screen.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_theme_mode_screen.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_ui_style_screen.dart';
 
@@ -90,6 +91,32 @@ void main() {
       '$settingsPath/$settingsThemeModeRelativePath',
     );
     expect(find.byType(SettingsThemeModeScreen), findsOneWidget);
+  });
+
+  testWidgets('/settings/theme-colorへ直接アクセスできる', (tester) async {
+    await tester.pumpWidget(
+      createApp(
+        config: _config,
+        overrides: [searchHistoryTestOverride(), themeSettingsTestOverride()],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(MyApp));
+    final router =
+        ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(goRouterProvider)..go(
+          '$settingsPath/$settingsThemeColorRelativePath',
+        );
+    await tester.pumpAndSettle();
+
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      '$settingsPath/$settingsThemeColorRelativePath',
+    );
+    expect(find.byType(SettingsThemeColorScreen), findsOneWidget);
   });
 
   test('rootと各branchのNavigator keyをrouterが利用する', () {

@@ -5,6 +5,7 @@ import '../navigation/adaptive_app_shell.dart';
 import '../repository/search/pages/repository_search_screen.dart';
 import '../settings/pages/settings_licenses_screen.dart';
 import '../settings/pages/settings_screen.dart';
+import '../settings/pages/settings_theme_color_screen.dart';
 import '../settings/pages/settings_theme_mode_screen.dart';
 import '../settings/pages/settings_ui_style_screen.dart';
 import 'app_routes.dart';
@@ -49,6 +50,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     name: settingsThemeModeRouteName,
                     builder: (context, state) =>
                         const SettingsThemeModeScreen(),
+                  ),
+                  GoRoute(
+                    path: settingsThemeColorRelativePath,
+                    name: settingsThemeColorRouteName,
+                    builder: (context, state) =>
+                        const SettingsThemeColorScreen(),
                   ),
                   GoRoute(
                     path: settingsLicensesRelativePath,

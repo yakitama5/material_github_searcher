@@ -7,5 +7,16 @@ themeModeTitle: Theme Mode
 themeModeSystem: System
 themeModeLight: Light
 themeModeDark: Dark
+themeColorTitle: Theme Color
+themeColorApp: App
+themeColorDynamic: Dynamic
+themeColorBlue: Blue
+themeColorPurple: Purple
+themeColorPink: Pink
+themeColorRed: Red
+themeColorOrange: Orange
+themeColorYellow: Yellow
+themeColorGreen: Green
+themeColorDynamicFallback: Dynamic Color is unavailable for the current theme, so the app color is shown. Your choice is saved as Dynamic.
 saveError: Failed to save the setting
 licensesTitle: Licenses

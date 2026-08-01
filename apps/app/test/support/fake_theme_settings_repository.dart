@@ -37,6 +37,11 @@ final class FakeThemeSettingsRepository implements ThemeSettingsRepository {
   /// 非`null`の場合、[save]はこの例外をthrowし、内部状態を更新しない。
   AppException? saveError;
 
+  /// 非`null`の場合、[save]は本Completerが完了するまで待機する。
+  ///
+  /// 保存中の設定選択肢が無効化されることを検証するテストで使う。
+  Completer<void>? saveGate;
+
   @override
   Future<ThemeSettings> load() async {
     final gate = loadGate;
@@ -52,6 +57,10 @@ final class FakeThemeSettingsRepository implements ThemeSettingsRepository {
 
   @override
   Future<void> save(ThemeSettings settings) async {
+    final gate = saveGate;
+    if (gate != null) {
+      await gate.future;
+    }
     final error = saveError;
     if (error != null) {
       throw error;

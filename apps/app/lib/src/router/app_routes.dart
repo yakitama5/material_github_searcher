@@ -16,6 +16,12 @@ const settingsThemeModeRelativePath = 'theme-mode';
 /// Theme Mode設定画面へ`pushNamed`する際に使う名前付きroute名。
 const settingsThemeModeRouteName = 'settingsThemeMode';
 
+/// Theme Color設定画面の、[settingsPath]からの相対パス。
+const settingsThemeColorRelativePath = 'theme-color';
+
+/// Theme Color設定画面へ`pushNamed`する際に使う名前付きroute名。
+const settingsThemeColorRouteName = 'settingsThemeColor';
+
 /// License画面の、[settingsPath]からの相対パス。
 const settingsLicensesRelativePath = 'licenses';
 
