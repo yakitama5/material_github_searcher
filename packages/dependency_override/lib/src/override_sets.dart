@@ -22,6 +22,10 @@ import 'package:riverpod/misc.dart';
 /// [SharedPreferencesSearchHistoryRepository]の`load`・`save`呼び出しごとに
 /// 遅延実行させる（platform未登録時の生成失敗もRepositoryのtry節で
 /// 永続化失敗として変換できるようにするため）。
+///
+/// テーマ設定も同じ`infrastructure_shared_preferences`packageの
+/// [SharedPreferencesThemeSettingsRepository]へ結線し、検索履歴とは独立した
+/// keyへ保存する。
 List<Override> createProductionOverrides() => [
   repositorySearchRepositoryProvider.overrideWith((ref) {
     final dio = createGitHubDio();
@@ -38,6 +42,11 @@ List<Override> createProductionOverrides() => [
       preferencesFactory: createSharedPreferencesAsync,
     ),
   ),
+  themeSettingsRepositoryProvider.overrideWith(
+    (ref) => const SharedPreferencesThemeSettingsRepository(
+      preferencesFactory: createSharedPreferencesAsync,
+    ),
+  ),
 ];
 
 /// テスト・開発環境向けのProvider override一式を生成する。
@@ -46,7 +55,8 @@ List<Override> createProductionOverrides() => [
 /// 接続せず同じシナリオ（成功・空・失敗・遅延・cancel）を再現できるように
 /// する。Repository Detailも同様に[MockRepositoryDetailRepository]へ結線する。
 /// 検索履歴も同様に、実ストレージへ書き込まない
-/// [MockSearchHistoryRepository]へ結線する。
+/// [MockSearchHistoryRepository]へ結線する。テーマ設定も同様に、実ストレージへ
+/// 書き込まない[MockThemeSettingsRepository]へ結線する。
 List<Override> createMockOverrides() => [
   repositorySearchRepositoryProvider.overrideWith(
     (ref) => MockRepositorySearchRepository(),
@@ -56,5 +66,8 @@ List<Override> createMockOverrides() => [
   ),
   searchHistoryRepositoryProvider.overrideWith(
     (ref) => MockSearchHistoryRepository(),
+  ),
+  themeSettingsRepositoryProvider.overrideWith(
+    (ref) => MockThemeSettingsRepository(),
   ),
 ];
