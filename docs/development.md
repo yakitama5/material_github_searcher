@@ -2,6 +2,15 @@
 
 このリポジトリでの開発コマンドをまとめる。
 
+## 対応プラットフォーム
+
+Android/iOSを正式対象とする。Webは正式配布対象ではなく、Device Previewや
+ローカルでの動作確認用途としてrunnerを維持する。Windows・macOS・Linux
+runner（`apps/app/windows`・`apps/app/macos`・`apps/app/linux`）は対象外のため
+削除した。GitHub ActionsのGolden Test生成環境やCI runnerとしての
+macOS/Linux利用（[`docs/testing.md`](testing.md)参照）は、アプリの対応
+platform表明とは無関係であり本項の対象外。
+
 ## セットアップ
 
 このリポジトリでは [mise](https://mise.jdx.dev/) でFlutterのバージョンを固定管理している。
@@ -87,7 +96,7 @@ mise exec -- flutter run --flavor dev --dart-define-from-file=flavor/dev.json -d
 # Prod (iOS Simulator)
 mise exec -- flutter run --flavor prod --dart-define-from-file=flavor/prod.json -d <Simulator ID>
 
-# Dev (Web など Android/iOS 以外)
+# Dev (Web、Device Preview・ローカル確認用)
 mise exec -- flutter run --dart-define-from-file=flavor/dev.json
 
 mise exec -- flutter test
