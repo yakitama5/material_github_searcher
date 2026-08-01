@@ -149,6 +149,9 @@ class Translations$repositorySearch$ja {
 	/// ja: '更新中'
 	String get refreshing => '更新中';
 
+	/// ja: '更新のため引いています'
+	String get pulling => '更新のため引いています';
+
 	/// ja: '未設定'
 	String get languageUnset => '未設定';
 
@@ -305,6 +308,7 @@ extension on Translations {
 			'repositorySearch.errorRateLimited' => 'GitHub APIの利用回数上限に達しました。しばらくしてから再度お試しください',
 			'repositorySearch.retry' => '再試行',
 			'repositorySearch.refreshing' => '更新中',
+			'repositorySearch.pulling' => '更新のため引いています',
 			'repositorySearch.languageUnset' => '未設定',
 			'repositorySearch.languageLabel' => '言語',
 			'repositorySearch.starsLabel' => 'スター数',
