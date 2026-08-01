@@ -15,6 +15,7 @@ import 'src/config/app_build_config.dart';
 import 'src/license/register_app_license.dart';
 import 'src/router/app_title_provider.dart';
 import 'src/router/go_router_provider.dart';
+import 'src/theme/app_scroll_behavior.dart';
 import 'src/theme/dynamic_color_scope.dart';
 
 void main() async {
@@ -108,6 +109,7 @@ class _MyAppState extends ConsumerState<MyApp> {
             darkTheme: resolvedTheme.dark,
             themeMode: resolvedTheme.themeMode,
             routerConfig: routerConfig,
+            scrollBehavior: const AppScrollBehavior(),
             builder: widget.builder,
           ),
         );
