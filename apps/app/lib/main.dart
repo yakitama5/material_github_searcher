@@ -73,6 +73,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     // AsyncLoading・AsyncError双方で`ThemeSettings()`の既定値へ揃える。
     final themeSettings =
         ref.watch(themeSettingsProvider).value ?? const ThemeSettings();
+    final routerConfig = ref.watch(goRouterProvider);
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
@@ -90,7 +91,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           theme: resolvedTheme.light,
           darkTheme: resolvedTheme.dark,
           themeMode: resolvedTheme.themeMode,
-          routerConfig: ref.watch(goRouterProvider),
+          routerConfig: routerConfig,
         );
       },
     );
