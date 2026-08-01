@@ -11,6 +11,12 @@ final class _FakeSearchHistoryRepository implements SearchHistoryRepository {
   AppException? loadError;
   AppException? saveError;
 
+  /// 非空の場合、`save`呼び出しごとに先頭から1つずつ消費してそのエラーを
+  /// 適用する（`null`なら成功）。[saveGate]によって完了順序が呼び出し順序と
+  /// 入れ替わっても、どの呼び出しにどのエラーを対応させたいかをテスト側で
+  /// 制御できるよう、消費は`save`呼び出し開始時点（gate待機より前）で行う。
+  final List<AppException?> saveErrorQueue = [];
+
   /// 非`null`の場合、`load`は完了前にこの[Completer]を待つ。
   Completer<void>? loadGate;
 
@@ -39,11 +45,13 @@ final class _FakeSearchHistoryRepository implements SearchHistoryRepository {
 
   @override
   Future<void> save(SearchHistory history) async {
+    final error = saveErrorQueue.isNotEmpty
+        ? saveErrorQueue.removeAt(0)
+        : saveError;
     final gate = saveGate;
     if (gate != null) {
       await gate.future;
     }
-    final error = saveError;
     if (error != null) {
       throw error;
     }
@@ -192,18 +200,25 @@ void main() {
       expect(fake.savedHistories, hasLength(3));
     });
 
-    test('先発呼び出しの遅延失敗は後発が確定させた最新履歴を上書きしない', () async {
+    test('先発呼び出しの遅延失敗は、直列化された後発のsaveまで巻き戻さない', () async {
       await controller().load();
       final gate = Completer<void>();
-      fake.saveGate = gate;
+      const error = SearchHistoryPersistenceException(message: 'save failed');
+      fake
+        ..saveGate = gate
+        // 先発(flutter)のsaveは失敗、後発(dart)のsaveは成功させる。直列化
+        // により実際の呼び出し順は開始順（flutter→dart）のまま保たれるため、
+        // 呼び出し順でのエラー割り当てになる。
+        ..saveErrorQueue.addAll([error, null]);
 
       // 先発(flutter)のsaveはgateで止め、後発(dart)より遅く完了させる。
       final future1 = controller().recordSubmittedKeyword('flutter');
       expect(state().history.entries, [SearchHistoryEntry('flutter')]);
 
-      // 後発(dart)は即座に成功し、最新のreadyへ進む。
+      // 後発(dart)はgateの影響を受けず、最新のreadyへ即座に進む（実際の
+      // save呼び出しは直列化キューに乗り、先発のsave完了後に実行される）。
       fake.saveGate = null;
-      await controller().recordSubmittedKeyword('dart');
+      final future2 = controller().recordSubmittedKeyword('dart');
       expect(state().status, SearchHistoryStatus.ready);
       expect(state().history.entries, [
         SearchHistoryEntry('dart'),
@@ -211,20 +226,58 @@ void main() {
       ]);
 
       // 先発のsaveを失敗させて完了させる。
-      const error = SearchHistoryPersistenceException(message: 'save failed');
-      fake.saveError = error;
       gate.complete();
-      await future1;
+      await Future.wait([future1, future2]);
 
       // 先発の遅延失敗によって、後発が確定させた最新履歴が古いスナップ
-      // ショット（dartを含まないflutterのみの履歴）へ巻き戻らない。
+      // ショット（dartを含まないflutterのみの履歴）へ巻き戻らない。後発
+      // (dart)自体のsaveは先発の失敗の影響を受けず、diskへ正しく反映される。
       final current = state();
       expect(current.status, SearchHistoryStatus.ready);
       expect(current.history.entries, [
         SearchHistoryEntry('dart'),
         SearchHistoryEntry('flutter'),
       ]);
+      expect(fake.savedHistories.last.entries, current.history.entries);
     });
+
+    test(
+      '先発呼び出しのsave完了が後発より遅れても、diskには後発が確定させた'
+      '最新履歴が残る（Issue #112）',
+      () async {
+        await controller().load();
+        final gate = Completer<void>();
+        fake.saveGate = gate;
+
+        // 先発(flutter)のsaveはgateで止め、後発(dart)より遅く完了させる。
+        final future1 = controller().recordSubmittedKeyword('flutter');
+        expect(state().history.entries, [SearchHistoryEntry('flutter')]);
+
+        // 後発(dart)はgateの影響を受けず、最新のreadyへ進む。
+        fake.saveGate = null;
+        final future2 = controller().recordSubmittedKeyword('dart');
+        expect(state().status, SearchHistoryStatus.ready);
+        expect(state().history.entries, [
+          SearchHistoryEntry('dart'),
+          SearchHistoryEntry('flutter'),
+        ]);
+
+        // 先発のsaveを（失敗ではなく）成功で完了させる。
+        gate.complete();
+        await Future.wait([future1, future2]);
+
+        final current = state();
+        expect(current.status, SearchHistoryStatus.ready);
+        expect(current.history.entries, [
+          SearchHistoryEntry('dart'),
+          SearchHistoryEntry('flutter'),
+        ]);
+        // save()完了の順序が開始順序と入れ替わっても、diskに最終的に残る
+        // べきは常に後発(dart)が確定させた最新履歴であり、先発
+        // (flutterのみ)の遅延完了で上書きされてはならない。
+        expect(fake.savedHistories.last.entries, current.history.entries);
+      },
+    );
   });
 
   group('recordSubmittedKeyword: load未完了・失敗時の競合', () {

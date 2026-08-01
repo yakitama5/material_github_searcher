@@ -124,15 +124,64 @@ final class SearchHistoryController extends Notifier<SearchHistoryState> {
     await _persist(next, generation);
   }
 
-  Future<void> _persist(SearchHistory history, int generation) async {
+  /// 直列化された永続化キューの実行中ループ。`null`はキューが空で実行中の
+  /// ループが無いことを示す。
+  Future<void>? _writeLoop;
+
+  /// [_writeLoop]が次に書き込むべき最新の履歴。
+  ///
+  /// [_persist]が呼ばれるたびに上書きする。ループが追いつく前に複数回
+  /// [_persist]が呼ばれても、実際に[SearchHistoryRepository.save]へ渡すのは
+  /// 常にその時点で最新の履歴のみに合成（coalesce）する。[SearchHistoryRepository.save]
+  /// は履歴全体を上書きする契約のため、中間状態を書き込まずに最新へ飛ばして
+  /// も実体を損なわない。
+  SearchHistory? _pendingWrite;
+
+  /// [_pendingWrite]に対応する世代番号。
+  int? _pendingWriteGeneration;
+
+  /// [history]を[generation]の下で永続化する。
+  ///
+  /// [SearchHistoryRepository.save]呼び出し自体の完了順序は保証されない
+  /// （Issue #112）。開始順序と異なる順序で完了すると、後発の呼び出しが
+  /// 確定させた最新履歴を、先発の遅延完了がdisk上で上書きしてしまう。
+  /// 成功パスに[_isStale]チェックを足すだけでは、チェック時点で既にdiskへ
+  /// 書き込まれた事実は取り消せずTOCTOUの余地が残るだけで意味がないため、
+  /// Controllerの責務として書き込み自体を直列化する：常に高々1つの
+  /// [SearchHistoryRepository.save]呼び出しのみを実行中とし、実行中に別の
+  /// 呼び出しが来た場合は上記の[_pendingWrite]で合成してからループの次の
+  /// 反復に回す。
+  ///
+  /// 返す[Future]は、この呼び出し時点でキューにある全ての書き込みが完了
+  /// する（ループが空になる）まで解決しない。呼び出し元は自身の呼び出し分
+  /// だけを待っているわけではない点に注意（後発の呼び出しにjoinされて
+  /// 待たされる場合がある）。
+  Future<void> _persist(SearchHistory history, int generation) {
+    _pendingWrite = history;
+    _pendingWriteGeneration = generation;
+    return _writeLoop ??= _runWriteLoop();
+  }
+
+  /// [_pendingWrite]が無くなるまで[SearchHistoryRepository.save]を直列に
+  /// 呼び出し続ける。
+  Future<void> _runWriteLoop() async {
     final repository = ref.read(searchHistoryRepositoryProvider);
     try {
-      await repository.save(history);
-    } on AppException catch (error) {
-      if (_isStale(generation)) {
-        return;
+      while (_pendingWrite != null) {
+        final history = _pendingWrite!;
+        final generation = _pendingWriteGeneration!;
+        _pendingWrite = null;
+        _pendingWriteGeneration = null;
+        try {
+          await repository.save(history);
+        } on AppException catch (error) {
+          if (!_isStale(generation)) {
+            _toPersistenceError(error);
+          }
+        }
       }
-      _toPersistenceError(error);
+    } finally {
+      _writeLoop = null;
     }
   }
 
