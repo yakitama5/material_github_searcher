@@ -60,7 +60,7 @@ class M3RefreshIndicator extends StatefulWidget {
   /// Pull to Refreshが実行されたときに呼ばれるcallback。
   final RefreshCallback onRefresh;
 
-  /// refresh実行中かどうか。`true`の間はgestureの有無に関わらずIndicatorを
+  /// refresh実行中かどうか。`true`の間は[enabled]の値に関わらずIndicatorを
   /// 表示する（programmatic refresh向け）。
   final bool refreshing;
 
@@ -69,10 +69,13 @@ class M3RefreshIndicator extends StatefulWidget {
 
   /// Pull to Refresh gesture自体の有効・無効を切り替える。
   ///
-  /// `false`の間は[child]をそのまま表示し、drag検出・Indicator表示を一切
-  /// 行わない。未検索・初回loading・初回errorなど、[onRefresh]を呼んでも
-  /// 意味を持たない画面状態で、指を引いた分だけIndicatorだけが反応する
-  /// ちぐはぐな見た目を避けるために使う。既定値は`true`。
+  /// `false`の間はdrag検出を止め、gestureに連動したIndicator表示（pull量に
+  /// 応じたslide・scale）を行わない。未検索・初回loading・初回errorなど、
+  /// [onRefresh]を呼んでも意味を持たない画面状態で、指を引いた分だけ
+  /// Indicatorだけが反応するちぐはぐな見た目を避けるために使う。
+  /// [refreshing]によるprogrammatic refreshの表示はgestureを伴わないため、
+  /// `enabled`が`false`でも[refreshing]が`true`の間はIndicatorを表示する。
+  /// 既定値は`true`。
   final bool enabled;
 
   /// Indicatorを表示する上端からのoffset（論理px）。
@@ -195,7 +198,10 @@ class _M3RefreshIndicatorState extends State<M3RefreshIndicator> {
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final displayFraction = _isRefreshing ? 1.0 : _pullFraction;
-    final showGlyph = widget.enabled && displayFraction > 0;
+    // `_isRefreshing`（programmatic refreshを含む）はgestureを伴わないため、
+    // [M3RefreshIndicator.enabled]の値に関わらず表示する。`enabled`は
+    // gesture由来の表示（`_pullFraction`）だけをゲートする。
+    final showGlyph = _isRefreshing || (widget.enabled && _pullFraction > 0);
     final animateGlyph = _isRefreshing && !reduceMotion;
     // pull量の前半（0〜_scaleFractionThreshold）でscaleを0→1へ広げ切り、
     // 残り半分は位置移動（slide）だけを続ける。全域で拡大し続けるより、

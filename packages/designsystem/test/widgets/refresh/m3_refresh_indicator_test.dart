@@ -489,6 +489,25 @@ void main() {
 
       expect(refreshCount, 0);
     });
+
+    testWidgets('enabledがfalseでもrefreshingがtrueの間はIndicatorを表示する', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _TestApp(
+          child: M3RefreshIndicator(
+            refreshing: true,
+            enabled: false,
+            onRefresh: () async {},
+            child: const _ScrollableContent(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsOneWidget);
+      expect(find.byType(M3LoadingIndicator), findsOneWidget);
+    });
   });
 }
 
