@@ -276,6 +276,18 @@ void main() {
         // べきは常に後発(dart)が確定させた最新履歴であり、先発
         // (flutterのみ)の遅延完了で上書きされてはならない。
         expect(fake.savedHistories.last.entries, current.history.entries);
+        // 直列化により、save自体は開始順（flutter→dart）で2回実行される。
+        // 先発(flutter)は既に実行中でキャンセルできないため、古い内容の
+        // ままdiskへ一度反映されるが、直後の後発(dart)のsaveで正しい内容に
+        // 修正される。件数・順序まで固定することで、coalesce条件が変わり
+        // 「後発のsaveが先発を追い越して実行される」退行が起きても検知
+        // できるようにする（coalesceが対象とするのは、ループが追いつく前に
+        // まだ実行されていない中間的な呼び出しであり、既に実行中の呼び出し
+        // を打ち切るものではない点に注意）。
+        expect(fake.savedHistories, hasLength(2));
+        expect(fake.savedHistories.first.entries, [
+          SearchHistoryEntry('flutter'),
+        ]);
       },
     );
   });
