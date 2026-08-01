@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lottie/lottie.dart';
 import 'package:material_github_searcher/i18n/strings.g.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_empty.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_lottie_message.dart';
@@ -54,6 +55,8 @@ void main() {
         find.byType(RepositorySearchLottieMessage),
       );
       expect(message.assetPath, 'assets/lottie/woman_empty_box.json');
+      expect(message.reducedMotionProgress, 1);
+      expect(message.renderCache, RenderCache.raster);
     });
   });
 }
