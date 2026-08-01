@@ -10,12 +10,24 @@ import 'package:flutter/services.dart';
 /// 同一fileから複数回`registerAppLicense`/`createApp`を呼ぶ際に必要）。
 Future<String>? _cachedLicense;
 
+/// [registerAppLicense]で既に登録済みのアプリ名の集合。
+///
+/// `createApp`は同一プロセス内で複数回呼ばれ得る（Widget Test、複数シナリオを
+/// 1プロセスで実行するPatrol E2E等）。`LicenseRegistry`は重複登録を排除せず、
+/// 同じ名前を複数回登録するとライセンス画面の詳細ページに同じMITライセンスが
+/// 重複表示されるため、同一アプリ名の再登録をここで防ぐ。
+final _registeredAppNames = <String>{};
+
 /// アプリ自身のMITライセンスを[LicenseRegistry]へ登録する。
 ///
 /// リポジトリ直下の`LICENSE`を指す`assets/LICENSE`（シンボリックリンク）を
 /// 読み込み、[appName]で識別可能なエントリとして追加する。ライセンス本文の
-/// 実体はリポジトリ直下の`LICENSE`のみとし、複製しない。
+/// 実体はリポジトリ直下の`LICENSE`のみとし、複製しない。同一[appName]で
+/// 複数回呼んでも、[LicenseRegistry]への登録は最初の1回のみ行う。
 void registerAppLicense(String appName) {
+  if (!_registeredAppNames.add(appName)) {
+    return;
+  }
   LicenseRegistry.addLicense(() async* {
     final license = await (_cachedLicense ??= rootBundle.loadString(
       'assets/LICENSE',

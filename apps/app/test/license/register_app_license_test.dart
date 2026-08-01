@@ -43,4 +43,14 @@ void main() {
       contains('MIT License'),
     );
   });
+
+  test('同一アプリ名を複数回呼んでも登録は1件のみになる', () async {
+    registerAppLicense('Duplicate Guard Test App');
+    registerAppLicense('Duplicate Guard Test App');
+
+    final entries = await LicenseRegistry.licenses.toList();
+
+    expect(entries, hasLength(1));
+    expect(entries.single.packages, ['Duplicate Guard Test App']);
+  });
 }
