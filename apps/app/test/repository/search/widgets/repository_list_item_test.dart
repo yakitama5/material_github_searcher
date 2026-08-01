@@ -1,3 +1,4 @@
+import 'package:designsystem/designsystem.dart';
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,11 +17,26 @@ const _flutterRepo = RepositorySummary(
 String get _expectedSemanticsLabel {
   final i18n = AppLocale.ja.translations.repositorySearch;
   return '${_flutterRepo.identity.fullName}, ${i18n.languageLabel}: '
-      '${_flutterRepo.language}, ${i18n.starsLabel}: '
-      '${_flutterRepo.stargazersCount}';
+      '${_flutterRepo.language}';
 }
 
 void main() {
+  testWidgets('補足情報は言語だけを表示しStarを表示しない', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TranslationProvider(
+          child: Scaffold(body: RepositoryListItem(summary: _flutterRepo)),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.code), findsOneWidget);
+    expect(find.byType(MetaInfoRow), findsOneWidget);
+    expect(find.text('${_flutterRepo.language}'), findsOneWidget);
+    expect(find.byIcon(Icons.star), findsNothing);
+    expect(find.text('${_flutterRepo.stargazersCount}'), findsNothing);
+  });
+
   testWidgets('タップ時に指定したcallbackへidentityを渡す', (tester) async {
     RepositoryIdentity? tapped;
     await tester.pumpWidget(

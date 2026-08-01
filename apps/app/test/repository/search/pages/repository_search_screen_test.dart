@@ -330,21 +330,29 @@ void main() {
     );
   });
 
-  testWidgets('languageがnullの場合はローカライズした未設定を表示する', (tester) async {
-    final repository = FakeRepositorySearchRepository();
-    final query = RepositorySearchQuery('octocat');
-    repository.setSuccess(query: query, page: _singlePage(_nullLanguageRepo));
-    await _pumpSearchScreen(tester, repository: repository);
+  for (final locale in [AppLocale.ja, AppLocale.en]) {
+    testWidgets('$localeでlanguageがnullの場合はローカライズした未設定を表示する', (
+      tester,
+    ) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('octocat');
+      repository.setSuccess(query: query, page: _singlePage(_nullLanguageRepo));
+      await _pumpSearchScreen(
+        tester,
+        repository: repository,
+        locale: locale,
+      );
 
-    await tester.enterText(find.byKey(_searchFieldKey), 'octocat');
-    await tester.tap(find.byKey(_submitButtonKey));
-    await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(_searchFieldKey), 'octocat');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
 
-    expect(
-      find.text(AppLocale.ja.translations.repositorySearch.languageUnset),
-      findsOneWidget,
-    );
-  });
+      expect(
+        find.text(locale.translations.repositorySearch.languageUnset),
+        findsOneWidget,
+      );
+    });
+  }
 
   testWidgets('非常に長い名前でも例外を投げずに表示する', (tester) async {
     final repository = FakeRepositorySearchRepository();
@@ -377,6 +385,25 @@ void main() {
     expect(find.text('flutter/flutter'), findsOneWidget);
   });
 
+  testWidgets('320dpでtext scaleと長いRepository名を組み合わせても破綻しない', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    final repository = FakeRepositorySearchRepository();
+    final query = RepositorySearchQuery('long-name');
+    repository.setSuccess(query: query, page: _singlePage(_longNameRepo));
+    await _pumpSearchScreen(tester, repository: repository, width: 320);
+
+    await tester.enterText(find.byKey(_searchFieldKey), 'long-name');
+    await tester.tap(find.byKey(_submitButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining(_longNameRepo.identity.name), findsOneWidget);
+  });
+
   testWidgets('owner iconの読み込み失敗時はfallback avatarを表示する', (tester) async {
     final repository = FakeRepositorySearchRepository();
     final query = RepositorySearchQuery('broken-avatar');
@@ -390,7 +417,7 @@ void main() {
     expect(find.byIcon(Icons.person), findsOneWidget);
   });
 
-  testWidgets('Semanticsにリポジトリ名と主要情報が含まれる', (tester) async {
+  testWidgets('Semanticsにリポジトリ名と言語が含まれStarが含まれない', (tester) async {
     final repository = FakeRepositorySearchRepository();
     final query = RepositorySearchQuery('flutter');
     repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
@@ -404,7 +431,7 @@ void main() {
     final semantics = tester.getSemantics(find.text('flutter/flutter'));
     expect(semantics.label, contains('flutter/flutter'));
     expect(semantics.label, contains('Dart'));
-    expect(semantics.label, contains('160000'));
+    expect(semantics.label, isNot(contains('160000')));
     handle.dispose();
   });
 
@@ -455,7 +482,7 @@ void main() {
     });
   }
 
-  for (final width in [402.0, 744.0, 1024.0]) {
+  for (final width in [320.0, 402.0, 744.0, 1024.0]) {
     testWidgets('幅$widthでも例外を投げず表示する', (tester) async {
       final repository = FakeRepositorySearchRepository();
       final query = RepositorySearchQuery('flutter');
