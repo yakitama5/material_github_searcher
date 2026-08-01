@@ -30,7 +30,9 @@ jobs:
     permissions:
       contents: read
       # configure-pagesがPagesの設定情報（base_path等）を読み取るために必要。
-      # Pagesの公開元は事前にGitHub Actionsへ設定済みのため、有効化(write)は行わない。
+      # Pagesの公開元は事前にGitHub Actionsへ設定済みで、configure-pagesの
+      # enablement（Pages未設定時の自動有効化、既定false）も使わないため、GET相当の
+      # readで足りる想定。403になる場合はwriteへ変更する。
       pages: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -74,6 +76,19 @@ jobs:
           -t debug/main.dart
           --dart-define-from-file=flavor/dev.json
           --base-href="$BASE_HREF"
+
+      - name: Verify base-href in build artifact
+        working-directory: apps/app
+        env:
+          BASE_HREF: ${{ steps.base_href.outputs.value }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # base-hrefの解決に失敗すると、buildとdeployは成功するのに配信後のPage
+          # 上でasset読み込みが崩れる（白画面等）。silentな失敗を防ぐため、生成された
+          # index.htmlに解決済みbase-hrefが実際に反映されているかをここで検証する。
+          grep -qF "<base href=\"$BASE_HREF\">" build/web/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
