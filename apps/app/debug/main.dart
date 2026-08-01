@@ -18,11 +18,7 @@ void main() async {
   await LocaleSettings.useDeviceLocale();
 
   final config = AppBuildConfig.current;
-  assertDevicePreviewAllowed(
-    config,
-    isReleaseMode: kReleaseMode,
-    isWeb: kIsWeb,
-  );
+  assertDevicePreviewAllowed(config, isWeb: kIsWeb);
 
   runApp(
     DevicePreview(
