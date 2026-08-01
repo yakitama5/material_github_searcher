@@ -12,6 +12,31 @@ FlutterのThemeDataは`useMaterial3`が既定で`true`（Flutter 3.16以降）�
 設定は不要。`ColorScheme.fromSeed`等、MD3のカラーシステムに沿ったAPIを使う
 （`apps/app/lib/main.dart`参照）。
 
+## Theme（Dynamic Color対応）
+
+`ThemeSettings`（UI Style・ThemeMode・ThemeColor）から実際に描画する
+`ThemeData`・`ThemeMode`への変換は`packages/designsystem`の`AppTheme.resolve`が
+純粋な関数として担う。`designsystem`はRiverpodへ依存しないため、
+`ThemeSettings`のSSOT（`themeSettingsProvider`）を購読しrootを再構築する
+責務は`apps/app/lib/main.dart`（Composition Root）側が持つ。
+
+ThemeColorが`dynamic`の場合はOSのDynamic Color（`dynamic_color`
+パッケージの`DynamicColorBuilder`が提供するLight/Dark`ColorScheme`）を使う。
+Dynamic Color非対応やOS未応答で片方または双方が`null`の場合、不足している
+側だけを`AppThemeColor.app`のSeedから生成し、`ThemeSettings`の保存値
+`dynamic`自体は変更しない。それ以外のThemeColorは固定Seedから
+`ColorScheme.fromSeed`で生成する。
+
+UI Styleは`ThemeData.platform`へ反映する。`system`は`defaultTargetPlatform`
+（実行OS）へ追従させ、`android`・`ios`は実行OSに関わらず対応する
+`TargetPlatform`を強制する。CupertinoAppへの置き換えは行わない。
+
+`ThemeSettings`の読込中・読込失敗時も既定Theme
+（`AppThemeColor.app`・`ThemeMode.system`・実行OSのUI Style）で起動し、
+空白画面にしない。画面から色を直書きせず`Theme.of(context).colorScheme`
+（または`designsystem`の`context.colorScheme`拡張）経由でMD3の
+`ColorScheme`を使う。
+
 ## Skeleton
 
 読み込み中の共通プレースホルダーは`packages/designsystem`の`SkeletonScope`と
