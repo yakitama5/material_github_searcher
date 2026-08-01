@@ -152,7 +152,7 @@ Patrol CLIの`package_name` / `bundle_id`はflavor設定ファイルを参照で
 [`device_preview_plus`](https://pub.dev/packages/device_preview_plus)を、通常のDev/Prod起動、
 Widget Test、Patrolへ影響しないDev Web専用の確認ツールとして`dev_dependencies`に導入している。
 実機・Widget Test・Golden Test・Patrolの代替にはせず、端末サイズ・画面向き・Text Scale・
-Light/Darkを素早く見た目確認する用途に限定する。
+Safe Area・Light/Darkを素早く見た目確認する用途に限定する。
 
 専用entrypoint `apps/app/debug/main.dart` からのみ起動する。通常起動の`lib/main.dart`は
 `device_preview_plus`をimportしない。
@@ -177,6 +177,8 @@ Slangとのlocale二重管理を避けるため、ロケール切り替えは本
 - Device: 端末サイズ（Model）・画面向き（Orientation）
 - Accessibility: Text scaling factor
 - System: Theme（Light/Dark）
+
+Safe Areaは専用トグルを持たず、Deviceの端末サイズ（Model）選択に連動して反映される。
 
 `createApp`へ追加した`builder`引数（`TransitionBuilder?`、既定`null`）が
 `MaterialApp.builder`へ橋渡しするhookで、`debug/main.dart`だけが`DevicePreview.appBuilder`を

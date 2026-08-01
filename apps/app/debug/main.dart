@@ -9,8 +9,9 @@ import 'package:material_github_searcher/src/config/device_preview_guard.dart';
 
 /// Device Preview専用のDev Web entrypoint。
 ///
-/// 端末サイズ・画面向き・Text Scale・Light/Darkの確認に用途を限定し、
-/// 通常起動・Widget Test・Patrolでは利用しない
+/// 端末サイズ・画面向き・Text Scale・Safe Area・Light/Darkの確認に用途を
+/// 限定し、通常起動・Widget Test・Patrolでは利用しない。Safe Areaは専用
+/// トグルを持たず、端末サイズ（Model）選択に連動して反映される
 /// （[docs/development.md](../../../docs/development.md)参照）。
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
