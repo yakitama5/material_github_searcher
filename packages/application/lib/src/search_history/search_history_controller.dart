@@ -146,8 +146,9 @@ final class SearchHistoryController extends Notifier<SearchHistoryState> {
   /// （Issue #112）。開始順序と異なる順序で完了すると、後発の呼び出しが
   /// 確定させた最新履歴を、先発の遅延完了がdisk上で上書きしてしまう。
   /// 成功パスに[_isStale]チェックを足すだけでは、チェック時点で既にdiskへ
-  /// 書き込まれた事実は取り消せずTOCTOUの余地が残るだけで意味がないため、
-  /// Controllerの責務として書き込み自体を直列化する：常に高々1つの
+  /// 書き込まれた事実は取り消せず、チェック後にまだ古いsaveが割り込む余地が
+  /// 残るだけで意味がないため、Controllerの責務として書き込み自体を直列化
+  /// する：常に高々1つの
   /// [SearchHistoryRepository.save]呼び出しのみを実行中とし、実行中に別の
   /// 呼び出しが来た場合は上記の[_pendingWrite]で合成してからループの次の
   /// 反復に回す。
