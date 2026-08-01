@@ -151,16 +151,31 @@ DevのBundle IDを使い、SwiftPMを維持した`RunnerUITests` targetから起
 から、本番と共通の`createApp`をpumpする。テスト側から`main()`、`runApp()`、
 `WidgetsFlutterBinding.ensureInitialized()`は呼ばない。
 
-現時点では外部サービスやRepositoryが未実装のため、起動Smoke Testは外部通信を
-行わない。Patrolは`dependency_override`が公開するMock向けoverride一式を
-`patrol_test/support/pump_test_app.dart`の必須引数へ渡して起動する。外部サービスを
-利用する機能を追加する際は、`createMockOverrides()`へ`infrastructure_mock`の
-決定的なFakeとの結線を追加する。Dev向けの実サービス結線を暗黙に利用してはならない。
+Patrolは主要ユーザーフローを検証するE2E Testとして扱い、起動だけの確認は追加しない。
+現在の`apps/app/patrol_test/main_user_flows_test.dart`は、次の3シナリオを独立した
+`patrolTest`として持つ。
 
-検索機能とリポジトリ詳細画面が完成した時点で、現在の起動Smoke Testを
-「検索して結果を選択し、リポジトリ詳細を開く」主要検索フローへ置き換える。
-画面やユーザーフローを追加した後も、起動確認だけのテストを重複して増やさず、
-利用者の操作と結果を検証するシナリオを優先する。
+- 起動時の日本語案内と初期Lottieを確認し、検索を実行する。結果一覧のSkeletonから
+  Repository名・owner icon・言語を確認し、OpenContainerでDetailへ遷移する。
+  Detail APIが未完了でもSummary（Star・Watcher・Fork・Issue）を即時表示し、Watcher
+  だけSkeletonになること、API完了後に`subscribers_count`が表示されることを確認する。
+- 30件の1ページ目から無限scrollで2ページ目を取得し、Pull to Refreshの「更新中」表示と
+  再取得結果を確認する。その後、別queryで0件検索を行い、Empty Lottieと空状態文言を確認する。
+- 再検索後に検索履歴の候補を選択し、Settingsへ遷移する。License一覧を開いてアプリ名を
+  確認し、戻る操作でSettingsへ復帰する。
+
+各シナリオは`createMockOverrideSet()`から新しいMockとメモリ上のFake Preferencesを
+生成し、同じ`createApp` Composition RootへProvider overrideとして渡す。検索・Detailの
+応答はFixtureと`Completer`で成功・0件・pagination・遅延を決定的に設定するため、実GitHub
+APIや`SharedPreferences`へ接続しない。Patrolテストから`infrastructure_mock`を直接参照せず、
+`dependency_override/testing.dart`が公開するテスト用型を利用する。
+
+画面の状態遷移はKey・Semantics・Widget type・Provider応答の完了状態で待ち、固定sleepや
+アプリ全体の`pumpAndSettle`には依存しない。初期案内・Skeleton・Empty・Refresh indicatorは
+自律アニメーションを持つため、アニメーションの静止ではなく必要な状態の出現を待つ。
+テストは通常の`createApp`を使い、Device Preview用entrypointやPreview専用Composition Rootは
+使わない。対象は検索・Detail・履歴・Settings・Licenseの主要フローに限定し、Widget Testは
+単一画面の状態・操作、Golden Testは共通Widgetの描画回帰を担当する。
 
 ### Golden Test 基盤（`packages/designsystem`）
 
