@@ -13,6 +13,7 @@ import 'package:material_github_searcher/src/repository/search/widgets/repositor
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_bar.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_empty.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_initial.dart';
+import 'package:material_github_searcher/src/repository/search/widgets/repository_search_lottie_message.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/search_history_suggestions.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_screen.dart';
 import 'package:patrol/patrol.dart';
@@ -41,7 +42,15 @@ Future<void> _waitUntilExists(PatrolIntegrationTester $, Finder finder) async {
 
 Future<void> _waitForInitialState(PatrolIntegrationTester $) async {
   final i18n = AppLocale.ja.translations.repositorySearch;
-  await _waitUntilVisible($, find.byType(RepositorySearchInitial));
+  final initial = find.byType(RepositorySearchInitial);
+  await _waitUntilVisible($, initial);
+  await _waitUntilExists(
+    $,
+    find.descendant(
+      of: initial,
+      matching: find.byType(RepositorySearchLottieMessage),
+    ),
+  );
   await _waitUntilVisible($, find.text(i18n.initialTitle));
   await _waitUntilVisible($, find.text(i18n.initialHint));
 }
@@ -205,7 +214,11 @@ void main() {
 
       final scrollableStateFinder = find.descendant(
         of: scrollable,
-        matching: find.byType(Scrollable),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
       );
       final scrollableState = $.tester.state<ScrollableState>(
         scrollableStateFinder,
@@ -222,7 +235,12 @@ void main() {
       );
       final refreshingLabel =
           AppLocale.ja.translations.repositorySearch.refreshing;
-      await $.tester.fling(scrollable, const Offset(0, 300), 1000);
+      final pullDistance = scrollableState.position.viewportDimension * 0.45;
+      await $.tester.timedDrag(
+        scrollable,
+        Offset(0, pullDistance),
+        const Duration(milliseconds: 300),
+      );
       await _waitUntilExists($, find.bySemanticsLabel(refreshingLabel));
       await _waitUntilExists($, find.byKey(m3RefreshIndicatorGlyphKey));
       expect(refreshGate.isCompleted, isFalse);
@@ -244,7 +262,15 @@ void main() {
       );
       await $(repositorySearchFieldKey).enterText(patrolEmptyQuery.value);
       await $(repositorySearchSubmitButtonKey).tap();
-      await _waitUntilVisible($, find.byType(RepositorySearchEmpty));
+      final empty = find.byType(RepositorySearchEmpty);
+      await _waitUntilVisible($, empty);
+      await _waitUntilExists(
+        $,
+        find.descendant(
+          of: empty,
+          matching: find.byType(RepositorySearchLottieMessage),
+        ),
+      );
       await _waitUntilVisible(
         $,
         find.text(AppLocale.ja.translations.repositorySearch.emptyTitle),
