@@ -67,7 +67,7 @@ final patrolInitialSearchPage = RepositorySearchPage(
       ),
     ),
   ],
-  totalCount: 31,
+  totalCount: 35,
   nextPage: 2,
   hasMore: true,
 );
