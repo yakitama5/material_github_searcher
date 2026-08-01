@@ -14,29 +14,42 @@ Future<void> _pumpMessage(
   String assetPath = _assetPath,
   double reducedMotionProgress = 1,
 }) async {
+  if (assetPath != _missingAssetPath) {
+    await tester.runAsync(() async {
+      await AssetLottie(assetPath).load();
+    });
+  }
   await tester.pumpWidget(
     MediaQuery(
       data: MediaQueryData(disableAnimations: disableAnimations),
-      child: MaterialApp(
-        home: Scaffold(
-          body: CustomScrollView(
-            slivers: [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: RepositorySearchLottieMessage(
-                  assetPath: assetPath,
-                  title: _title,
-                  description: _description,
-                  reducedMotionProgress: reducedMotionProgress,
-                ),
-              ),
-            ],
-          ),
-        ),
+      child: _messageApp(
+        assetPath: assetPath,
+        reducedMotionProgress: reducedMotionProgress,
       ),
     ),
   );
 }
+
+Widget _messageApp({
+  String assetPath = _assetPath,
+  double reducedMotionProgress = 1,
+}) => MaterialApp(
+  home: Scaffold(
+    body: CustomScrollView(
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: RepositorySearchLottieMessage(
+            assetPath: assetPath,
+            title: _title,
+            description: _description,
+            reducedMotionProgress: reducedMotionProgress,
+          ),
+        ),
+      ],
+    ),
+  ),
+);
 
 LottieBuilder _lottie(WidgetTester tester) => tester.widget<LottieBuilder>(
   find.byType(LottieBuilder),
@@ -46,15 +59,12 @@ AnimationController _animationController(WidgetTester tester) =>
     _lottie(tester).controller! as AnimationController;
 
 Future<void> _waitForComposition(WidgetTester tester) async {
-  for (var i = 0; i < 20; i++) {
+  for (var i = 0; i < 5; i++) {
     await tester.pump();
     final controller = _lottie(tester).controller;
     if (controller is AnimationController && controller.duration != null) {
       return;
     }
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 10)),
-    );
   }
   fail('Lottie composition was not loaded');
 }
@@ -79,6 +89,38 @@ void main() {
       await _waitForComposition(tester);
 
       final controller = _animationController(tester);
+      expect(controller.isAnimating, isTrue);
+    });
+
+    testWidgets('MediaQueryのReduce Motion切替に追従する', (tester) async {
+      final disableAnimations = ValueNotifier(false);
+      addTearDown(disableAnimations.dispose);
+
+      await tester.runAsync(() async {
+        await AssetLottie(_assetPath).load();
+      });
+      await tester.pumpWidget(
+        ValueListenableBuilder<bool>(
+          valueListenable: disableAnimations,
+          builder: (context, disabled, child) => MediaQuery(
+            data: MediaQueryData(disableAnimations: disabled),
+            child: child!,
+          ),
+          child: _messageApp(reducedMotionProgress: 0.75),
+        ),
+      );
+      await _waitForComposition(tester);
+
+      final controller = _animationController(tester);
+      expect(controller.isAnimating, isTrue);
+
+      disableAnimations.value = true;
+      await tester.pump();
+      expect(controller.isAnimating, isFalse);
+      expect(controller.value, closeTo(0.75, 0.001));
+
+      disableAnimations.value = false;
+      await tester.pump();
       expect(controller.isAnimating, isTrue);
     });
 
