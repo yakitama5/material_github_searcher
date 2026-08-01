@@ -15,9 +15,3 @@ icons_launcher:
       image_path: "assets/launcher_icon/icon_prod.png"
     web:
       enable: false
-    macos:
-      enable: false
-    windows:
-      enable: false
-    linux:
-      enable: false

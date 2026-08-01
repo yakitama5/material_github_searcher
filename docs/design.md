@@ -113,4 +113,4 @@ Material 3の標準ブレークポイントでは表現しきれない連続的�
 - 検索画面・詳細画面の具体的なレスポンシブ実装（画面回転時のレイアウトを含む）
 - `responsive_framework`の導入（理由は前述）
 - デスクトップ・外部ディスプレイ向けの`large`/`extraLarge`クラス
-- macOS/Web/Windows/Linux向けの画面回転・レスポンシブ対応（iOS/Androidのみ対象）
+- Web向けの画面回転・レスポンシブ対応（iOS/Androidのみ対象）
