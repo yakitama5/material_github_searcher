@@ -45,3 +45,10 @@ app.*.map.json
 **/android/app/debug
 **/android/app/profile
 **/android/app/release
+
+# Desktop runners are intentionally not part of this app (Android/iOS only).
+# `flutter build`/`pub get` can still regenerate plugin registration files here
+# from `.metadata`; ignore them so they are never committed again.
+apps/app/macos/
+apps/app/linux/
+apps/app/windows/
