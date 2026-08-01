@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:application/application.dart';
 import 'package:dependency_override/dependency_override.dart';
 import 'package:designsystem/designsystem.dart';
+import 'package:domain/domain.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,16 +67,33 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: widget.config.appName,
-      scaffoldMessengerKey: SnackBarManager.rootScaffoldMessengerKey,
-      locale: TranslationProvider.of(context).flutterLocale,
-      supportedLocales: AppLocaleUtils.supportedLocales,
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      routerConfig: ref.watch(goRouterProvider),
+    // 読込中・失敗時も既定Themeで起動し、空白画面にしない契約
+    // （`ThemeSettingsNotifier`のdoc参照）。永続化失敗時はThemeSettingsを
+    // メモリ上の既定値のまま扱うApplication層の方針に合わせ、root側も
+    // AsyncLoading・AsyncError双方で`ThemeSettings()`の既定値へ揃える。
+    final themeSettings =
+        ref.watch(themeSettingsProvider).value ?? const ThemeSettings();
+    final routerConfig = ref.watch(goRouterProvider);
+
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) {
+        final resolvedTheme = AppTheme.resolve(
+          themeSettings,
+          dynamicLight: lightDynamic,
+          dynamicDark: darkDynamic,
+        );
+        return MaterialApp.router(
+          title: widget.config.appName,
+          scaffoldMessengerKey: SnackBarManager.rootScaffoldMessengerKey,
+          locale: TranslationProvider.of(context).flutterLocale,
+          supportedLocales: AppLocaleUtils.supportedLocales,
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          theme: resolvedTheme.light,
+          darkTheme: resolvedTheme.dark,
+          themeMode: resolvedTheme.themeMode,
+          routerConfig: routerConfig,
+        );
+      },
     );
   }
 }
