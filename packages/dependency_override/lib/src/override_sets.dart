@@ -11,18 +11,13 @@ import 'package:riverpod/misc.dart';
 /// 応答を設定する呼び出し元は本型を使うことで、`apps/app`から
 /// `infrastructure_mock`を直接参照せずに同じMockインスタンスを設定できる。
 final class MockOverrideSet {
-  /// 指定されたMock、または未指定なら新しいMockで設定を生成する。
-  MockOverrideSet({
-    MockRepositorySearchRepository? searchRepository,
-    MockRepositoryDetailRepository? detailRepository,
-    MockSearchHistoryRepository? searchHistoryRepository,
-    MockThemeSettingsRepository? themeSettingsRepository,
-  }) : searchRepository = searchRepository ?? MockRepositorySearchRepository(),
-       detailRepository = detailRepository ?? MockRepositoryDetailRepository(),
-       searchHistoryRepository =
-           searchHistoryRepository ?? MockSearchHistoryRepository(),
-       themeSettingsRepository =
-           themeSettingsRepository ?? MockThemeSettingsRepository();
+  /// [createMockOverrideSet]から呼び出される内部constructor。
+  MockOverrideSet._({
+    required this.searchRepository,
+    required this.detailRepository,
+    required this.searchHistoryRepository,
+    required this.themeSettingsRepository,
+  });
 
   /// 検索RepositoryのMock。
   final MockRepositorySearchRepository searchRepository;
@@ -37,7 +32,7 @@ final class MockOverrideSet {
   final MockThemeSettingsRepository themeSettingsRepository;
 
   /// `createApp()`へ渡すProvider override一式。
-  List<Override> get overrides => [
+  late final List<Override> overrides = List.unmodifiable([
     repositorySearchRepositoryProvider.overrideWith(
       (ref) => searchRepository,
     ),
@@ -48,11 +43,23 @@ final class MockOverrideSet {
     themeSettingsRepositoryProvider.overrideWith(
       (ref) => themeSettingsRepository,
     ),
-  ];
+  ]);
 }
 
 /// シナリオごとに設定可能なMock override setを生成する。
-MockOverrideSet createMockOverrideSet() => MockOverrideSet();
+MockOverrideSet createMockOverrideSet({
+  MockRepositorySearchRepository? searchRepository,
+  MockRepositoryDetailRepository? detailRepository,
+  MockSearchHistoryRepository? searchHistoryRepository,
+  MockThemeSettingsRepository? themeSettingsRepository,
+}) => MockOverrideSet._(
+  searchRepository: searchRepository ?? MockRepositorySearchRepository(),
+  detailRepository: detailRepository ?? MockRepositoryDetailRepository(),
+  searchHistoryRepository:
+      searchHistoryRepository ?? MockSearchHistoryRepository(),
+  themeSettingsRepository:
+      themeSettingsRepository ?? MockThemeSettingsRepository(),
+);
 
 /// 本番環境向けのProvider override一式を生成する。
 ///
@@ -107,6 +114,4 @@ List<Override> createProductionOverrides() => [
 /// 検索履歴も同様に、実ストレージへ書き込まない
 /// [MockSearchHistoryRepository]へ結線する。テーマ設定も同様に、実ストレージへ
 /// 書き込まない[MockThemeSettingsRepository]へ結線する。
-List<Override> createMockOverrides() => [
-  ...createMockOverrideSet().overrides,
-];
+List<Override> createMockOverrides() => createMockOverrideSet().overrides;
