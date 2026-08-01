@@ -8,4 +8,6 @@ export 'package:infrastructure_mock/infrastructure_mock.dart'
         MockRepositoryDetailSuccess,
         MockRepositorySearchRepository,
         MockRepositorySearchResponse,
-        MockRepositorySearchSuccess;
+        MockRepositorySearchSuccess,
+        MockSearchHistoryRepository,
+        MockThemeSettingsRepository;
