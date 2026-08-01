@@ -12,6 +12,11 @@
 .swiftpm/
 migrate_working_dir/
 
+# Agent plans are temporary worktree files and are not committed.
+# Keep the directory itself in the repository.
+/plans/*
+!/plans/.gitkeep
+
 # IntelliJ related
 *.iml
 *.ipr
