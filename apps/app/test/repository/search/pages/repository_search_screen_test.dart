@@ -431,7 +431,10 @@ void main() {
     final semantics = tester.getSemantics(find.text('flutter/flutter'));
     expect(semantics.label, contains('flutter/flutter'));
     expect(semantics.label, contains('Dart'));
-    expect(semantics.label, isNot(contains('160000')));
+    expect(
+      semantics.label,
+      isNot(contains('${_flutterRepo.stargazersCount}')),
+    );
     handle.dispose();
   });
 
