@@ -20,41 +20,16 @@ const _prodConfig = AppBuildConfig(
 
 void main() {
   group('assertDevicePreviewAllowed', () {
-    test('Dev FlavorかつdebugモードのWebでは例外を投げない', () {
+    test('Dev FlavorかつWebでは例外を投げない（release build相当でもbuild modeを問わず許可する）', () {
       expect(
-        () => assertDevicePreviewAllowed(
-          _devConfig,
-          isReleaseMode: false,
-          isWeb: true,
-        ),
+        () => assertDevicePreviewAllowed(_devConfig, isWeb: true),
         returnsNormally,
-      );
-    });
-
-    test('releaseモードでは起動を拒否する', () {
-      expect(
-        () => assertDevicePreviewAllowed(
-          _devConfig,
-          isReleaseMode: true,
-          isWeb: true,
-        ),
-        throwsA(
-          isA<StateError>().having(
-            (error) => error.message,
-            'message',
-            contains('release mode'),
-          ),
-        ),
       );
     });
 
     test('Prod Flavorでは起動を拒否する', () {
       expect(
-        () => assertDevicePreviewAllowed(
-          _prodConfig,
-          isReleaseMode: false,
-          isWeb: true,
-        ),
+        () => assertDevicePreviewAllowed(_prodConfig, isWeb: true),
         throwsA(
           isA<StateError>().having(
             (error) => error.message,
@@ -67,16 +42,25 @@ void main() {
 
     test('Web以外のPlatformでは起動を拒否する', () {
       expect(
-        () => assertDevicePreviewAllowed(
-          _devConfig,
-          isReleaseMode: false,
-          isWeb: false,
-        ),
+        () => assertDevicePreviewAllowed(_devConfig, isWeb: false),
         throwsA(
           isA<StateError>().having(
             (error) => error.message,
             'message',
             contains('Web-only'),
+          ),
+        ),
+      );
+    });
+
+    test('Prod Flavorかつ Web以外では起動を拒否する（Android/iOSのProd誤起動を防ぐ）', () {
+      expect(
+        () => assertDevicePreviewAllowed(_prodConfig, isWeb: false),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('dev flavor'),
           ),
         ),
       );

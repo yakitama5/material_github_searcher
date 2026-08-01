@@ -1,0 +1,112 @@
+name: Deploy Device Preview
+
+# Device Preview専用のDev Web entrypoint（apps/app/debug/main.dart）を
+# main への push を契機に GitHub Pages へ自動デプロイするCD。
+#
+# format/analyze/test は check_pr.yaml が main push 時にも実行するため、
+# 本Workflowはbuild/deployのみを担う。PRのRequired Status Checkには含めず、
+# main push専用のCDとして独立させている。
+
+on:
+  push:
+    branches: [main]
+  # 障害時の再デプロイ用。入力なしで同じbuild/deployを再実行する。
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # GitHub Pagesの公式starter workflowはcancel-in-progress: falseを既定にしているが、
+  # 本Workflowは同時実行時に古いデプロイをキャンセルする方針（Issue #148）のためtrueにする。
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Dev Web Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # configure-pagesがPagesの設定情報（base_path等）を読み取るために必要。
+      # Pagesの公開元は事前にGitHub Actionsへ設定済みで、configure-pagesの
+      # enablement（Pages未設定時の自動有効化、既定false）も使わないため、GET相当の
+      # readで足りる想定。403になる場合はwriteへ変更する。
+      pages: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - uses: ./.github/actions/setup-flutter
+
+      - name: Install dependencies
+        # pub workspace（pubspec.yamlのworkspace設定）のため、リポジトリルートで解決する。
+        run: flutter pub get
+
+      - name: Resolve base-href
+        id: base_href
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # configure-pagesのbase_pathは先頭"/"付き・末尾"/"なし（例: "/material_github_searcher"）、
+          # ルート公開時は空文字になる。flutter buildの--base-hrefは先頭・末尾ともに"/"を要求するため
+          # ここで正規化し、リポジトリ名のハードコードを避ける。
+          base_href="${BASE_PATH:-/}"
+          if [[ "$base_href" != */ ]]; then
+            base_href="${base_href}/"
+          fi
+          echo "value=$base_href" >> "$GITHUB_OUTPUT"
+
+      - name: Build Dev Web Preview (release)
+        working-directory: apps/app
+        env:
+          BASE_HREF: ${{ steps.base_href.outputs.value }}
+        run: >-
+          flutter build web
+          --release
+          -t debug/main.dart
+          --dart-define-from-file=flavor/dev.json
+          --base-href="$BASE_HREF"
+
+      - name: Verify base-href in build artifact
+        working-directory: apps/app
+        env:
+          BASE_HREF: ${{ steps.base_href.outputs.value }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # base-hrefの解決に失敗すると、buildとdeployは成功するのに配信後のPage
+          # 上でasset読み込みが崩れる（白画面等）。silentな失敗を防ぐため、生成された
+          # index.htmlに解決済みbase-hrefが実際に反映されているかをここで検証する。
+          grep -qF "<base href=\"$BASE_HREF\">" build/web/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: apps/app/build/web
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

@@ -165,10 +165,12 @@ mise exec -- flutter run \
   --dart-define-from-file=flavor/dev.json
 ```
 
-`debug/main.dart`はProd Flavor・releaseモード・Web以外のPlatformでの起動を`StateError`で
-拒否する（判定は`lib/src/config/device_preview_guard.dart`の`assertDevicePreviewAllowed`が持ち、
-`device_preview_plus`に依存しないためWidget Testからも検証できる）。Android/iOSの通常
-Dev・Prod起動にはこのentrypointを使わないため、Device Previewが混入することはない。
+`debug/main.dart`はProd Flavor・Web以外のPlatformでの起動を`StateError`で拒否する
+（判定は`lib/src/config/device_preview_guard.dart`の`assertDevicePreviewAllowed`が持ち、
+`device_preview_plus`に依存しないためWidget Testからも検証できる）。Dev Flavor・Webの
+組み合わせに限り、GitHub PagesへのDev Web Preview配信（後述）のためdebug/profile/release
+いずれのbuild modeも許可する。Android/iOSの通常Dev・Prod起動にはこのentrypointを
+使わないため、Device Previewが混入することはない。
 
 ツールパネルは次の項目だけに絞っている。ロケール切り替えを含む他の項目は非表示にした。
 Slangとのlocale二重管理を避けるため、ロケール切り替えは本ツールの対象外とし、言語切り替えは
@@ -222,6 +224,40 @@ Playへ提出するRelease AABではない。
 成果物をCodemagic CLI Tools等から内部テストへ配布する工程をArtifact作成後に追加する。
 現在のWorkflowには、署名情報の復元、Release署名、Codemagic CLI Toolsのインストール、
 App Store Connect / Google Playへのアップロード処理は含めない。
+
+## GitHub PagesへのDevice Preview自動デプロイ
+
+`.github/workflows/deploy_device_preview.yaml`の`Deploy Device Preview` Workflowが、
+`main`への push を契機にDev Web Preview（`apps/app/debug/main.dart`）を`--release`
+buildし、GitHub Pagesへ自動デプロイする。公開URLは
+`https://yakitama5.github.io/material_github_searcher/`。
+
+このWorkflowはbuild/deployのみを担い、format/analyze/testは`check_pr.yaml`が
+`main` push時にも実行するため重複させていない。PRのRequired Status Checkには含めず、
+`main` push専用のCDとして独立させている。
+
+Workflow起動条件は次の2つ。
+
+- `main`ブランチへのpush（通常のCD起動）
+- `workflow_dispatch`（障害時に入力なしで同じbuild/deployを再実行する用途）
+
+GitHub Actionsの画面から`Deploy Device Preview`を開き、`Run workflow`を選択すると
+手動再実行できる。デプロイ完了後は、Workflow Runの`deploy` jobの`Summary`または
+Environment（`github-pages`）のURLから公開URLを確認できる。
+
+Repository SettingsのPages公開元（Build and deployment source）を`GitHub Actions`に
+設定することが、初回のみ必要な手動設定である（本リポジトリでは設定済み）。
+
+`--base-href`はリポジトリ名をハードコードせず、`actions/configure-pages`が返す
+`base_path`を正規化して利用する。go_routerはPath URL Strategyを使わずhashベースURL
+（例: `#/settings/theme-color`）のままのため、サブパスの直接アクセスやブラウザ更新でも
+サーバーへは常にbase pathのindex.htmlしか要求されず、専用の`404.html`フォールバックを
+追加しなくても404にならない。
+
+Web Dev Previewは、既存の[Device Preview（Dev Web限定）](#device-previewdev-web限定)の
+制約（実機・Widget Test・Golden Test・Patrolの代替にしない、localeとSlangの二重管理を
+避ける等）をそのまま引き継ぐ。GitHub Pagesは公開サイトのため、追加のAPI keyや秘密情報は
+埋め込まず、現在のDev Web Previewと同じくGitHub APIの未認証アクセスを利用する。
 
 ## Android実機・iOS SimulatorでのE2E Test（Patrol）
 
