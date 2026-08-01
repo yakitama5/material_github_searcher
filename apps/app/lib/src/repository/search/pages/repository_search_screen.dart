@@ -201,9 +201,19 @@ class _RepositorySearchScreenState
             child: M3RefreshIndicator(
               refreshing: state.status == RepositorySearchStatus.refreshing,
               onRefresh: _refresh,
-              // SliverAppBar内のSearchBar（toolbarHeight既定56 + 余白）と
-              // 重ならないよう、既定の16よりも下へIndicatorをずらす。
-              offset: 72,
+              // 未検索・初回loading（Skeleton表示）・初回errorはrefresh()
+              // 自体が何もしないため、指を引いてもIndicatorだけが反応する
+              // 見た目のちぐはぐさを避けるためgesture自体を無効化する。
+              // `RepositorySearchController.refresh`のガード条件と揃える。
+              enabled:
+                  state.status == RepositorySearchStatus.success ||
+                  state.status == RepositorySearchStatus.loadingMore ||
+                  state.status == RepositorySearchStatus.refreshing,
+              // SliverAppBar内のSearchBar（既定のtoolbarHeight）の下あたりに
+              // 表示位置を合わせるため、既定の16よりも下へIndicatorをずらす
+              // （pull量が少ない間はSearchBarと重なる場合があるが、途中経過
+              // の見た目の自然さを優先し許容する）。
+              offset: kToolbarHeight + 16,
               semanticsLabel: context.i18n.repositorySearch.refreshing,
               pullSemanticsLabel: context.i18n.repositorySearch.pulling,
               child: NotificationListener<ScrollNotification>(
