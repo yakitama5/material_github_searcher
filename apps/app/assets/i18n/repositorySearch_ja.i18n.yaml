@@ -1,7 +1,8 @@
 searchFieldLabel: リポジトリ検索
 searchFieldHint: リポジトリ名やキーワードを入力
 searchButtonTooltip: 検索する
-guidance: キーワードを入力し、キーボードの検索または検索ボタンで検索してください
+initialTitle: リポジトリを検索しましょう
+initialHint: キーワードを入力して検索を始めてください
 emptyTitle: 条件に一致するリポジトリが見つかりませんでした
 emptyHint: 別のキーワードで再度検索してください
 errorGeneric: 通信エラーが発生しました。しばらくしてから再度お試しください

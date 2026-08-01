@@ -89,7 +89,8 @@ class _Translations$repositorySearch$en extends Translations$repositorySearch$ja
 	@override String get searchFieldLabel => 'Search repositories';
 	@override String get searchFieldHint => 'Enter a repository name or keyword';
 	@override String get searchButtonTooltip => 'Search';
-	@override String get guidance => 'Enter a keyword, then submit from the keyboard or the search button.';
+	@override String get initialTitle => 'Search for repositories';
+	@override String get initialHint => 'Enter a keyword to get started.';
 	@override String get emptyTitle => 'No repositories matched your search.';
 	@override String get emptyHint => 'Try a different keyword and search again.';
 	@override String get errorGeneric => 'Something went wrong. Please try again later.';
@@ -178,7 +179,8 @@ extension on TranslationsEn {
 			'repositorySearch.searchFieldLabel' => 'Search repositories',
 			'repositorySearch.searchFieldHint' => 'Enter a repository name or keyword',
 			'repositorySearch.searchButtonTooltip' => 'Search',
-			'repositorySearch.guidance' => 'Enter a keyword, then submit from the keyboard or the search button.',
+			'repositorySearch.initialTitle' => 'Search for repositories',
+			'repositorySearch.initialHint' => 'Enter a keyword to get started.',
 			'repositorySearch.emptyTitle' => 'No repositories matched your search.',
 			'repositorySearch.emptyHint' => 'Try a different keyword and search again.',
 			'repositorySearch.errorGeneric' => 'Something went wrong. Please try again later.',

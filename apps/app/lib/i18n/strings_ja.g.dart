@@ -128,8 +128,11 @@ class Translations$repositorySearch$ja {
 	/// ja: '検索する'
 	String get searchButtonTooltip => '検索する';
 
-	/// ja: 'キーワードを入力し、キーボードの検索または検索ボタンで検索してください'
-	String get guidance => 'キーワードを入力し、キーボードの検索または検索ボタンで検索してください';
+	/// ja: 'リポジトリを検索しましょう'
+	String get initialTitle => 'リポジトリを検索しましょう';
+
+	/// ja: 'キーワードを入力して検索を始めてください'
+	String get initialHint => 'キーワードを入力して検索を始めてください';
 
 	/// ja: '条件に一致するリポジトリが見つかりませんでした'
 	String get emptyTitle => '条件に一致するリポジトリが見つかりませんでした';
@@ -298,7 +301,8 @@ extension on Translations {
 			'repositorySearch.searchFieldLabel' => 'リポジトリ検索',
 			'repositorySearch.searchFieldHint' => 'リポジトリ名やキーワードを入力',
 			'repositorySearch.searchButtonTooltip' => '検索する',
-			'repositorySearch.guidance' => 'キーワードを入力し、キーボードの検索または検索ボタンで検索してください',
+			'repositorySearch.initialTitle' => 'リポジトリを検索しましょう',
+			'repositorySearch.initialHint' => 'キーワードを入力して検索を始めてください',
 			'repositorySearch.emptyTitle' => '条件に一致するリポジトリが見つかりませんでした',
 			'repositorySearch.emptyHint' => '別のキーワードで再度検索してください',
 			'repositorySearch.errorGeneric' => '通信エラーが発生しました。しばらくしてから再度お試しください',

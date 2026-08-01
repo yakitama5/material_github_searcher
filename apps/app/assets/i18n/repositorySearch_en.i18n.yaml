@@ -1,7 +1,8 @@
 searchFieldLabel: Search repositories
 searchFieldHint: Enter a repository name or keyword
 searchButtonTooltip: Search
-guidance: Enter a keyword, then submit from the keyboard or the search button.
+initialTitle: Search for repositories
+initialHint: Enter a keyword to get started.
 emptyTitle: No repositories matched your search.
 emptyHint: Try a different keyword and search again.
 errorGeneric: Something went wrong. Please try again later.
