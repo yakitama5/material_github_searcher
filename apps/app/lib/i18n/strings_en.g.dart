@@ -136,6 +136,7 @@ class _Translations$settings$en extends Translations$settings$ja {
 	@override String get themeColorGreen => 'Green';
 	@override String get themeColorDynamicFallback => 'Dynamic Color is unavailable for the current theme, so the app color is shown. Your choice is saved as Dynamic.';
 	@override String get saveError => 'Failed to save the setting';
+	@override String get licensesTitle => 'Licenses';
 }
 
 // Path: common.navigation
@@ -215,6 +216,7 @@ extension on TranslationsEn {
 			'settings.themeColorGreen' => 'Green',
 			'settings.themeColorDynamicFallback' => 'Dynamic Color is unavailable for the current theme, so the app color is shown. Your choice is saved as Dynamic.',
 			'settings.saveError' => 'Failed to save the setting',
+			'settings.licensesTitle' => 'Licenses',
 			_ => null,
 		};
 	}

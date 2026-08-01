@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../navigation/adaptive_app_shell.dart';
 import '../repository/search/pages/repository_search_screen.dart';
+import '../settings/pages/settings_licenses_screen.dart';
 import '../settings/pages/settings_screen.dart';
 import '../settings/pages/settings_theme_color_screen.dart';
 import '../settings/pages/settings_theme_mode_screen.dart';
@@ -55,6 +56,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     name: settingsThemeColorRouteName,
                     builder: (context, state) =>
                         const SettingsThemeColorScreen(),
+                  ),
+                  GoRoute(
+                    path: settingsLicensesRelativePath,
+                    name: settingsLicensesRouteName,
+                    builder: (context, state) => const SettingsLicensesScreen(),
                   ),
                 ],
               ),

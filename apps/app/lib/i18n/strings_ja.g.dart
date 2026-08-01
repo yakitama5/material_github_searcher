@@ -250,6 +250,9 @@ class Translations$settings$ja {
 
 	/// ja: '設定の保存に失敗しました'
 	String get saveError => '設定の保存に失敗しました';
+
+	/// ja: 'ライセンス'
+	String get licensesTitle => 'ライセンス';
 }
 
 // Path: common.navigation
@@ -333,6 +336,7 @@ extension on Translations {
 			'settings.themeColorGreen' => '緑',
 			'settings.themeColorDynamicFallback' => '現在のテーマではDynamic Colorを利用できないため、アプリの色を表示します。選択はダイナミックとして保存されます。',
 			'settings.saveError' => '設定の保存に失敗しました',
+			'settings.licensesTitle' => 'ライセンス',
 			_ => null,
 		};
 	}

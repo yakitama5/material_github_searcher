@@ -27,6 +27,12 @@ const settingsThemeModeListTileKey = Key('settingsThemeModeListTile');
 /// Settings一覧からTheme Color設定へ遷移する`ListTile`のkey。
 const settingsThemeColorListTileKey = Key('settingsThemeColorListTile');
 
+/// Settings一覧画面からLicense画面へ遷移する`ListTile`のkey。
+///
+/// Widget Testから参照するため、実装とテストで同一のリテラルを再定義せず
+/// 本constを共有する。
+const settingsLicensesListTileKey = Key('settingsLicensesListTile');
+
 /// 設定一覧画面。
 ///
 /// [themeSettingsProvider]のみをSingle Source of Truthとしてwatchし、
@@ -73,6 +79,12 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: Text(themeColorLabel(themeColor, i18n)),
                   trailing: ThemeColorPreview(themeColor: themeColor),
                   onTap: () => context.pushNamed(settingsThemeColorRouteName),
+                ),
+                ListTile(
+                  key: settingsLicensesListTileKey,
+                  title: Text(i18n.settings.licensesTitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.pushNamed(settingsLicensesRouteName),
                 ),
               ],
             ),

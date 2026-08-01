@@ -1,4 +1,5 @@
 import 'package:domain/domain.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,7 @@ import 'package:material_github_searcher/main.dart';
 import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/router/app_routes.dart';
 import 'package:material_github_searcher/src/router/go_router_provider.dart';
+import 'package:material_github_searcher/src/settings/pages/settings_licenses_screen.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_screen.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_theme_color_screen.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_theme_mode_screen.dart';
@@ -25,6 +27,10 @@ const _config = AppBuildConfig(
 );
 
 void main() {
+  setUp(() {
+    addTearDown(LicenseRegistry.reset);
+  });
+
   testWidgets('既定値Systemの現在値を一覧へ表示する', (tester) async {
     await _pump(tester);
 
@@ -99,6 +105,20 @@ void main() {
     expect(find.byType(SettingsThemeModeScreen), findsNothing);
   });
 
+  testWidgets('License行をタップすると画面へ遷移し、戻ると一覧へ戻る', (tester) async {
+    await _pump(tester);
+
+    await tester.tap(find.byKey(settingsLicensesListTileKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsLicensesScreen), findsOneWidget);
+
+    await _popFrom<SettingsLicensesScreen>(tester);
+
+    expect(find.byType(SettingsScreen), findsOneWidget);
+    expect(find.byType(SettingsLicensesScreen), findsNothing);
+  });
+
   testWidgets('Theme Mode選択画面での変更が一覧の現在値表示へ反映される', (tester) async {
     await _pump(tester);
 
@@ -150,6 +170,7 @@ void main() {
       uiStyleTitle: 'UIスタイル',
       themeModeTitle: 'テーマモード',
       themeColorTitle: 'テーマカラー',
+      licensesTitle: 'ライセンス',
     ),
     (
       appLocale: AppLocale.en,
@@ -157,6 +178,7 @@ void main() {
       uiStyleTitle: 'UI Style',
       themeModeTitle: 'Theme Mode',
       themeColorTitle: 'Theme Color',
+      licensesTitle: 'Licenses',
     ),
   ]) {
     testWidgets('${locale.appLocale}では一覧の文言をその言語で表示する', (tester) async {
@@ -172,6 +194,7 @@ void main() {
       expect(find.text(locale.uiStyleTitle), findsOneWidget);
       expect(find.text(locale.themeModeTitle), findsOneWidget);
       expect(find.text(locale.themeColorTitle), findsOneWidget);
+      expect(find.text(locale.licensesTitle), findsOneWidget);
     });
   }
 
@@ -204,6 +227,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(SettingsThemeColorScreen), findsOneWidget);
+    });
+
+    testWidgets('$width幅でもLicense行からLicense画面へ遷移できる', (tester) async {
+      await _pump(tester, width: width);
+
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      await tester.tap(find.byKey(settingsLicensesListTileKey));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsLicensesScreen), findsOneWidget);
     });
   }
 
@@ -238,6 +271,18 @@ Future<void> _pump(
     ),
   );
   await tester.pumpAndSettle();
+
+  // createAppが登録する本物のcollector（`assets/LICENSE`を`rootBundle`経由で
+  // 読込む）は、Flutter Test環境では同一test fileの2回目以降の読込みが完了
+  // しない場合があるため、決定的なFakeへ差し替える。License画面自体の内容は
+  // `settings_licenses_screen_test.dart`で検証するため、本fileではLicense画面
+  // への遷移可否のみを確認すれば足りる。
+  LicenseRegistry.reset();
+  LicenseRegistry.addLicense(
+    () => Stream.value(
+      const LicenseEntryWithLineBreaks(['Fake Package'], 'Fake License Text'),
+    ),
+  );
 
   final context = tester.element(find.byType(MyApp));
   ProviderScope.containerOf(

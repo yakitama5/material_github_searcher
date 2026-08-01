@@ -19,3 +19,4 @@ themeColorYellow: 黄
 themeColorGreen: 緑
 themeColorDynamicFallback: 現在のテーマではDynamic Colorを利用できないため、アプリの色を表示します。選択はダイナミックとして保存されます。
 saveError: 設定の保存に失敗しました
+licensesTitle: ライセンス
