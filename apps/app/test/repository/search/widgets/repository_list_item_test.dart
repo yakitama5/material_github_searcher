@@ -25,7 +25,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: TranslationProvider(
-          child: Scaffold(body: RepositoryListItem(summary: _flutterRepo)),
+          child: const Scaffold(
+            body: RepositoryListItem(summary: _flutterRepo),
+          ),
         ),
       ),
     );
