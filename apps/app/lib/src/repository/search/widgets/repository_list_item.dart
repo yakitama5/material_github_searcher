@@ -6,10 +6,9 @@ import '../../../../i18n/strings.g.dart';
 
 /// data時の1件分のRepository検索結果を表示する行。
 ///
-/// 名前・owner icon・language・Starを最低限表示する。owner iconの読み込み
-/// 失敗時はfallback avatarへ切り替え、languageが`null`の場合はローカライズ
-/// した「未設定」を表示する。detail遷移は後続Issueが実装するため、[onTap]は
-/// 呼び出し口を用意するのみで本Issueでは渡さない。
+/// 名前・owner icon・languageを最低限表示する。owner iconの読み込み失敗時は
+/// fallback avatarへ切り替え、languageが`null`の場合はローカライズした
+/// 「未設定」を表示する。
 class RepositoryListItem extends StatelessWidget {
   /// [summary]の1件を表示する行を生成する。
   const RepositoryListItem({required this.summary, this.onTap, super.key});
@@ -26,13 +25,10 @@ class RepositoryListItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final fullName = summary.identity.fullName;
     final languageLabel = summary.language ?? i18n.languageUnset;
-    final starsValue = '${summary.stargazersCount}';
     final onTap = this.onTap;
 
     return Semantics(
-      label:
-          '$fullName, ${i18n.languageLabel}: $languageLabel, '
-          '${i18n.starsLabel}: $starsValue',
+      label: '$fullName, ${i18n.languageLabel}: $languageLabel',
       button: onTap != null,
       onTap: onTap == null ? null : () => onTap(summary.identity),
       child: ExcludeSemantics(
@@ -40,26 +36,11 @@ class RepositoryListItem extends StatelessWidget {
           onTap: onTap == null ? null : () => onTap(summary.identity),
           leading: _OwnerAvatar(imageUrl: summary.ownerAvatarUrl),
           title: Text(fullName, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Row(
-            children: [
-              Expanded(
-                child: MetaInfoRow(
-                  icon: Icons.code,
-                  iconColor: colorScheme.secondary,
-                  label: i18n.languageLabel,
-                  value: languageLabel,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: MetaInfoRow(
-                  icon: Icons.star,
-                  iconColor: colorScheme.tertiary,
-                  label: i18n.starsLabel,
-                  value: starsValue,
-                ),
-              ),
-            ],
+          subtitle: MetaInfoRow(
+            icon: Icons.code,
+            iconColor: colorScheme.secondary,
+            label: i18n.languageLabel,
+            value: languageLabel,
           ),
         ),
       ),
