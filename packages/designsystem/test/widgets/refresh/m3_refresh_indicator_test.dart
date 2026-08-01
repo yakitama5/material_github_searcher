@@ -395,6 +395,38 @@ void main() {
 
       expect(notifications, isNotEmpty);
     });
+
+    testWidgets('画面より短い一覧でもpull量が徐々に上昇する', (tester) async {
+      _setViewportHeight(tester);
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: M3RefreshIndicator(
+            refreshing: false,
+            onRefresh: () async {},
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [SizedBox(height: 10, child: Text('content'))],
+            ),
+          ),
+        ),
+      );
+
+      final gesture = await tester.startGesture(const Offset(200, 300));
+      await gesture.moveBy(const Offset(0, _kThresholdOffset / 3));
+      await tester.pump();
+      final shortOpacity = tester.widget<Opacity>(find.byType(Opacity)).opacity;
+
+      await gesture.moveBy(const Offset(0, _kThresholdOffset));
+      await tester.pump();
+      final longOpacity = tester.widget<Opacity>(find.byType(Opacity)).opacity;
+
+      expect(shortOpacity, greaterThan(0));
+      expect(longOpacity, greaterThan(shortOpacity));
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
   });
 }
 

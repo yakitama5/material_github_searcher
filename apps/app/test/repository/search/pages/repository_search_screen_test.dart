@@ -881,6 +881,71 @@ void main() {
 
       expect(find.text('flutter/flutter'), findsOneWidget);
     });
+
+    for (final locale in [AppLocale.ja, AppLocale.en]) {
+      testWidgets('pull中は${locale.languageCode}のpull用Semantics labelを読み上げる', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        final repository = FakeRepositorySearchRepository();
+        final query = RepositorySearchQuery('flutter');
+        repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+        await _pumpSearchScreen(
+          tester,
+          repository: repository,
+          locale: locale,
+        );
+
+        await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+        await tester.tap(find.byKey(_submitButtonKey));
+        await tester.pumpAndSettle();
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.byType(CustomScrollView)),
+        );
+        await gesture.moveBy(const Offset(0, 200));
+        await tester.pump();
+
+        expect(
+          find.bySemanticsLabel(locale.translations.repositorySearch.pulling),
+          findsOneWidget,
+        );
+        expect(
+          find.bySemanticsLabel(
+            locale.translations.repositorySearch.refreshing,
+          ),
+          findsNothing,
+        );
+
+        await gesture.up();
+        await tester.pumpAndSettle();
+        handle.dispose();
+      });
+    }
+
+    testWidgets('pull中のIndicatorはSearchBarと重ならない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(CustomScrollView)),
+      );
+      await gesture.moveBy(const Offset(0, 200));
+      await tester.pump();
+
+      final indicatorRect = tester.getRect(find.byIcon(Icons.refresh));
+      final searchFieldRect = tester.getRect(find.byKey(_searchFieldKey));
+      expect(indicatorRect.top, greaterThanOrEqualTo(searchFieldRect.bottom));
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
   });
 
   group('検索履歴サジェスト', () {
