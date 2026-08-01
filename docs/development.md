@@ -35,6 +35,35 @@ mise exec -- dart run build_runner build --workspace -d
 生成された `apps/app/lib/i18n/*.g.dart` はリポジトリにコミットする。翻訳
 リソースを変更したら、コミット前に上記コマンドで再生成すること。
 
+## アプリアイコンの生成（icons_launcher）
+
+Android/iOSのDev・Prodランチャーアイコンは[`icons_launcher`](https://pub.dev/packages/icons_launcher)で
+生成する。素材は`apps/app/assets/launcher_icon/`、Flavor別設定は
+`apps/app/icons_launcher-dev.yaml` / `icons_launcher-prod.yaml`に置く。
+
+```sh
+cd apps/app
+mise exec -- dart run icons_launcher:create --flavors dev,prod
+```
+
+生成先は次の通りで、いずれもコミット対象。
+
+- Android: `android/app/src/<flavor>/res/`（Gradleのflavor source setにより
+  `src/main/res`より優先されるため、`AndroidManifest.xml`のアイコン参照は
+  Flavor共通のままでよい）。
+- iOS: `ios/Runner/Assets.xcassets/<flavor>AppIcon.appiconset/`。
+
+iOSは`icons_launcher`がAsset Catalogのみを生成し、`project.pbxproj`の
+Build Configurationは書き換えない。`Debug-dev`/`Release-dev`/`Profile-dev`の
+`ASSETCATALOG_COMPILER_APPICON_NAME`は`devAppIcon`、`-prod`側は`prodAppIcon`を
+指すよう設定済みで、`icons_launcher:create`を再実行してもこの設定は変更されない。
+無印の`Runner`Scheme用`Debug`/`Release`/`Profile`は既存の`AppIcon`のまま対象外。
+
+`adaptive_monochrome_image`に指定する素材は、Android 13+ Themed Icon（Material You）が
+アルファチャンネルだけを図形として使い、背景色は端末側のテーマ色で塗り替えるため、
+背景を透明・図柄をアルファ不透明にした単色画像を用意する。不透明な画像を渡すと
+Themed Icon適用時に塗りつぶし四角として表示される。
+
 ## アプリの実行・テスト・build
 
 Flutterアプリの実行、テスト、buildは `apps/app` で行う。
