@@ -42,6 +42,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/lottie/woman_empty_box.json
+    - assets/LICENSE
 
 patrol:
   app_name: Dev - Material GitHub Searcher

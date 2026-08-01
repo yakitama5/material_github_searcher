@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/misc.dart';
 
 import 'i18n/strings.g.dart';
 import 'src/config/app_build_config.dart';
+import 'src/license/register_app_license.dart';
 import 'src/router/app_title_provider.dart';
 import 'src/router/go_router_provider.dart';
 
@@ -34,6 +35,7 @@ Widget createApp({
   required AppBuildConfig config,
   List<Override> overrides = const [],
 }) {
+  registerAppLicense(config.appName);
   return ProviderScope(
     overrides: [
       appTitleProvider.overrideWithValue(config.appName),

@@ -15,3 +15,9 @@ const settingsThemeModeRelativePath = 'theme-mode';
 
 /// Theme Mode設定画面へ`pushNamed`する際に使う名前付きroute名。
 const settingsThemeModeRouteName = 'settingsThemeMode';
+
+/// License画面の、[settingsPath]からの相対パス。
+const settingsLicensesRelativePath = 'licenses';
+
+/// License画面へ`pushNamed`する際に使う名前付きroute名。
+const settingsLicensesRouteName = 'settingsLicenses';

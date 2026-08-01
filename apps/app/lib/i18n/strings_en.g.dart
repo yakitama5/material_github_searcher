@@ -125,6 +125,7 @@ class _Translations$settings$en extends Translations$settings$ja {
 	@override String get themeModeLight => 'Light';
 	@override String get themeModeDark => 'Dark';
 	@override String get saveError => 'Failed to save the setting';
+	@override String get licensesTitle => 'Licenses';
 }
 
 // Path: common.navigation
@@ -193,6 +194,7 @@ extension on TranslationsEn {
 			'settings.themeModeLight' => 'Light',
 			'settings.themeModeDark' => 'Dark',
 			'settings.saveError' => 'Failed to save the setting',
+			'settings.licensesTitle' => 'Licenses',
 			_ => null,
 		};
 	}
