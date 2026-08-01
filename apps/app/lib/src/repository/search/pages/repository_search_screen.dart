@@ -201,7 +201,11 @@ class _RepositorySearchScreenState
             child: M3RefreshIndicator(
               refreshing: state.status == RepositorySearchStatus.refreshing,
               onRefresh: _refresh,
+              // SliverAppBar内のSearchBar（toolbarHeight既定56 + 余白）と
+              // 重ならないよう、既定の16よりも下へIndicatorをずらす。
+              offset: 72,
               semanticsLabel: context.i18n.repositorySearch.refreshing,
+              pullSemanticsLabel: context.i18n.repositorySearch.pulling,
               child: NotificationListener<ScrollNotification>(
                 onNotification: _handleScrollNotification,
                 child: CustomScrollView(
