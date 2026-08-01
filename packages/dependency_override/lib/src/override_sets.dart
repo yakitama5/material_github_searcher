@@ -4,6 +4,56 @@ import 'package:infrastructure_mock/infrastructure_mock.dart';
 import 'package:infrastructure_shared_preferences/infrastructure_shared_preferences.dart';
 import 'package:riverpod/misc.dart';
 
+/// テスト・開発用のMock実装とProvider overrideをひとまとめにした設定。
+///
+/// [createMockOverrides]はこれまでどおり新しいMockを生成した
+/// [List<Override>]だけを返す。一方、Patrolのようにシナリオごとに決定的な
+/// 応答を設定する呼び出し元は本型を使うことで、`apps/app`から
+/// `infrastructure_mock`を直接参照せずに同じMockインスタンスを設定できる。
+final class MockOverrideSet {
+  /// 指定されたMock、または未指定なら新しいMockで設定を生成する。
+  MockOverrideSet({
+    MockRepositorySearchRepository? searchRepository,
+    MockRepositoryDetailRepository? detailRepository,
+    MockSearchHistoryRepository? searchHistoryRepository,
+    MockThemeSettingsRepository? themeSettingsRepository,
+  }) : searchRepository = searchRepository ?? MockRepositorySearchRepository(),
+       detailRepository = detailRepository ?? MockRepositoryDetailRepository(),
+       searchHistoryRepository =
+           searchHistoryRepository ?? MockSearchHistoryRepository(),
+       themeSettingsRepository =
+           themeSettingsRepository ?? MockThemeSettingsRepository();
+
+  /// 検索RepositoryのMock。
+  final MockRepositorySearchRepository searchRepository;
+
+  /// Detail RepositoryのMock。
+  final MockRepositoryDetailRepository detailRepository;
+
+  /// 検索履歴のメモリ上Fake。
+  final MockSearchHistoryRepository searchHistoryRepository;
+
+  /// テーマ設定のメモリ上Fake。
+  final MockThemeSettingsRepository themeSettingsRepository;
+
+  /// `createApp()`へ渡すProvider override一式。
+  List<Override> get overrides => [
+    repositorySearchRepositoryProvider.overrideWith(
+      (ref) => searchRepository,
+    ),
+    repositoryDetailRepositoryProvider.overrideWith((ref) => detailRepository),
+    searchHistoryRepositoryProvider.overrideWith(
+      (ref) => searchHistoryRepository,
+    ),
+    themeSettingsRepositoryProvider.overrideWith(
+      (ref) => themeSettingsRepository,
+    ),
+  ];
+}
+
+/// シナリオごとに設定可能なMock override setを生成する。
+MockOverrideSet createMockOverrideSet() => MockOverrideSet();
+
 /// 本番環境向けのProvider override一式を生成する。
 ///
 /// Repository検索は実GitHub APIを叩く[GitHubRepositorySearchRepository]へ
@@ -58,16 +108,5 @@ List<Override> createProductionOverrides() => [
 /// [MockSearchHistoryRepository]へ結線する。テーマ設定も同様に、実ストレージへ
 /// 書き込まない[MockThemeSettingsRepository]へ結線する。
 List<Override> createMockOverrides() => [
-  repositorySearchRepositoryProvider.overrideWith(
-    (ref) => MockRepositorySearchRepository(),
-  ),
-  repositoryDetailRepositoryProvider.overrideWith(
-    (ref) => MockRepositoryDetailRepository(),
-  ),
-  searchHistoryRepositoryProvider.overrideWith(
-    (ref) => MockSearchHistoryRepository(),
-  ),
-  themeSettingsRepositoryProvider.overrideWith(
-    (ref) => MockThemeSettingsRepository(),
-  ),
+  ...createMockOverrideSet().overrides,
 ];
