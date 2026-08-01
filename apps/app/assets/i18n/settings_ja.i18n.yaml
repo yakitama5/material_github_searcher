@@ -7,4 +7,15 @@ themeModeTitle: テーマモード
 themeModeSystem: システム
 themeModeLight: ライト
 themeModeDark: ダーク
+themeColorTitle: テーマカラー
+themeColorApp: アプリ
+themeColorDynamic: ダイナミック
+themeColorBlue: 青
+themeColorPurple: 紫
+themeColorPink: ピンク
+themeColorRed: 赤
+themeColorOrange: オレンジ
+themeColorYellow: 黄
+themeColorGreen: 緑
+themeColorDynamicFallback: 現在のテーマではDynamic Colorを利用できないため、アプリの色を表示します。選択はダイナミックとして保存されます。
 saveError: 設定の保存に失敗しました
