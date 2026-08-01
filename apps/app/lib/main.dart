@@ -35,6 +35,7 @@ void main() async {
 Widget createApp({
   required AppBuildConfig config,
   List<Override> overrides = const [],
+  TransitionBuilder? builder,
 }) {
   registerAppLicense(config.appName);
   return ProviderScope(
@@ -42,17 +43,26 @@ Widget createApp({
       appTitleProvider.overrideWithValue(config.appName),
       ...overrides,
     ],
-    child: TranslationProvider(child: MyApp(config: config)),
+    child: TranslationProvider(
+      child: MyApp(config: config, builder: builder),
+    ),
   );
 }
 
 /// アプリケーションのルートとなるウィジェット。
 class MyApp extends ConsumerStatefulWidget {
   /// ルートウィジェット [MyApp] を生成する。
-  const MyApp({required this.config, super.key});
+  const MyApp({required this.config, this.builder, super.key});
 
   /// 現在のビルド設定。
   final AppBuildConfig config;
+
+  /// [MaterialApp.builder] へ注入する任意のラッパー。
+  ///
+  /// Device Preview専用entrypoint（`debug/main.dart`）が
+  /// `DevicePreview.appBuilder` を渡すためのhookで、通常起動やTestでは
+  /// 指定しない。
+  final TransitionBuilder? builder;
 
   @override
   ConsumerState<MyApp> createState() => _MyAppState();
@@ -98,6 +108,7 @@ class _MyAppState extends ConsumerState<MyApp> {
             darkTheme: resolvedTheme.dark,
             themeMode: resolvedTheme.themeMode,
             routerConfig: routerConfig,
+            builder: widget.builder,
           ),
         );
       },
