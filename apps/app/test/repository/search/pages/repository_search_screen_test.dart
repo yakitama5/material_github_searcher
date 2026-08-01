@@ -129,6 +129,22 @@ Future<void> _pullToRefresh(WidgetTester tester) async {
   await tester.pump(const Duration(seconds: 1));
 }
 
+/// 上端で下方向へdragし、releaseせずに[TestGesture]を返す。
+///
+/// pull中のIndicator表示・Semanticsを検証するテストで共通して使う。
+/// 呼び出し側でrelease（`gesture.up()`）と、その後の検証・後始末を行う。
+Future<TestGesture> _dragWithoutReleasing(
+  WidgetTester tester, {
+  double distance = 200,
+}) async {
+  final gesture = await tester.startGesture(
+    tester.getCenter(find.byType(CustomScrollView)),
+  );
+  await gesture.moveBy(Offset(0, distance));
+  await tester.pump();
+  return gesture;
+}
+
 /// 非同期の検索結果反映を待つ。
 ///
 /// [RepositorySearchEmpty]はReduce Motion無効時にLottieアニメーションを
@@ -901,11 +917,7 @@ void main() {
         await tester.tap(find.byKey(_submitButtonKey));
         await tester.pumpAndSettle();
 
-        final gesture = await tester.startGesture(
-          tester.getCenter(find.byType(CustomScrollView)),
-        );
-        await gesture.moveBy(const Offset(0, 200));
-        await tester.pump();
+        final gesture = await _dragWithoutReleasing(tester);
 
         expect(
           find.bySemanticsLabel(locale.translations.repositorySearch.pulling),
@@ -928,11 +940,7 @@ void main() {
       final repository = FakeRepositorySearchRepository();
       await _pumpSearchScreen(tester, repository: repository);
 
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.byType(CustomScrollView)),
-      );
-      await gesture.moveBy(const Offset(0, 200));
-      await tester.pump();
+      final gesture = await _dragWithoutReleasing(tester);
 
       expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
 
@@ -958,11 +966,7 @@ void main() {
       await tester.pump();
       expect(find.byType(RepositoryListSkeleton), findsOneWidget);
 
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.byType(CustomScrollView)),
-      );
-      await gesture.moveBy(const Offset(0, 200));
-      await tester.pump();
+      final gesture = await _dragWithoutReleasing(tester);
 
       expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
 
@@ -984,11 +988,7 @@ void main() {
       await tester.tap(find.byKey(_submitButtonKey));
       await tester.pumpAndSettle();
 
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.byType(CustomScrollView)),
-      );
-      await gesture.moveBy(const Offset(0, 200));
-      await tester.pump();
+      final gesture = await _dragWithoutReleasing(tester);
 
       expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
 
