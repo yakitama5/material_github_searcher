@@ -58,6 +58,17 @@ Skeletonレイアウトはdesignsystemへ追加せず、各画面の責務とす
 Golden TestではScopeの1200ms周期に対して`tester.pump`へ固定のDurationを渡し、
 アニメーション位相を決定的にする。repeat中のため`pumpAndSettle`は使わない。
 
+## 操作性（マウスドラッグスクロール）
+
+`apps/app/lib/src/theme/app_scroll_behavior.dart`の`AppScrollBehavior`
+（`MaterialScrollBehavior`のサブクラス）を`MaterialApp.router.scrollBehavior`へ設定し、
+`dragDevices`へ`PointerDeviceKind.mouse`を追加している。既定の`MaterialScrollBehavior`は
+タッチ・スタイラス・トラックパッドのみをドラッグスクロール対象とし、マウスは対象外
+（テキスト選択との競合を避けるための上流の既定挙動）。本アプリはWebでもモバイルアプリ
+相当のスワイプ操作感で確認できるようにする方針のため、マウスドラッグでのスクロールを
+有効にしている。テキスト選択とドラッグスクロールの競合が問題になった場合は、対象領域を
+限定する対応を個別に検討する。
+
 ## レスポンシブ対応
 
 デバイス種別ではなく利用可能幅で判断する。画面全体のレイアウト切り替えには
