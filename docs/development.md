@@ -147,6 +147,43 @@ Patrol CLIの`package_name` / `bundle_id`はflavor設定ファイルを参照で
 重複して記載する。`flavor/dev.json`のIDを変更する場合は、Androidは
 `appIdAndroid + appIdSuffix`、iOSは`appIdIos + appIdSuffix`となるよう同セクションも同期する。
 
+## Device Preview（Dev Web限定）
+
+[`device_preview_plus`](https://pub.dev/packages/device_preview_plus)を、通常のDev/Prod起動、
+Widget Test、Patrolへ影響しないDev Web専用の確認ツールとして`dev_dependencies`に導入している。
+実機・Widget Test・Golden Test・Patrolの代替にはせず、端末サイズ・画面向き・Text Scale・
+Light/Darkを素早く見た目確認する用途に限定する。
+
+専用entrypoint `apps/app/debug/main.dart` からのみ起動する。通常起動の`lib/main.dart`は
+`device_preview_plus`をimportしない。
+
+```sh
+cd apps/app
+mise exec -- flutter run \
+  -d chrome \
+  -t debug/main.dart \
+  --dart-define-from-file=flavor/dev.json
+```
+
+`debug/main.dart`はProd Flavorまたはreleaseモードでの起動を`StateError`で拒否する
+（判定は`lib/src/config/device_preview_guard.dart`の`assertDevicePreviewAllowed`が持ち、
+`device_preview_plus`に依存しないためWidget Testからも検証できる）。Android/iOSの通常
+Dev・Prod起動にはこのentrypointを使わないため、Device Previewが混入することはない。
+
+ツールパネルは次の項目だけに絞っている。ロケール切り替えを含む他の項目は非表示にした。
+Slangとのlocale二重管理を避けるため、ロケール切り替えは本ツールの対象外とし、言語切り替えは
+引き続きSlangのlocale設定で行う。
+
+- Device: 端末サイズ（Model）・画面向き（Orientation）
+- Accessibility: Text scaling factor
+- System: Theme（Light/Dark）
+
+`createApp`へ追加した`builder`引数（`TransitionBuilder?`、既定`null`）が
+`MaterialApp.builder`へ橋渡しするhookで、`debug/main.dart`だけが`DevicePreview.appBuilder`を
+渡す。通常起動・Widget Test・Patrolは`builder`を指定しないため、Composition Root
+（`createApp`のProvider override経路、`MaterialApp.router`、go_router、DynamicColor、
+ThemeSettings）への影響はない。
+
 ## GitHub Actionsでの手動Build
 
 `.github/workflows/build_app.yaml`の`Build App` Workflowでは、Dev/ProdアプリのAndroid
