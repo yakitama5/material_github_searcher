@@ -1,0 +1,6 @@
+title: Settings
+uiStyleTitle: UI Style
+uiStyleSystem: System
+uiStyleAndroid: Android
+uiStyleIos: iOS
+saveError: Failed to save the setting

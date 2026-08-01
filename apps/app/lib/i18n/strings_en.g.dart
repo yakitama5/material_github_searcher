@@ -42,6 +42,7 @@ class TranslationsEn extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$common$en common = _Translations$common$en._(_root);
 	@override late final _Translations$repositoryDetail$en repositoryDetail = _Translations$repositoryDetail$en._(_root);
 	@override late final _Translations$repositorySearch$en repositorySearch = _Translations$repositorySearch$en._(_root);
+	@override late final _Translations$settings$en settings = _Translations$settings$en._(_root);
 }
 
 // Path: common
@@ -107,6 +108,21 @@ class _Translations$repositorySearch$en extends Translations$repositorySearch$ja
 	@override String get historyClearAllDialogCancel => 'Cancel';
 }
 
+// Path: settings
+class _Translations$settings$en extends Translations$settings$ja {
+	_Translations$settings$en._(TranslationsEn root) : this._root = root, super.internal(root);
+
+	final TranslationsEn _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Settings';
+	@override String get uiStyleTitle => 'UI Style';
+	@override String get uiStyleSystem => 'System';
+	@override String get uiStyleAndroid => 'Android';
+	@override String get uiStyleIos => 'iOS';
+	@override String get saveError => 'Failed to save the setting';
+}
+
 // Path: common.navigation
 class _Translations$common$navigation$en extends Translations$common$navigation$ja {
 	_Translations$common$navigation$en._(TranslationsEn root) : this._root = root, super.internal(root);
@@ -163,6 +179,12 @@ extension on TranslationsEn {
 			'repositorySearch.historyClearAllDialogMessage' => 'This removes all saved search history. This action cannot be undone.',
 			'repositorySearch.historyClearAllDialogConfirm' => 'Delete',
 			'repositorySearch.historyClearAllDialogCancel' => 'Cancel',
+			'settings.title' => 'Settings',
+			'settings.uiStyleTitle' => 'UI Style',
+			'settings.uiStyleSystem' => 'System',
+			'settings.uiStyleAndroid' => 'Android',
+			'settings.uiStyleIos' => 'iOS',
+			'settings.saveError' => 'Failed to save the setting',
 			_ => null,
 		};
 	}
