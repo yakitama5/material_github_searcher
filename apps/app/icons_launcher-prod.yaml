@@ -1,0 +1,23 @@
+# dart run icons_launcher:create --flavor prod
+# dart run icons_launcher:create --flavors dev,prod
+
+icons_launcher:
+  platforms:
+    android:
+      enable: true
+      image_path: "assets/launcher_icon/icon_prod.png"
+      adaptive_background_color: "#000000"
+      adaptive_foreground_image: "assets/launcher_icon/icon_adaptive_prod.png"
+      adaptive_round_image: "assets/launcher_icon/icon_prod.png"
+      adaptive_monochrome_image: "assets/launcher_icon/icon_adaptive_monochrome_prod.png"
+    ios:
+      enable: true
+      image_path: "assets/launcher_icon/icon_prod.png"
+    web:
+      enable: false
+    macos:
+      enable: false
+    windows:
+      enable: false
+    linux:
+      enable: false

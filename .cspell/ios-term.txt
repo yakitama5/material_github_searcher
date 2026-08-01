@@ -7,3 +7,6 @@ xcscheme
 pbxproj
 iphonesimulator
 libexec
+appiconset
+ASSETCATALOG
+APPICON
