@@ -5,11 +5,12 @@ import 'app_build_config.dart';
 /// 判定ロジックを`device_preview_plus`に依存しない形でここへ置くことで、
 /// `debug/`配下から呼び出しつつ、Widget Testからも直接検証できるようにする。
 /// Device Previewは実機・Widget Test・Golden Test・Patrolの代替にしない方針
-/// のため、Dev Flavorかつdebug/profile用途に限定し、Prod Flavorまたは
-/// releaseでの起動を拒否する。
+/// のため、Dev Flavorかつdebug/profile用途、かつWebに限定し、Prod Flavor・
+/// release・Web以外のPlatformでの起動を拒否する。
 void assertDevicePreviewAllowed(
   AppBuildConfig config, {
   required bool isReleaseMode,
+  required bool isWeb,
 }) {
   if (isReleaseMode) {
     throw StateError(
@@ -21,6 +22,12 @@ void assertDevicePreviewAllowed(
     throw StateError(
       'Device Preview entrypoint (debug/main.dart) requires the dev '
       'flavor. Pass --dart-define-from-file=flavor/dev.json.',
+    );
+  }
+  if (!isWeb) {
+    throw StateError(
+      'Device Preview entrypoint (debug/main.dart) is Web-only. Use '
+      'lib/main.dart for Android/iOS.',
     );
   }
 }

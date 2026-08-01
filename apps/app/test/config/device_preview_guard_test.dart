@@ -20,16 +20,24 @@ const _prodConfig = AppBuildConfig(
 
 void main() {
   group('assertDevicePreviewAllowed', () {
-    test('Dev Flavorかつdebugモードでは例外を投げない', () {
+    test('Dev FlavorかつdebugモードのWebでは例外を投げない', () {
       expect(
-        () => assertDevicePreviewAllowed(_devConfig, isReleaseMode: false),
+        () => assertDevicePreviewAllowed(
+          _devConfig,
+          isReleaseMode: false,
+          isWeb: true,
+        ),
         returnsNormally,
       );
     });
 
     test('releaseモードでは起動を拒否する', () {
       expect(
-        () => assertDevicePreviewAllowed(_devConfig, isReleaseMode: true),
+        () => assertDevicePreviewAllowed(
+          _devConfig,
+          isReleaseMode: true,
+          isWeb: true,
+        ),
         throwsA(
           isA<StateError>().having(
             (error) => error.message,
@@ -42,12 +50,33 @@ void main() {
 
     test('Prod Flavorでは起動を拒否する', () {
       expect(
-        () => assertDevicePreviewAllowed(_prodConfig, isReleaseMode: false),
+        () => assertDevicePreviewAllowed(
+          _prodConfig,
+          isReleaseMode: false,
+          isWeb: true,
+        ),
         throwsA(
           isA<StateError>().having(
             (error) => error.message,
             'message',
             contains('dev flavor'),
+          ),
+        ),
+      );
+    });
+
+    test('Web以外のPlatformでは起動を拒否する', () {
+      expect(
+        () => assertDevicePreviewAllowed(
+          _devConfig,
+          isReleaseMode: false,
+          isWeb: false,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('Web-only'),
           ),
         ),
       );

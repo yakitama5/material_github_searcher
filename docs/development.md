@@ -165,8 +165,8 @@ mise exec -- flutter run \
   --dart-define-from-file=flavor/dev.json
 ```
 
-`debug/main.dart`はProd Flavorまたはreleaseモードでの起動を`StateError`で拒否する
-（判定は`lib/src/config/device_preview_guard.dart`の`assertDevicePreviewAllowed`が持ち、
+`debug/main.dart`はProd Flavor・releaseモード・Web以外のPlatformでの起動を`StateError`で
+拒否する（判定は`lib/src/config/device_preview_guard.dart`の`assertDevicePreviewAllowed`が持ち、
 `device_preview_plus`に依存しないためWidget Testからも検証できる）。Android/iOSの通常
 Dev・Prod起動にはこのentrypointを使わないため、Device Previewが混入することはない。
 
