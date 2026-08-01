@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../navigation/adaptive_app_shell.dart';
 import '../repository/search/pages/repository_search_screen.dart';
 import '../settings/pages/settings_screen.dart';
+import '../settings/pages/settings_theme_mode_screen.dart';
 import '../settings/pages/settings_ui_style_screen.dart';
 import 'app_routes.dart';
 import 'router_keys.dart';
@@ -41,6 +42,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                     path: settingsUiStyleRelativePath,
                     name: settingsUiStyleRouteName,
                     builder: (context, state) => const SettingsUiStyleScreen(),
+                  ),
+                  GoRoute(
+                    path: settingsThemeModeRelativePath,
+                    name: settingsThemeModeRouteName,
+                    builder: (context, state) =>
+                        const SettingsThemeModeScreen(),
                   ),
                 ],
               ),

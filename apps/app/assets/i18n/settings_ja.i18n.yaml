@@ -3,4 +3,8 @@ uiStyleTitle: UIスタイル
 uiStyleSystem: システム
 uiStyleAndroid: Android
 uiStyleIos: iOS
+themeModeTitle: テーマモード
+themeModeSystem: システム
+themeModeLight: ライト
+themeModeDark: ダーク
 saveError: 設定の保存に失敗しました

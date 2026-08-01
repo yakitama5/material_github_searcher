@@ -8,6 +8,7 @@ import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/router/app_routes.dart';
 import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_screen.dart';
+import 'package:material_github_searcher/src/settings/pages/settings_theme_mode_screen.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_ui_style_screen.dart';
 
 import '../../support/fake_search_history_repository.dart';
@@ -25,7 +26,20 @@ void main() {
   testWidgets('既定値Systemの現在値を一覧へ表示する', (tester) async {
     await _pump(tester);
 
-    expect(find.text('システム'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(settingsUiStyleListTileKey),
+        matching: find.text('システム'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(settingsThemeModeListTileKey),
+        matching: find.text('システム'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('UI Style行をタップすると選択画面へ遷移し、戻ると一覧へ戻る', (tester) async {
@@ -36,7 +50,7 @@ void main() {
 
     expect(find.byType(SettingsUiStyleScreen), findsOneWidget);
 
-    await _pop(tester);
+    await _popFrom<SettingsUiStyleScreen>(tester);
 
     expect(find.byType(SettingsScreen), findsOneWidget);
     expect(find.byType(SettingsUiStyleScreen), findsNothing);
@@ -50,14 +64,53 @@ void main() {
     await tester.tap(find.byKey(settingsUiStyleOptionKey(AppUiStyle.android)));
     await tester.pumpAndSettle();
 
-    await _pop(tester);
+    await _popFrom<SettingsUiStyleScreen>(tester);
 
     expect(find.text('Android'), findsOneWidget);
   });
 
+  testWidgets('Theme Mode行をタップすると選択画面へ遷移し、戻ると一覧へ戻る', (tester) async {
+    await _pump(tester);
+
+    await tester.tap(find.byKey(settingsThemeModeListTileKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsThemeModeScreen), findsOneWidget);
+
+    await _popFrom<SettingsThemeModeScreen>(tester);
+
+    expect(find.byType(SettingsScreen), findsOneWidget);
+    expect(find.byType(SettingsThemeModeScreen), findsNothing);
+  });
+
+  testWidgets('Theme Mode選択画面での変更が一覧の現在値表示へ反映される', (tester) async {
+    await _pump(tester);
+
+    await tester.tap(find.byKey(settingsThemeModeListTileKey));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(settingsThemeModeOptionKey(AppThemeMode.dark)),
+    );
+    await tester.pumpAndSettle();
+
+    await _popFrom<SettingsThemeModeScreen>(tester);
+
+    expect(find.text('ダーク'), findsOneWidget);
+  });
+
   for (final locale in [
-    (appLocale: AppLocale.ja, title: '設定', uiStyleTitle: 'UIスタイル'),
-    (appLocale: AppLocale.en, title: 'Settings', uiStyleTitle: 'UI Style'),
+    (
+      appLocale: AppLocale.ja,
+      title: '設定',
+      uiStyleTitle: 'UIスタイル',
+      themeModeTitle: 'テーマモード',
+    ),
+    (
+      appLocale: AppLocale.en,
+      title: 'Settings',
+      uiStyleTitle: 'UI Style',
+      themeModeTitle: 'Theme Mode',
+    ),
   ]) {
     testWidgets('${locale.appLocale}では一覧の文言をその言語で表示する', (tester) async {
       await _pump(tester, locale: locale.appLocale);
@@ -70,11 +123,12 @@ void main() {
         findsOneWidget,
       );
       expect(find.text(locale.uiStyleTitle), findsOneWidget);
+      expect(find.text(locale.themeModeTitle), findsOneWidget);
     });
   }
 
   for (final width in [402.0, 744.0, 1024.0]) {
-    testWidgets('$width幅でも一覧を操作できる', (tester) async {
+    testWidgets('$width幅でもUI Style行から選択画面を操作できる', (tester) async {
       await _pump(tester, width: width);
 
       expect(find.byType(SettingsScreen), findsOneWidget);
@@ -82,6 +136,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(SettingsUiStyleScreen), findsOneWidget);
+    });
+
+    testWidgets('$width幅でもTheme Mode行から選択画面を操作できる', (tester) async {
+      await _pump(tester, width: width);
+
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      await tester.tap(find.byKey(settingsThemeModeListTileKey));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsThemeModeScreen), findsOneWidget);
     });
   }
 
@@ -125,14 +189,14 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
-/// [SettingsUiStyleScreen]から一覧へ戻る。
+/// 設定項目の選択画面[T]から一覧へ戻る。
 ///
 /// AppBarの戻るボタンはlocale・UI Styleに応じてtooltip・見た目
 /// （Material/Cupertino）が変わり、`tester.pageBack()`はこれらに依存して
 /// 対象を特定するため、localeを問わず決定的に検証できるよう
 /// `Navigator.pop`を直接呼ぶ。
-Future<void> _pop(WidgetTester tester) async {
-  final context = tester.element(find.byType(SettingsUiStyleScreen));
+Future<void> _popFrom<T extends Widget>(WidgetTester tester) async {
+  final context = tester.element(find.byType(T));
   Navigator.of(context).pop();
   await tester.pumpAndSettle();
 }

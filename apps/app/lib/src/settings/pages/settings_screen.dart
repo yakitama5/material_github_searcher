@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../i18n/strings.g.dart';
 import '../../router/app_routes.dart';
+import '../theme_mode_label.dart';
 import '../ui_style_label.dart';
 
 /// Settings一覧画面から各設定項目へ遷移する`ListTile`のkey。
@@ -14,6 +15,12 @@ import '../ui_style_label.dart';
 /// Widget Testから参照するため、実装とテストで同一のリテラルを再定義せず
 /// 本constを共有する。
 const settingsUiStyleListTileKey = Key('settingsUiStyleListTile');
+
+/// Settings一覧画面からTheme Mode設定へ遷移する`ListTile`のkey。
+///
+/// Widget Testから参照するため、実装とテストで同一のリテラルを再定義せず
+/// 本constを共有する。
+const settingsThemeModeListTileKey = Key('settingsThemeModeListTile');
 
 /// 設定一覧画面。
 ///
@@ -26,8 +33,9 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final i18n = context.i18n;
-    final uiStyle =
-        ref.watch(themeSettingsProvider).value?.uiStyle ?? AppUiStyle.system;
+    final themeSettings = ref.watch(themeSettingsProvider).value;
+    final uiStyle = themeSettings?.uiStyle ?? AppUiStyle.system;
+    final themeMode = themeSettings?.themeMode ?? AppThemeMode.system;
 
     return Scaffold(
       appBar: AppBar(title: Text(i18n.settings.title)),
@@ -37,9 +45,6 @@ class SettingsScreen extends ConsumerWidget {
             constraints: const BoxConstraints(
               maxWidth: Breakpoints.maxContentWidth,
             ),
-            // 設定項目が今後複数行に増える一覧のため、現在1行のみでも
-            // ListViewのまま扱う。
-            // ignore: altive_lints_plugin/avoid_single_child
             child: ListView(
               children: [
                 ListTile(
@@ -48,6 +53,13 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: Text(uiStyleLabel(uiStyle, i18n)),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.pushNamed(settingsUiStyleRouteName),
+                ),
+                ListTile(
+                  key: settingsThemeModeListTileKey,
+                  title: Text(i18n.settings.themeModeTitle),
+                  subtitle: Text(themeModeLabel(themeMode, i18n)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.pushNamed(settingsThemeModeRouteName),
                 ),
               ],
             ),
