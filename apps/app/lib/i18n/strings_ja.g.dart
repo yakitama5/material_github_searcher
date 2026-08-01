@@ -43,6 +43,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$common$ja common = Translations$common$ja.internal(_root);
 	late final Translations$repositoryDetail$ja repositoryDetail = Translations$repositoryDetail$ja.internal(_root);
 	late final Translations$repositorySearch$ja repositorySearch = Translations$repositorySearch$ja.internal(_root);
+	late final Translations$settings$ja settings = Translations$settings$ja.internal(_root);
 }
 
 // Path: common
@@ -179,6 +180,33 @@ class Translations$repositorySearch$ja {
 	String get historyClearAllDialogCancel => 'キャンセル';
 }
 
+// Path: settings
+class Translations$settings$ja {
+	Translations$settings$ja.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// ja: '設定'
+	String get title => '設定';
+
+	/// ja: 'UI Style'
+	String get uiStyleTitle => 'UI Style';
+
+	/// ja: 'システム'
+	String get uiStyleSystem => 'システム';
+
+	/// ja: 'Android'
+	String get uiStyleAndroid => 'Android';
+
+	/// ja: 'iOS'
+	String get uiStyleIos => 'iOS';
+
+	/// ja: '設定の保存に失敗しました'
+	String get saveError => '設定の保存に失敗しました';
+}
+
 // Path: common.navigation
 class Translations$common$navigation$ja {
 	Translations$common$navigation$ja.internal(this._root);
@@ -239,6 +267,12 @@ extension on Translations {
 			'repositorySearch.historyClearAllDialogMessage' => '保存されている検索履歴をすべて削除します。この操作は取り消せません。',
 			'repositorySearch.historyClearAllDialogConfirm' => '削除',
 			'repositorySearch.historyClearAllDialogCancel' => 'キャンセル',
+			'settings.title' => '設定',
+			'settings.uiStyleTitle' => 'UI Style',
+			'settings.uiStyleSystem' => 'システム',
+			'settings.uiStyleAndroid' => 'Android',
+			'settings.uiStyleIos' => 'iOS',
+			'settings.saveError' => '設定の保存に失敗しました',
 			_ => null,
 		};
 	}

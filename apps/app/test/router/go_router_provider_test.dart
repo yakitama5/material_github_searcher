@@ -6,8 +6,11 @@ import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/router/app_routes.dart';
 import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/router/router_keys.dart';
+import 'package:material_github_searcher/src/settings/pages/settings_screen.dart';
+import 'package:material_github_searcher/src/settings/pages/settings_ui_style_screen.dart';
 
 import '../support/fake_search_history_repository.dart';
+import '../support/fake_theme_settings_repository.dart';
 
 const _config = AppBuildConfig(
   flavor: Flavor.dev,
@@ -36,7 +39,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(router.routeInformationProvider.value.uri.path, settingsPath);
-    expect(find.text('Settings'), findsWidgets);
+    expect(find.byType(SettingsScreen), findsOneWidget);
+  });
+
+  testWidgets('/settings/ui-styleへ直接アクセスできる', (tester) async {
+    await tester.pumpWidget(
+      createApp(
+        config: _config,
+        overrides: [searchHistoryTestOverride(), themeSettingsTestOverride()],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(MyApp));
+    final router = ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(goRouterProvider)..go('$settingsPath/$settingsUiStyleRelativePath');
+    await tester.pumpAndSettle();
+
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      '$settingsPath/$settingsUiStyleRelativePath',
+    );
+    expect(find.byType(SettingsUiStyleScreen), findsOneWidget);
   });
 
   test('rootと各branchのNavigator keyをrouterが利用する', () {

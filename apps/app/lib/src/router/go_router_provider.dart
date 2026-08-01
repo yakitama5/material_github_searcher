@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../navigation/adaptive_app_shell.dart';
 import '../repository/search/pages/repository_search_screen.dart';
+import '../settings/pages/settings_screen.dart';
+import '../settings/pages/settings_ui_style_screen.dart';
 import 'app_routes.dart';
 import 'router_keys.dart';
 
@@ -34,7 +35,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: settingsPath,
-                builder: (context, state) => const _SettingsPlaceholder(),
+                builder: (context, state) => const SettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: settingsUiStyleRelativePath,
+                    name: settingsUiStyleRouteName,
+                    builder: (context, state) => const SettingsUiStyleScreen(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -45,12 +53,3 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   ref.onDispose(router.dispose);
   return router;
 });
-
-class _SettingsPlaceholder extends StatelessWidget {
-  const _SettingsPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('Settings')));
-  }
-}
