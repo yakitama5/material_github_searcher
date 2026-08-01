@@ -12,6 +12,9 @@ import 'package:material3_indicators/material3_indicators.dart';
 const _testViewportHeight = 600.0;
 const _kThresholdOffset = _testViewportHeight * 0.25;
 
+Rect _glyphRect(WidgetTester tester) =>
+    tester.getRect(find.byKey(m3RefreshIndicatorGlyphKey));
+
 void main() {
   group('M3RefreshIndicator', () {
     testWidgets('下方向へのdragでonRefreshを呼び出す', (tester) async {
@@ -67,7 +70,7 @@ void main() {
       expect(find.byType(M3LoadingIndicator), findsOneWidget);
     });
 
-    testWidgets('Reduce Motionでは静止したアイコンへフォールバックする', (tester) async {
+    testWidgets('Reduce Motionでは静止した図形へフォールバックする', (tester) async {
       await tester.pumpWidget(
         _TestApp(
           disableAnimations: true,
@@ -81,7 +84,7 @@ void main() {
       await tester.pump();
 
       expect(find.byType(M3LoadingIndicator), findsNothing);
-      expect(find.byIcon(Icons.refresh), findsOneWidget);
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsOneWidget);
     });
 
     testWidgets('semanticsLabelを渡すとインジケーターへ反映する', (tester) async {
@@ -106,7 +109,7 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('短いdragより長いdragの方がIndicatorが明瞭に表示される', (tester) async {
+    testWidgets('pull量に応じてIndicatorのtopが単調増加する(slide)', (tester) async {
       _setViewportHeight(tester);
 
       await tester.pumpWidget(
@@ -120,20 +123,60 @@ void main() {
       );
 
       final gesture = await tester.startGesture(const Offset(200, 300));
-      await gesture.moveBy(const Offset(0, _kThresholdOffset / 3));
+      await gesture.moveBy(const Offset(0, _kThresholdOffset / 5));
       await tester.pump();
-      final shortOpacity = tester.widget<Opacity>(find.byType(Opacity)).opacity;
+      final earlyTop = _glyphRect(tester).top;
+
+      await gesture.moveBy(const Offset(0, _kThresholdOffset * 0.4));
+      await tester.pump();
+      final midTop = _glyphRect(tester).top;
 
       await gesture.moveBy(const Offset(0, _kThresholdOffset));
       await tester.pump();
-      final longOpacity = tester.widget<Opacity>(find.byType(Opacity)).opacity;
+      final lateTop = _glyphRect(tester).top;
 
-      expect(shortOpacity, greaterThan(0));
-      expect(shortOpacity, lessThan(1));
-      expect(longOpacity, greaterThan(shortOpacity));
-      expect(longOpacity, closeTo(1, 0.01));
+      expect(midTop, greaterThan(earlyTop));
+      expect(lateTop, greaterThan(midTop));
 
       // pending gestureを後続テストへ持ち越さないよう解放する。
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('pull量0〜0.5でIndicatorが拡大し、0.5以降はサイズが変化しない(scale)', (
+      tester,
+    ) async {
+      _setViewportHeight(tester);
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: M3RefreshIndicator(
+            refreshing: false,
+            onRefresh: () async {},
+            child: const _ScrollableContent(),
+          ),
+        ),
+      );
+
+      final gesture = await tester.startGesture(const Offset(200, 300));
+      // displayFraction ≈ 0.2（scale閾値0.5未満）
+      await gesture.moveBy(const Offset(0, _kThresholdOffset / 5));
+      await tester.pump();
+      final smallHeight = _glyphRect(tester).height;
+
+      // 累計displayFraction ≈ 0.5（scale閾値ちょうど）
+      await gesture.moveBy(const Offset(0, _kThresholdOffset * 0.3));
+      await tester.pump();
+      final thresholdHeight = _glyphRect(tester).height;
+
+      // 累計displayFraction ≈ 1.0（閾値超え、scaleは1.0で頭打ち）
+      await gesture.moveBy(const Offset(0, _kThresholdOffset * 0.5));
+      await tester.pump();
+      final fullHeight = _glyphRect(tester).height;
+
+      expect(thresholdHeight, greaterThan(smallHeight));
+      expect(fullHeight, closeTo(thresholdHeight, 0.5));
+
       await gesture.up();
       await tester.pumpAndSettle();
     });
@@ -157,7 +200,7 @@ void main() {
         await gesture.moveBy(const Offset(0, _kThresholdOffset));
         await tester.pump();
 
-        expect(find.byIcon(Icons.refresh), findsOneWidget);
+        expect(find.byKey(m3RefreshIndicatorGlyphKey), findsOneWidget);
         expect(find.byType(M3LoadingIndicator), findsNothing);
 
         await gesture.up();
@@ -203,13 +246,12 @@ void main() {
 
       expect(refreshCount, 1);
       expect(find.byType(M3LoadingIndicator), findsOneWidget);
-      expect(find.byIcon(Icons.refresh), findsNothing);
 
       refreshCompleter.complete();
       await tester.pumpAndSettle();
 
       expect(find.byType(M3LoadingIndicator), findsNothing);
-      expect(find.byIcon(Icons.refresh), findsNothing);
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
     });
 
     testWidgets('threshold未満で離すとonRefreshを呼ばずIndicatorが収納される', (
@@ -234,13 +276,13 @@ void main() {
       await gesture.moveBy(const Offset(0, _kThresholdOffset / 5));
       await tester.pump();
 
-      expect(find.byIcon(Icons.refresh), findsOneWidget);
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsOneWidget);
 
       await gesture.up();
       await tester.pumpAndSettle();
 
       expect(refreshCount, 0);
-      expect(find.byIcon(Icons.refresh), findsNothing);
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
       expect(find.byType(M3LoadingIndicator), findsNothing);
     });
 
@@ -267,23 +309,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(refreshCount, 1);
-    });
-
-    testWidgets('Reduce Motionでもrefresh中は静止したアイコンで表示する', (tester) async {
-      await tester.pumpWidget(
-        _TestApp(
-          disableAnimations: true,
-          child: M3RefreshIndicator(
-            refreshing: true,
-            onRefresh: () async {},
-            child: const _ScrollableContent(),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(find.byType(M3LoadingIndicator), findsNothing);
-      expect(find.byIcon(Icons.refresh), findsOneWidget);
     });
 
     testWidgets('pull中はpullSemanticsLabelを、refresh中はsemanticsLabelを読み上げる', (
@@ -393,7 +418,11 @@ void main() {
       await gesture.up();
       await tester.pumpAndSettle();
 
-      expect(notifications, isNotEmpty);
+      // `isNotEmpty`だけでは対象種別が実際に届いたことを保証できない。
+      // 一覧先頭からのdragは常にoverscroll（既にoffset 0のためスクロール
+      // 自体は動かない）として扱われるため、`OverscrollNotification`が
+      // 実際に伝播していることを確認する。
+      expect(notifications.whereType<OverscrollNotification>(), isNotEmpty);
     });
 
     testWidgets('画面より短い一覧でもpull量が徐々に上昇する', (tester) async {
@@ -413,19 +442,50 @@ void main() {
       );
 
       final gesture = await tester.startGesture(const Offset(200, 300));
-      await gesture.moveBy(const Offset(0, _kThresholdOffset / 3));
+      await gesture.moveBy(const Offset(0, _kThresholdOffset / 5));
       await tester.pump();
-      final shortOpacity = tester.widget<Opacity>(find.byType(Opacity)).opacity;
+      final shortHeight = _glyphRect(tester).height;
 
       await gesture.moveBy(const Offset(0, _kThresholdOffset));
       await tester.pump();
-      final longOpacity = tester.widget<Opacity>(find.byType(Opacity)).opacity;
+      final longHeight = _glyphRect(tester).height;
 
-      expect(shortOpacity, greaterThan(0));
-      expect(longOpacity, greaterThan(shortOpacity));
+      expect(shortHeight, greaterThan(0));
+      expect(longHeight, greaterThan(shortHeight));
 
       await gesture.up();
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('enabledがfalseの間はdragしてもIndicatorが表示されずonRefreshも呼ばれない', (
+      tester,
+    ) async {
+      _setViewportHeight(tester);
+      var refreshCount = 0;
+
+      await tester.pumpWidget(
+        _TestApp(
+          child: M3RefreshIndicator(
+            refreshing: false,
+            enabled: false,
+            onRefresh: () async {
+              refreshCount++;
+            },
+            child: const _ScrollableContent(),
+          ),
+        ),
+      );
+
+      final gesture = await tester.startGesture(const Offset(200, 300));
+      await gesture.moveBy(const Offset(0, _kThresholdOffset * 1.5));
+      await tester.pump();
+
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(refreshCount, 0);
     });
   });
 }

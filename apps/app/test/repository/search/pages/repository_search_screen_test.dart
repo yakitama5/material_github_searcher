@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:application/application.dart';
+import 'package:designsystem/designsystem.dart';
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -923,10 +924,60 @@ void main() {
       });
     }
 
-    testWidgets('pull中のIndicatorはSearchBarと重ならない', (tester) async {
+    testWidgets('未検索中はdragしてもIndicatorが表示されない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      await _pumpSearchScreen(tester, repository: repository);
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(CustomScrollView)),
+      );
+      await gesture.moveBy(const Offset(0, 200));
+      await tester.pump();
+
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('初回loading中(Skeleton表示)はdragしてもIndicatorが表示されない', (
+      tester,
+    ) async {
       final repository = FakeRepositorySearchRepository();
       final query = RepositorySearchQuery('flutter');
-      repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+      final gate = Completer<void>();
+      repository.setSuccess(
+        query: query,
+        page: _singlePage(_flutterRepo),
+        gate: gate,
+      );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pump();
+      expect(find.byType(RepositoryListSkeleton), findsOneWidget);
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(CustomScrollView)),
+      );
+      await gesture.moveBy(const Offset(0, 200));
+      await tester.pump();
+
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
+
+      await gesture.up();
+      gate.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('初回error中はdragしてもIndicatorが表示されない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setFailure(
+        query: query,
+        exception: const RepositorySearchException(message: 'boom'),
+      );
       await _pumpSearchScreen(tester, repository: repository);
 
       await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
@@ -939,9 +990,7 @@ void main() {
       await gesture.moveBy(const Offset(0, 200));
       await tester.pump();
 
-      final indicatorRect = tester.getRect(find.byIcon(Icons.refresh));
-      final searchFieldRect = tester.getRect(find.byKey(_searchFieldKey));
-      expect(indicatorRect.top, greaterThanOrEqualTo(searchFieldRect.bottom));
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
 
       await gesture.up();
       await tester.pumpAndSettle();
