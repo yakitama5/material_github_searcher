@@ -433,9 +433,11 @@ void main() {
           child: M3RefreshIndicator(
             refreshing: false,
             onRefresh: () async {},
-            child: ListView(
+            child: ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [SizedBox(height: 10, child: Text('content'))],
+              itemCount: 1,
+              itemBuilder: (context, index) =>
+                  const SizedBox(height: 10, child: Text('content')),
             ),
           ),
         ),
