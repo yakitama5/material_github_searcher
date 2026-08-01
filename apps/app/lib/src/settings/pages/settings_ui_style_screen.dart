@@ -33,8 +33,8 @@ class SettingsUiStyleScreen extends ConsumerStatefulWidget {
 
 class _SettingsUiStyleScreenState extends ConsumerState<SettingsUiStyleScreen>
     with PresentationMixin {
-  /// 呼出し中の選択操作を無視し、多重tapによる[ThemeSettingsNotifier]の
-  /// 呼出し直列化前提（呼出し元の責務）を守る。
+  /// 呼出し中は選択肢を[RadioListTile.enabled]で無効化し、多重tapによる
+  /// [ThemeSettingsNotifier]の呼出し直列化前提（呼出し元の責務）を守る。
   bool _saving = false;
 
   Future<void> _select(AppUiStyle uiStyle) async {
@@ -69,13 +69,11 @@ class _SettingsUiStyleScreenState extends ConsumerState<SettingsUiStyleScreen>
             ),
             child: RadioGroup<AppUiStyle>(
               groupValue: current,
-              onChanged: _saving
-                  ? (_) {}
-                  : (value) {
-                      if (value != null) {
-                        unawaited(_select(value));
-                      }
-                    },
+              onChanged: (value) {
+                if (value != null) {
+                  unawaited(_select(value));
+                }
+              },
               child: ListView(
                 children: [
                   for (final style in AppUiStyle.values)
@@ -83,6 +81,7 @@ class _SettingsUiStyleScreenState extends ConsumerState<SettingsUiStyleScreen>
                       key: settingsUiStyleOptionKey(style),
                       title: Text(uiStyleLabel(style, i18n)),
                       value: style,
+                      enabled: !_saving,
                     ),
                 ],
               ),

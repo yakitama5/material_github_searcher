@@ -56,7 +56,7 @@ void main() {
   });
 
   for (final locale in [
-    (appLocale: AppLocale.ja, title: '設定', uiStyleTitle: 'UI Style'),
+    (appLocale: AppLocale.ja, title: '設定', uiStyleTitle: 'UIスタイル'),
     (appLocale: AppLocale.en, title: 'Settings', uiStyleTitle: 'UI Style'),
   ]) {
     testWidgets('${locale.appLocale}では一覧の文言をその言語で表示する', (tester) async {

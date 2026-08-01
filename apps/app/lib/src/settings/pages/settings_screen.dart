@@ -37,6 +37,9 @@ class SettingsScreen extends ConsumerWidget {
             constraints: const BoxConstraints(
               maxWidth: Breakpoints.maxContentWidth,
             ),
+            // 設定項目が今後複数行に増える一覧のため、現在1行のみでも
+            // ListViewのまま扱う。
+            // ignore: altive_lints_plugin/avoid_single_child
             child: ListView(
               children: [
                 ListTile(

@@ -191,8 +191,8 @@ class Translations$settings$ja {
 	/// ja: '設定'
 	String get title => '設定';
 
-	/// ja: 'UI Style'
-	String get uiStyleTitle => 'UI Style';
+	/// ja: 'UIスタイル'
+	String get uiStyleTitle => 'UIスタイル';
 
 	/// ja: 'システム'
 	String get uiStyleSystem => 'システム';
@@ -268,7 +268,7 @@ extension on Translations {
 			'repositorySearch.historyClearAllDialogConfirm' => '削除',
 			'repositorySearch.historyClearAllDialogCancel' => 'キャンセル',
 			'settings.title' => '設定',
-			'settings.uiStyleTitle' => 'UI Style',
+			'settings.uiStyleTitle' => 'UIスタイル',
 			'settings.uiStyleSystem' => 'システム',
 			'settings.uiStyleAndroid' => 'Android',
 			'settings.uiStyleIos' => 'iOS',
