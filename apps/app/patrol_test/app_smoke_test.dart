@@ -13,7 +13,11 @@ void main() {
     expect(AppBuildConfig.current.flavor, Flavor.dev);
     expect(LocaleSettings.currentLocale, AppLocale.ja);
     expect(
-      $(AppLocale.ja.translations.repositorySearch.guidance),
+      $(AppLocale.ja.translations.repositorySearch.initialTitle),
+      findsOneWidget,
+    );
+    expect(
+      $(AppLocale.ja.translations.repositorySearch.initialHint),
       findsOneWidget,
     );
   });

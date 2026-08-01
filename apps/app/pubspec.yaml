@@ -42,6 +42,7 @@ flutter:
     enable-swift-package-manager: true
   uses-material-design: true
   assets:
+    - assets/lottie/search_initialize.json
     - assets/lottie/woman_empty_box.json
     - assets/LICENSE
 

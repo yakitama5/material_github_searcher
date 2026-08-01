@@ -13,6 +13,7 @@ import 'package:material_github_searcher/src/repository/search/widgets/repositor
 import 'package:material_github_searcher/src/repository/search/widgets/repository_list_skeleton.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_bar.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/repository_search_empty.dart';
+import 'package:material_github_searcher/src/repository/search/widgets/repository_search_initial.dart';
 import 'package:material_github_searcher/src/repository/search/widgets/search_history_suggestions.dart';
 
 import '../../../support/fake_search_history_repository.dart';
@@ -159,15 +160,17 @@ Future<void> _settleWithoutLoopingAnimation(WidgetTester tester) async {
 
 void main() {
   testWidgets('未検索時は利用案内を表示する', (tester) async {
+    final repository = FakeRepositorySearchRepository();
     await _pumpSearchScreen(
       tester,
-      repository: FakeRepositorySearchRepository(),
+      repository: repository,
     );
 
-    expect(
-      find.text(AppLocale.ja.translations.repositorySearch.guidance),
-      findsOneWidget,
-    );
+    final i18n = AppLocale.ja.translations.repositorySearch;
+    expect(find.byType(RepositorySearchInitial), findsOneWidget);
+    expect(find.text(i18n.initialTitle), findsOneWidget);
+    expect(find.text(i18n.initialHint), findsOneWidget);
+    expect(repository.calls, isEmpty);
   });
 
   testWidgets('keyboard submitで検索を実行する', (tester) async {
@@ -181,6 +184,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.calls, [query]);
+    expect(find.byType(RepositorySearchInitial), findsNothing);
     expect(find.text('flutter/flutter'), findsOneWidget);
   });
 
@@ -236,6 +240,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(RepositoryListSkeleton), findsOneWidget);
+    expect(find.byType(RepositorySearchInitial), findsNothing);
     expect(
       tester.widget<TextField>(find.byKey(_searchFieldKey)).enabled,
       isNot(false),
@@ -266,6 +271,7 @@ void main() {
     await tester.tap(find.byKey(_submitButtonKey));
     await _settleWithoutLoopingAnimation(tester);
 
+    expect(find.byType(RepositorySearchInitial), findsNothing);
     expect(find.byType(RepositorySearchEmpty), findsOneWidget);
     expect(
       find.text(AppLocale.ja.translations.repositorySearch.emptyTitle),
@@ -286,6 +292,7 @@ void main() {
     await tester.tap(find.byKey(_submitButtonKey));
     await tester.pumpAndSettle();
 
+    expect(find.byType(RepositorySearchInitial), findsNothing);
     expect(
       find.text(AppLocale.ja.translations.repositorySearch.errorGeneric),
       findsOneWidget,
@@ -446,10 +453,10 @@ void main() {
         locale: locale,
       );
 
-      expect(
-        find.text(locale.translations.repositorySearch.guidance),
-        findsOneWidget,
-      );
+      final i18n = locale.translations.repositorySearch;
+      expect(find.text(i18n.initialTitle), findsOneWidget);
+      expect(find.text(i18n.initialHint), findsOneWidget);
+      expect(find.byType(RepositorySearchInitial), findsOneWidget);
     });
   }
 
@@ -524,6 +531,33 @@ void main() {
       expect(find.byType(RepositorySearchEmpty), findsOneWidget);
     });
   }
+
+  for (final width in [320.0, 402.0, 744.0, 1024.0]) {
+    testWidgets('未検索案内は幅$widthでも例外を投げず表示する', (tester) async {
+      await _pumpSearchScreen(
+        tester,
+        repository: FakeRepositorySearchRepository(),
+        width: width,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(RepositorySearchInitial), findsOneWidget);
+    });
+  }
+
+  testWidgets('未検索案内は大きなText Scaleでも例外を投げず表示する', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await _pumpSearchScreen(
+      tester,
+      repository: FakeRepositorySearchRepository(),
+      width: 320,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(RepositorySearchInitial), findsOneWidget);
+  });
 
   group('無限スクロール', () {
     testWidgets('末尾までスクロールするとpage2を取得して一覧へ追加する', (tester) async {
@@ -1359,12 +1393,19 @@ Future<void> _pumpSearchScreen(
   addTearDown(tester.view.reset);
 
   await tester.pumpWidget(
-    createApp(
-      config: _config,
-      overrides: [
-        repositorySearchRepositoryProvider.overrideWith((ref) => repository),
-        searchHistoryTestOverride(repository: historyRepository),
-      ],
+    MediaQuery(
+      data: MediaQueryData.fromView(tester.view).copyWith(
+        // Screen Testは無限再生するLottieの完了を待たず、状態遷移を
+        // `pumpAndSettle`で検証できるようReduce Motionを有効にする。
+        disableAnimations: true,
+      ),
+      child: createApp(
+        config: _config,
+        overrides: [
+          repositorySearchRepositoryProvider.overrideWith((ref) => repository),
+          searchHistoryTestOverride(repository: historyRepository),
+        ],
+      ),
     ),
   );
   await tester.pumpAndSettle();

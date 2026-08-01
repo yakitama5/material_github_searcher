@@ -11,6 +11,7 @@ import '../widgets/repository_list_item_open_container.dart';
 import '../widgets/repository_list_skeleton.dart';
 import '../widgets/repository_search_bar.dart';
 import '../widgets/repository_search_empty.dart';
+import '../widgets/repository_search_initial.dart';
 import '../widgets/repository_search_message_view.dart';
 import '../widgets/search_history_suggestions.dart';
 
@@ -291,12 +292,9 @@ class _RepositorySearchBody extends StatelessWidget {
     final i18n = context.i18n.repositorySearch;
 
     return switch (state.status) {
-      RepositorySearchStatus.initial => SliverFillRemaining(
+      RepositorySearchStatus.initial => const SliverFillRemaining(
         hasScrollBody: false,
-        child: RepositorySearchMessageView(
-          icon: Icons.search,
-          message: i18n.guidance,
-        ),
+        child: RepositorySearchInitial(),
       ),
       RepositorySearchStatus.loading => const SliverToBoxAdapter(
         child: RepositoryListSkeleton(),
