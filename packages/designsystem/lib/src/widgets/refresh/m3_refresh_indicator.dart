@@ -95,15 +95,17 @@ class _M3RefreshIndicatorState extends State<M3RefreshIndicator> {
     }
   }
 
+  /// `RefreshIndicator`は`done`・アイドル復帰時に`onStatusChange`を呼ばない
+  /// （フレームワーク内部のみで`_status`をリセットする）ため、`_status`は
+  /// 次にdragが始まるまで`canceled`・`done`のまま残り続ける。新しいdragの
+  /// 開始を「直前の状態」ではなく`status`自体の値だけで判定できるよう、
+  /// `drag`遷移時は常に`_dragOffset`・`_pullFraction`を無条件でリセットする。
   void _handleStatusChange(RefreshIndicatorStatus? status) {
     setState(() {
-      final wasIdle = _status == null;
       _status = status;
-      if (status == RefreshIndicatorStatus.drag && wasIdle) {
-        _dragOffset = 0;
-        _pullFraction = 0;
-      } else if (status == RefreshIndicatorStatus.canceled) {
-        _dragOffset = null;
+      if (status == RefreshIndicatorStatus.drag ||
+          status == RefreshIndicatorStatus.canceled) {
+        _dragOffset = status == RefreshIndicatorStatus.drag ? 0 : null;
         _pullFraction = 0;
       }
     });
