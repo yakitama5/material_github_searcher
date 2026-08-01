@@ -124,6 +124,17 @@ class _Translations$settings$en extends Translations$settings$ja {
 	@override String get themeModeSystem => 'System';
 	@override String get themeModeLight => 'Light';
 	@override String get themeModeDark => 'Dark';
+	@override String get themeColorTitle => 'Theme Color';
+	@override String get themeColorApp => 'App';
+	@override String get themeColorDynamic => 'Dynamic';
+	@override String get themeColorBlue => 'Blue';
+	@override String get themeColorPurple => 'Purple';
+	@override String get themeColorPink => 'Pink';
+	@override String get themeColorRed => 'Red';
+	@override String get themeColorOrange => 'Orange';
+	@override String get themeColorYellow => 'Yellow';
+	@override String get themeColorGreen => 'Green';
+	@override String get themeColorDynamicFallback => 'Dynamic Color is unavailable for the current theme, so the app color is shown. Your choice is saved as Dynamic.';
 	@override String get saveError => 'Failed to save the setting';
 }
 
@@ -192,6 +203,17 @@ extension on TranslationsEn {
 			'settings.themeModeSystem' => 'System',
 			'settings.themeModeLight' => 'Light',
 			'settings.themeModeDark' => 'Dark',
+			'settings.themeColorTitle' => 'Theme Color',
+			'settings.themeColorApp' => 'App',
+			'settings.themeColorDynamic' => 'Dynamic',
+			'settings.themeColorBlue' => 'Blue',
+			'settings.themeColorPurple' => 'Purple',
+			'settings.themeColorPink' => 'Pink',
+			'settings.themeColorRed' => 'Red',
+			'settings.themeColorOrange' => 'Orange',
+			'settings.themeColorYellow' => 'Yellow',
+			'settings.themeColorGreen' => 'Green',
+			'settings.themeColorDynamicFallback' => 'Dynamic Color is unavailable for the current theme, so the app color is shown. Your choice is saved as Dynamic.',
 			'settings.saveError' => 'Failed to save the setting',
 			_ => null,
 		};

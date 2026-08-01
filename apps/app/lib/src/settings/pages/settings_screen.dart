@@ -7,8 +7,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../i18n/strings.g.dart';
 import '../../router/app_routes.dart';
+import '../theme_color_label.dart';
 import '../theme_mode_label.dart';
 import '../ui_style_label.dart';
+import '../widgets/theme_color_preview.dart';
 
 /// Settings一覧画面から各設定項目へ遷移する`ListTile`のkey。
 ///
@@ -21,6 +23,9 @@ const settingsUiStyleListTileKey = Key('settingsUiStyleListTile');
 /// Widget Testから参照するため、実装とテストで同一のリテラルを再定義せず
 /// 本constを共有する。
 const settingsThemeModeListTileKey = Key('settingsThemeModeListTile');
+
+/// Settings一覧からTheme Color設定へ遷移する`ListTile`のkey。
+const settingsThemeColorListTileKey = Key('settingsThemeColorListTile');
 
 /// 設定一覧画面。
 ///
@@ -36,6 +41,7 @@ class SettingsScreen extends ConsumerWidget {
     final themeSettings = ref.watch(themeSettingsProvider).value;
     final uiStyle = themeSettings?.uiStyle ?? AppUiStyle.system;
     final themeMode = themeSettings?.themeMode ?? AppThemeMode.system;
+    final themeColor = themeSettings?.themeColor ?? AppThemeColor.app;
 
     return Scaffold(
       appBar: AppBar(title: Text(i18n.settings.title)),
@@ -60,6 +66,13 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: Text(themeModeLabel(themeMode, i18n)),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.pushNamed(settingsThemeModeRouteName),
+                ),
+                ListTile(
+                  key: settingsThemeColorListTileKey,
+                  title: Text(i18n.settings.themeColorTitle),
+                  subtitle: Text(themeColorLabel(themeColor, i18n)),
+                  trailing: ThemeColorPreview(themeColor: themeColor),
+                  onTap: () => context.pushNamed(settingsThemeColorRouteName),
                 ),
               ],
             ),

@@ -8,8 +8,10 @@ import 'package:material_github_searcher/src/config/app_build_config.dart';
 import 'package:material_github_searcher/src/router/app_routes.dart';
 import 'package:material_github_searcher/src/router/go_router_provider.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_screen.dart';
+import 'package:material_github_searcher/src/settings/pages/settings_theme_color_screen.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_theme_mode_screen.dart';
 import 'package:material_github_searcher/src/settings/pages/settings_ui_style_screen.dart';
+import 'package:material_github_searcher/src/settings/widgets/theme_color_preview.dart';
 
 import '../../support/fake_search_history_repository.dart';
 import '../../support/fake_theme_settings_repository.dart';
@@ -37,6 +39,20 @@ void main() {
       find.descendant(
         of: find.byKey(settingsThemeModeListTileKey),
         matching: find.text('システム'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(settingsThemeColorListTileKey),
+        matching: find.text('アプリ'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(settingsThemeColorListTileKey),
+        matching: find.byType(ThemeColorPreview),
       ),
       findsOneWidget,
     );
@@ -98,18 +114,49 @@ void main() {
     expect(find.text('ダーク'), findsOneWidget);
   });
 
+  testWidgets('Theme Color行をタップすると選択画面へ遷移し、戻ると一覧へ戻る', (tester) async {
+    await _pump(tester);
+
+    await tester.tap(find.byKey(settingsThemeColorListTileKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsThemeColorScreen), findsOneWidget);
+
+    await _popFrom<SettingsThemeColorScreen>(tester);
+
+    expect(find.byType(SettingsScreen), findsOneWidget);
+    expect(find.byType(SettingsThemeColorScreen), findsNothing);
+  });
+
+  testWidgets('Theme Color選択画面での変更が一覧の現在値表示へ反映される', (tester) async {
+    await _pump(tester);
+
+    await tester.tap(find.byKey(settingsThemeColorListTileKey));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(settingsThemeColorOptionKey(AppThemeColor.green)),
+    );
+    await tester.pumpAndSettle();
+
+    await _popFrom<SettingsThemeColorScreen>(tester);
+
+    expect(find.text('緑'), findsOneWidget);
+  });
+
   for (final locale in [
     (
       appLocale: AppLocale.ja,
       title: '設定',
       uiStyleTitle: 'UIスタイル',
       themeModeTitle: 'テーマモード',
+      themeColorTitle: 'テーマカラー',
     ),
     (
       appLocale: AppLocale.en,
       title: 'Settings',
       uiStyleTitle: 'UI Style',
       themeModeTitle: 'Theme Mode',
+      themeColorTitle: 'Theme Color',
     ),
   ]) {
     testWidgets('${locale.appLocale}では一覧の文言をその言語で表示する', (tester) async {
@@ -124,6 +171,7 @@ void main() {
       );
       expect(find.text(locale.uiStyleTitle), findsOneWidget);
       expect(find.text(locale.themeModeTitle), findsOneWidget);
+      expect(find.text(locale.themeColorTitle), findsOneWidget);
     });
   }
 
@@ -146,6 +194,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(SettingsThemeModeScreen), findsOneWidget);
+    });
+
+    testWidgets('$width幅でもTheme Color行から選択画面を操作できる', (tester) async {
+      await _pump(tester, width: width);
+
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      await tester.tap(find.byKey(settingsThemeColorListTileKey));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsThemeColorScreen), findsOneWidget);
     });
   }
 

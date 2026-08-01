@@ -101,16 +101,22 @@ void main() {
   });
 
   group('updateThemeColor', () {
-    test('themeColorを更新し、Repositoryへ保存する', () async {
+    test('9候補すべてを更新し、Repositoryへ保存する', () async {
       await container.read(themeSettingsProvider.future);
 
-      await container
-          .read(themeSettingsProvider.notifier)
-          .updateThemeColor(AppThemeColor.purple);
+      for (final themeColor in AppThemeColor.values) {
+        await container
+            .read(themeSettingsProvider.notifier)
+            .updateThemeColor(themeColor);
 
-      final state = container.read(themeSettingsProvider);
-      expect(state.value!.themeColor, AppThemeColor.purple);
-      expect(fake.savedSettings, [state.value]);
+        final state = container.read(themeSettingsProvider);
+        expect(state.value!.themeColor, themeColor);
+      }
+
+      expect(
+        fake.savedSettings.map((settings) => settings.themeColor),
+        AppThemeColor.values,
+      );
     });
   });
 
