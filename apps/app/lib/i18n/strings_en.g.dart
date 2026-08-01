@@ -99,7 +99,6 @@ class _Translations$repositorySearch$en extends Translations$repositorySearch$ja
 	@override String get pulling => 'Pulling to refresh';
 	@override String get languageUnset => 'Not set';
 	@override String get languageLabel => 'Language';
-	@override String get starsLabel => 'Stars';
 	@override String get historySuggestionsLabel => 'Search history';
 	@override String get historyClearAllLabel => 'Clear all';
 	@override String get historyClearAllTooltip => 'Clear all search history';
@@ -189,7 +188,6 @@ extension on TranslationsEn {
 			'repositorySearch.pulling' => 'Pulling to refresh',
 			'repositorySearch.languageUnset' => 'Not set',
 			'repositorySearch.languageLabel' => 'Language',
-			'repositorySearch.starsLabel' => 'Stars',
 			'repositorySearch.historySuggestionsLabel' => 'Search history',
 			'repositorySearch.historyClearAllLabel' => 'Clear all',
 			'repositorySearch.historyClearAllTooltip' => 'Clear all search history',

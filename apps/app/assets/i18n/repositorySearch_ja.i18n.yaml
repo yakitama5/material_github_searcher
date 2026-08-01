@@ -11,7 +11,6 @@ refreshing: 更新中
 pulling: 引き下げて更新
 languageUnset: 未設定
 languageLabel: 言語
-starsLabel: スター数
 historySuggestionsLabel: 検索履歴
 historyClearAllLabel: すべて削除
 historyClearAllTooltip: 検索履歴をすべて削除

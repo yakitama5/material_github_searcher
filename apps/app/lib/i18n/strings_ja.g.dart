@@ -158,9 +158,6 @@ class Translations$repositorySearch$ja {
 	/// ja: '言語'
 	String get languageLabel => '言語';
 
-	/// ja: 'スター数'
-	String get starsLabel => 'スター数';
-
 	/// ja: '検索履歴'
 	String get historySuggestionsLabel => '検索履歴';
 
@@ -311,7 +308,6 @@ extension on Translations {
 			'repositorySearch.pulling' => '引き下げて更新',
 			'repositorySearch.languageUnset' => '未設定',
 			'repositorySearch.languageLabel' => '言語',
-			'repositorySearch.starsLabel' => 'スター数',
 			'repositorySearch.historySuggestionsLabel' => '検索履歴',
 			'repositorySearch.historyClearAllLabel' => 'すべて削除',
 			'repositorySearch.historyClearAllTooltip' => '検索履歴をすべて削除',
