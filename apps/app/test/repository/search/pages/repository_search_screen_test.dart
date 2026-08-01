@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:application/application.dart';
+import 'package:designsystem/designsystem.dart';
 import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -126,6 +127,22 @@ Future<void> _pullToRefresh(WidgetTester tester) async {
   await tester.fling(find.byType(CustomScrollView), const Offset(0, 300), 1000);
   await tester.pump();
   await tester.pump(const Duration(seconds: 1));
+}
+
+/// 上端で下方向へdragし、releaseせずに[TestGesture]を返す。
+///
+/// pull中のIndicator表示・Semanticsを検証するテストで共通して使う。
+/// 呼び出し側でrelease（`gesture.up()`）と、その後の検証・後始末を行う。
+Future<TestGesture> _dragWithoutReleasing(
+  WidgetTester tester, {
+  double distance = 200,
+}) async {
+  final gesture = await tester.startGesture(
+    tester.getCenter(find.byType(CustomScrollView)),
+  );
+  await gesture.moveBy(Offset(0, distance));
+  await tester.pump();
+  return gesture;
 }
 
 /// 非同期の検索結果反映を待つ。
@@ -880,6 +897,103 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('flutter/flutter'), findsOneWidget);
+    });
+
+    for (final locale in [AppLocale.ja, AppLocale.en]) {
+      testWidgets('pull中は${locale.languageCode}のpull用Semantics labelを読み上げる', (
+        tester,
+      ) async {
+        final handle = tester.ensureSemantics();
+        final repository = FakeRepositorySearchRepository();
+        final query = RepositorySearchQuery('flutter');
+        repository.setSuccess(query: query, page: _singlePage(_flutterRepo));
+        await _pumpSearchScreen(
+          tester,
+          repository: repository,
+          locale: locale,
+        );
+
+        await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+        await tester.tap(find.byKey(_submitButtonKey));
+        await tester.pumpAndSettle();
+
+        final gesture = await _dragWithoutReleasing(tester);
+
+        expect(
+          find.bySemanticsLabel(locale.translations.repositorySearch.pulling),
+          findsOneWidget,
+        );
+        expect(
+          find.bySemanticsLabel(
+            locale.translations.repositorySearch.refreshing,
+          ),
+          findsNothing,
+        );
+
+        await gesture.up();
+        await tester.pumpAndSettle();
+        handle.dispose();
+      });
+    }
+
+    testWidgets('未検索中はdragしてもIndicatorが表示されない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      await _pumpSearchScreen(tester, repository: repository);
+
+      final gesture = await _dragWithoutReleasing(tester);
+
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('初回loading中(Skeleton表示)はdragしてもIndicatorが表示されない', (
+      tester,
+    ) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      final gate = Completer<void>();
+      repository.setSuccess(
+        query: query,
+        page: _singlePage(_flutterRepo),
+        gate: gate,
+      );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pump();
+      expect(find.byType(RepositoryListSkeleton), findsOneWidget);
+
+      final gesture = await _dragWithoutReleasing(tester);
+
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
+
+      await gesture.up();
+      gate.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('初回error中はdragしてもIndicatorが表示されない', (tester) async {
+      final repository = FakeRepositorySearchRepository();
+      final query = RepositorySearchQuery('flutter');
+      repository.setFailure(
+        query: query,
+        exception: const RepositorySearchException(message: 'boom'),
+      );
+      await _pumpSearchScreen(tester, repository: repository);
+
+      await tester.enterText(find.byKey(_searchFieldKey), 'flutter');
+      await tester.tap(find.byKey(_submitButtonKey));
+      await tester.pumpAndSettle();
+
+      final gesture = await _dragWithoutReleasing(tester);
+
+      expect(find.byKey(m3RefreshIndicatorGlyphKey), findsNothing);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
     });
   });
 

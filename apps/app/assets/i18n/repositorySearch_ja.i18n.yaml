@@ -8,6 +8,7 @@ errorGeneric: 通信エラーが発生しました。しばらくしてから再
 errorRateLimited: GitHub APIの利用回数上限に達しました。しばらくしてから再度お試しください
 retry: 再試行
 refreshing: 更新中
+pulling: 引き下げて更新
 languageUnset: 未設定
 languageLabel: 言語
 starsLabel: スター数

@@ -8,6 +8,7 @@ errorGeneric: Something went wrong. Please try again later.
 errorRateLimited: GitHub API rate limit reached. Please try again later.
 retry: Retry
 refreshing: Refreshing
+pulling: Pulling to refresh
 languageUnset: Not set
 languageLabel: Language
 starsLabel: Stars
