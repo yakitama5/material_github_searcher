@@ -203,6 +203,18 @@ class Translations$settings$ja {
 	/// ja: 'iOS'
 	String get uiStyleIos => 'iOS';
 
+	/// ja: 'テーマモード'
+	String get themeModeTitle => 'テーマモード';
+
+	/// ja: 'システム'
+	String get themeModeSystem => 'システム';
+
+	/// ja: 'ライト'
+	String get themeModeLight => 'ライト';
+
+	/// ja: 'ダーク'
+	String get themeModeDark => 'ダーク';
+
 	/// ja: '設定の保存に失敗しました'
 	String get saveError => '設定の保存に失敗しました';
 }
@@ -272,6 +284,10 @@ extension on Translations {
 			'settings.uiStyleSystem' => 'システム',
 			'settings.uiStyleAndroid' => 'Android',
 			'settings.uiStyleIos' => 'iOS',
+			'settings.themeModeTitle' => 'テーマモード',
+			'settings.themeModeSystem' => 'システム',
+			'settings.themeModeLight' => 'ライト',
+			'settings.themeModeDark' => 'ダーク',
 			'settings.saveError' => '設定の保存に失敗しました',
 			_ => null,
 		};

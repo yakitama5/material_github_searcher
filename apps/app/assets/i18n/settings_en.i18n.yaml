@@ -3,4 +3,8 @@ uiStyleTitle: UI Style
 uiStyleSystem: System
 uiStyleAndroid: Android
 uiStyleIos: iOS
+themeModeTitle: Theme Mode
+themeModeSystem: System
+themeModeLight: Light
+themeModeDark: Dark
 saveError: Failed to save the setting

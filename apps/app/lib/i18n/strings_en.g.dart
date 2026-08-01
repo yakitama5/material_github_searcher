@@ -120,6 +120,10 @@ class _Translations$settings$en extends Translations$settings$ja {
 	@override String get uiStyleSystem => 'System';
 	@override String get uiStyleAndroid => 'Android';
 	@override String get uiStyleIos => 'iOS';
+	@override String get themeModeTitle => 'Theme Mode';
+	@override String get themeModeSystem => 'System';
+	@override String get themeModeLight => 'Light';
+	@override String get themeModeDark => 'Dark';
 	@override String get saveError => 'Failed to save the setting';
 }
 
@@ -184,6 +188,10 @@ extension on TranslationsEn {
 			'settings.uiStyleSystem' => 'System',
 			'settings.uiStyleAndroid' => 'Android',
 			'settings.uiStyleIos' => 'iOS',
+			'settings.themeModeTitle' => 'Theme Mode',
+			'settings.themeModeSystem' => 'System',
+			'settings.themeModeLight' => 'Light',
+			'settings.themeModeDark' => 'Dark',
 			'settings.saveError' => 'Failed to save the setting',
 			_ => null,
 		};
