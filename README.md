@@ -199,7 +199,7 @@ mise run test:e2e <Android端末IDまたはiOS Simulator ID>
 
 - `.agents/skills/`配下に、コミット・PRレビューレポート作成等の再利用可能なスキルを定義し、Claude CodeとCodexの両方から同じ定義を参照する（ツール固有ディレクトリはシンボリックリンクで実体を共有）。
 - 推奨開発フロー（プラン作成→実装→Draft PR作成→詳細レビュー→レビュー依頼）は[`docs/agent-driven-development.md`](docs/agent-driven-development.md)にまとめている。
-- 実装判断の理由・背景は`docs/technical-decisions.md`に人手で記録し、エージェントには編集させていない。
+- 実装判断の理由・背景は[`docs/technical-decisions.md`](docs/technical-decisions.md)に人手で記録し、エージェントには編集させていない。
 - コード中のコメントは「なぜ」を記録する目的に絞り、エージェントが実装と同時に背景（設計上の制約・過去に踏んだ罠等）を書き残す運用にしている。
 
 ## 既知の制約
@@ -209,6 +209,10 @@ mise run test:e2e <Android端末IDまたはiOS Simulator ID>
 - Patrol E2E TestはRequired Status Checkに含めず、ローカル実行のみ（実行環境は上記「実行・検証環境」を参照）。
 - iOS物理端末では未検証（上記「実行・検証環境」を参照）。
 - Device Preview（Dev Web限定）はlocale切り替えを対象外にしている（Slangとの二重管理を避けるため）。
+
+## 振り返り
+
+今回のコーディング試験に取り組んだ感想は[`docs/retrospective.md`](docs/retrospective.md)にまとめている。
 
 ## License
 
