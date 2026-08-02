@@ -213,7 +213,7 @@ Windowsの場合は[Cmder](https://cmder.app)
 #### なぜその決定に至ったか（決定理由）
 
 - Organization内のPrivateリポジトリの場合はある程度絞って選択するべき
-- Publicリポジトリの場合、GitHub Actionsの制限もないので出来る限り対応した方がよいと思っている(試金石としても)
+- Public repositoryではstandard runnersを無料で利用できるので出来る限り対応した方がよいと思っている(試金石としても)
 - 本来であれば、GoldenTestもPodman使うなりでOS差異なくしたいけど、このPJでは採用しない、業務ならやるべき
 
 ### CD
