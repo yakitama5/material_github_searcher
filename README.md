@@ -103,7 +103,7 @@ flowchart LR
 | --- | --- |
 | `packages/domain` | エンティティ、値オブジェクト、リポジトリ抽象、業務ルール |
 | `packages/application` | ユースケース、アプリ状態、Riverpod Provider（generator不使用の手書き） |
-| `packages/infrastructure/*` | GitHub API（`github`）・SharedPreferences（`shared_preferences`）・テスト用Mock（`mock`）の実装 |
+| `packages/infrastructure/*` | GitHub API（`packages/infrastructure/github`、pub.devの`github`パッケージは使わず`dio`で自前実装）・SharedPreferences（`shared_preferences`）・テスト用Mock（`mock`）の実装 |
 | `packages/designsystem` | テーマ、共通Widget（Skeleton、Refresh Indicator等） |
 | `packages/dependency_override` | applicationのProviderとinfrastructureの実装の結線 |
 | `packages/foundation` | ドメインに依存しない汎用ユーティリティ |
@@ -167,10 +167,11 @@ PRのRequired Status Check（`check_pr.yaml`）はFormat・Analyze・Unit/Widget
 
 ```sh
 cd packages/designsystem
-flutter test --tags=golden       # Golden Testのみ（コミット前にローカルで実行）
+mise exec -- flutter test --tags=golden       # Golden Testのみ（コミット前にローカルで実行）
 
-# リポジトリルートで実行
-mise run test:e2e <Android端末IDまたはiOS Simulator ID>
+# リポジトリルートで実行する。DEVICE_IDは`flutter devices`で確認した
+# Android端末IDまたはiOS Simulator IDに置き換える
+mise run test:e2e DEVICE_ID
 ```
 
 背景・Fake/Mockの方針・画面幅ごとのWidget Testの書き方は[`docs/testing.md`](docs/testing.md)を参照。
