@@ -19,6 +19,20 @@
 
 ---
 
+## AI駆動開発
+
+### Claude Code / Codex
+
+#### なぜその決定に至ったか（決定理由）
+
+- 今回の対応はClaudeCode/Codexを利用して対応した
+- それぞれ下記のようなフローで実施
+  - ClaudeCode: メイン(Sonnet 5 High), アドバイザー(Opus 5 High)
+  - Codex: メイン(GPT-5.6 Terra Max), アドバイザー(GPT5.6 Sol Medium)
+  - Codex(7/31以降): メイン(GPT-5.6 Luna Max), アドバイザー(GPT5.6 Sol High)
+- AIは日々進化し、進め方のベストプラクティスが翌週には変わっているなんてことも多いので、PJ側でサブエージェントやルールで縛らない設計とする
+- とはいえ、初学者が迷わないように推奨する方針は、 `agent-driven-development.md`に記載
+
 ## アーキテクチャ
 
 ### オニオンアーキテクチャ
@@ -35,21 +49,6 @@
 - 個人的に必要十分 かつ レイヤー間を跨がない限りは壊滅的なリファクタリングが必要なケースが発生しない
   - エージェントが人間が処理不可能な速度で生成してもコントロールしやすい
 - 「どこに何が書いてあるか」を人もエージェントも判断しやすいと思ってる
-
-## AI駆動開発
-
-### Claude Code / Codex / CodeRabbit
-
-#### なぜその決定に至ったか（決定理由）
-
-- 今回の対応はClaudeCode/Codexを利用して対応した
-- それぞれ下記のようなフローで実施
-  - ClaudeCode: メイン(Sonnet 5 High), アドバイザー(Opus 5 High)
-  - Codex: メイン(GPT-5.6 Terra Max), アドバイザー(GPT5.6 Sol Medium)
-  - Codex(7/31以降): メイン(GPT-5.6 Luna Max), アドバイザー(GPT5.6 Sol High)
-- AIは日々進化し、進め方のベストプラクティスが翌週には変わっているなんてことも多いので、PJ側でサブエージェントやルールで縛らない設計とする
-- とはいえ、初学者が迷わないように推奨する方針は、 `agent-driven-development.md`に記載
-- CodeRabbitはPublicリポジトリなら使わない手はない
 
 ### パッケージ構成 (layer first)
 
