@@ -38,6 +38,14 @@
 </tr>
 </table>
 
+## アピールポイント
+
+- 通信キャンセルと世代管理により、古いAPIレスポンスによる状態の上書きを防止している。
+- 実時間・実ネットワークに依存しない決定的なMockを用いたUnit / Widget / E2E（Patrol）Test。
+- 詳細画面は検索結果一覧の要約データを既存itemsから即時表示し、Watcherのみ部分Skeletonで非同期取得する。
+- パッケージ間の依存方向を`tools/check_package_dependencies.dart`でCIから機械的に検査する。
+- コーディングエージェント（Claude Code／Codex）を活用しつつ、技術判断と振り返りは人間が記録する（[下記「AIサービスの利用について」](#aiサービスの利用について)参照）。
+
 ## 対応プラットフォーム
 
 Android/iOSを正式対象とする。Webは正式配布対象ではなく、Device Previewやローカルでの動作確認用途として維持する（[GitHub Pagesで公開中](https://yakitama5.github.io/material_github_searcher/)）。Windows・macOS・Linux runnerは対象外のため意図的に削除した（詳細は[`docs/development.md`](docs/development.md)）。
@@ -46,8 +54,8 @@ Android/iOSを正式対象とする。Webは正式配布対象ではなく、Dev
 
 | 要件 | 対応内容 |
 | --- | --- |
-| IDE・SDK・言語は基本的に最新の安定版を利用 | Flutter 3.44.8 / Dart 3.12.2を`mise.toml`で固定し、全開発者・CIで同一バージョンを使用する。アップグレード手順は[`docs/flutter-upgrade.md`](docs/flutter-upgrade.md) |
-| 最新の安定版以外を使う場合は理由を記載 | 該当なし（IDE・SDK・言語は最新安定版を使用） |
+| IDE・SDK・言語は基本的に最新の安定版を利用 | Flutter 3.44.8 / Dart 3.12.2を、開発・提出時点（2026年8月）の最新Stableとして`mise.toml`で固定し、全開発者・CIで同一バージョンを使用する。アップグレード手順は[`docs/flutter-upgrade.md`](docs/flutter-upgrade.md)。IDEは[下記「実行・検証環境」](#実行検証環境)参照 |
+| 最新の安定版以外を使う場合は理由を記載 | 該当なし |
 | 状態管理はProvider/Riverpodのいずれか | Riverpod（generatorを使わず手書き）を採用。理由は[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | サードパーティライブラリはOSSに限り制限なし | dio・go_router・riverpod・lottie・animations・dynamic_color・slang・shared_preferences等、pub.dev公開のOSSのみ使用 |
 | 対象OSバージョンはFlutterプロジェクト作成時点のバージョン | Androidは`flutter.minSdkVersion`/`targetSdkVersion`/`compileSdkVersion`を上書きせずFlutterの既定値のまま使用。iOSは`IPHONEOS_DEPLOYMENT_TARGET`をPodfile既定の`13.0`のまま使用 |
@@ -55,8 +63,8 @@ Android/iOSを正式対象とする。Webは正式配布対象ではなく、Dev
 | 入力したキーワードでGitHubのリポジトリを検索できる | [下記「機能」](#機能)参照 |
 | `search/repositories`を利用し、`github`パッケージ等を使わず自前実装 | `packages/infrastructure/github`が`dio`のみで自前実装（[下記「API・挙動として明記する事項」](#api挙動として明記する事項)参照） |
 | 検索結果は一覧で概要（リポジトリ名）を表示 | 一覧はRepository名・owner icon・言語を表示（要件のリポジトリ名表示を満たした上で#136の判断により拡張） |
-| タップで詳細（リポジトリ名・オーナーアイコン・言語・Star数・Watcher数・Fork数・Issue数）を表示 | `RepositoryDetailPage`で6項目を表示。Watcherのみ`subscribers_count`を非同期取得する |
-| マテリアルデザインに準拠 | Material Design 3（`useMaterial3`既定）+ Dynamic Color対応。方針は[`docs/design.md`](docs/design.md) |
+| タップで詳細（リポジトリ名・オーナーアイコン・言語・Star数・Watcher数・Fork数・Issue数）を表示 | `RepositoryDetailPage`で7項目を表示。Watcherのみ`subscribers_count`を非同期取得する |
+| マテリアルデザインに準拠 | Material Design 3を基盤とし、`ColorScheme`・Dynamic Color・`NavigationBar`/`NavigationRail`・Container Transform（`OpenContainer`）等を適用。方針は[`docs/design.md`](docs/design.md) |
 
 ## 機能
 
@@ -188,6 +196,7 @@ mise run test:e2e <Android端末IDまたはiOS Simulator ID>
 | 項目 | 値 |
 | --- | --- |
 | Flutter / Dart | 3.44.8 / 3.12.2（`mise.toml`で固定） |
+| IDE・関連ツール | Zed（コード編集・目視確認）、Xcode（iOS build・Simulator操作）、Android Studio（Android SDK管理）。いずれも開発機の最新安定版で、バージョンはmiseのようなツールでは固定していない |
 | 開発機OS | macOS 26.6 |
 | iOS 実検証環境 | iPhone 17 Pro Simulator（iOS 26.1） |
 | Android 実検証環境 | Pixel 8a 実機（Android 17 / API 37） |
