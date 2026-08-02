@@ -19,3 +19,5 @@ SSOT
 octocat
 Khaled
 AgustinusST
+Cmder
+peco
