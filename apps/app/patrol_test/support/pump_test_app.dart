@@ -13,7 +13,9 @@ Future<void> pumpTestApp(
   required List<Override> overrides,
 }) async {
   await LocaleSettings.setLocale(AppLocale.ja);
-  await $.pumpWidgetAndSettle(
+  // 初期案内・Skeleton・Emptyは自律アニメーションを持つため、
+  // `pumpAndSettle`でアプリ全体の静止を待たず、状態をFinderで待つ。
+  await $.pumpWidget(
     createApp(
       config: AppBuildConfig.current,
       overrides: overrides,
